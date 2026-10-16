@@ -406,6 +406,51 @@ body {
 </head>
 <body class="bg-[#F8FAFC] text-slate-800 min-h-screen flex flex-col font-sans selection:bg-orange-100 selection:text-orange-900 pb-20 md:pb-8">
 
+  <!-- ==================== DYNAMIC TOP ANNOUNCEMENT BAR (MANAGED VIA ADMIN CMS) ==================== -->
+  <div id="live-web-announcement-bar" class="hidden transition-all duration-300 relative z-40 text-xs py-2 px-4 shadow-sm bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 text-center sm:text-left">
+      <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+        <span id="live-announcement-tag" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20">NEW</span>
+        <span id="live-announcement-text" class="font-bold">🚀 JAANKAR Release v1.1 is now live! Experience PC compatibility hub & AI on your phone.</span>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <a id="live-announcement-btn" href="#download" class="px-3 py-1 rounded-full text-[11px] font-black bg-white text-slate-900 hover:bg-slate-100 transition shadow-sm">
+          Download App
+        </a>
+        <button type="button" onclick="dismissLiveAnnouncement()" class="text-white/80 hover:text-white p-0.5 cursor-pointer" title="Dismiss">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAINTENANCE MODE OVERLAY (MANAGED VIA ADMIN CMS) ==================== -->
+  <div id="live-web-maintenance-shield" class="fixed inset-0 z-[999999] bg-slate-950/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center text-white">
+    <div class="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-6 shadow-2xl shadow-amber-500/20 animate-pulse">
+      <i data-lucide="wrench" class="w-10 h-10"></i>
+    </div>
+    <div class="max-w-md space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        <span>Maintenance & Upgrade Mode Active</span>
+      </div>
+      <h1 id="live-maintenance-headline" class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+        System Upgrade in Progress
+      </h1>
+      <p id="live-maintenance-subtitle" class="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed">
+        We are currently upgrading the JAANKAR user experience with new features. We will be back online shortly!
+      </p>
+      <div class="pt-4 flex items-center justify-center gap-3">
+        <a id="live-maintenance-support-link" href="https://t.me/jaankar_official" target="_blank" class="px-4 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/30 text-sky-400 text-xs font-bold transition">
+          Join Telegram Updates
+        </a>
+        <button type="button" onclick="location.reload()" class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition cursor-pointer">
+          Check Status ↻
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="glass-header">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -439,13 +484,21 @@ body {
           <span class="text-orange-600 font-extrabold">Smart Tools</span>
           <span class="w-1.5 h-1.5 rounded-full bg-orange-600"></span>
         </button>
+        <button type="button" onclick="switchTab('pc-lab')" id="desktop-tab-pc-lab" class="px-3.5 py-2 rounded-xl transition hover:text-orange-600 hover:bg-orange-50/70 flex items-center gap-1.5">
+          <i data-lucide="cpu" class="w-4 h-4 text-purple-600"></i>
+          <span>PC Lab</span>
+        </button>
+        <button type="button" onclick="switchTab('compare')" id="desktop-tab-compare" class="px-3.5 py-2 rounded-xl transition hover:text-orange-600 hover:bg-orange-50/70 flex items-center gap-1.5">
+          <i data-lucide="scale" class="w-4 h-4 text-cyan-600"></i>
+          <span>Compare</span>
+        </button>
         <button type="button" onclick="switchTab('gadgets')" id="desktop-tab-gadgets" class="px-3.5 py-2 rounded-xl transition hover:text-orange-600 hover:bg-orange-50/70 flex items-center gap-1.5">
           <i data-lucide="smartphone" class="w-4 h-4"></i>
           <span>Gadgets</span>
         </button>
-        <button type="button" onclick="switchTab('learning')" id="desktop-tab-learning" class="px-3.5 py-2 rounded-xl transition hover:text-orange-600 hover:bg-orange-50/70 flex items-center gap-1.5">
-          <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-          <span>Knowledge</span>
+        <button type="button" onclick="switchTab('academy')" id="desktop-tab-academy" class="px-3.5 py-2 rounded-xl transition hover:text-orange-600 hover:bg-orange-50/70 flex items-center gap-1.5">
+          <i data-lucide="book-open" class="w-4 h-4 text-emerald-600"></i>
+          <span>Academy</span>
         </button>
         <button type="button" onclick="switchTab('saved')" id="desktop-tab-saved" class="px-3.5 py-2 rounded-xl transition hover:text-orange-600 hover:bg-orange-50/70 flex items-center gap-1.5">
           <i data-lucide="bookmark" class="w-4 h-4"></i>
@@ -981,12 +1034,254 @@ body {
 
     </div>
 
-    <!-- ==================== VIEW 4: GADGETS & SPECS ==================== -->
+    <!-- ==================== VIEW: PC BUILD COMPATIBILITY LAB ==================== -->
+    <div id="view-pc-lab" class="hidden space-y-6">
+      
+      <!-- Hub Header Banner -->
+      <div class="p-6 rounded-3xl bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-[10px] font-black tracking-wider uppercase text-purple-300">COMPATIBILITY ENGINE</span>
+            <span class="text-xs text-slate-400">AM5 vs LGA1700 • DDR4 / DDR5 • PSU Wattage</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">PC Build Compatibility Hub</h2>
+          <p class="text-xs text-slate-300 max-w-xl">
+            Select your components to automatically check socket compatibility, memory standard matching, and estimated power requirements before buying.
+          </p>
+        </div>
+        <button type="button" onclick="resetPcBuild()" class="btn-secondary-clean text-xs px-3.5 py-2 text-slate-200 border-slate-700 bg-slate-800/80 hover:bg-slate-700 self-start md:self-auto cursor-pointer">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>Reset Build</span>
+        </button>
+      </div>
+
+      <!-- Main Layout: Component Selectors (Left 2 cols) + Real-time Compatibility Report (Right 1 col) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Component Pickers (2 Cols) -->
+        <div class="lg:col-span-2 space-y-4">
+          
+          <!-- 1. Processor (CPU) -->
+          <div class="jaankar-card p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[11px]">1</span>
+                <span>Processor (CPU)</span>
+              </label>
+              <span id="selected-cpu-badge" class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-600">Socket: AM5</span>
+            </div>
+            <select id="pc-select-cpu" onchange="runPcCompatibilityCheck()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-purple-500">
+              <option value="amd-7600x">AMD Ryzen 5 7600X (6C/12T, AM5, DDR5, 105W)</option>
+              <option value="amd-7800x3d" selected>AMD Ryzen 7 7800X3D (8C/16T, AM5, 3D V-Cache, 120W) — Best for Gaming</option>
+              <option value="intel-14400f">Intel Core i5-14400F (10C/16T, LGA1700, DDR4/DDR5, 65W) — Budget King</option>
+              <option value="intel-14700k">Intel Core i7-14700K (20C/28T, LGA1700, DDR4/DDR5, 125W)</option>
+            </select>
+          </div>
+
+          <!-- 2. Motherboard -->
+          <div class="jaankar-card p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[11px]">2</span>
+                <span>Motherboard</span>
+              </label>
+              <span id="selected-mobo-badge" class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-600">Socket: AM5 (DDR5)</span>
+            </div>
+            <select id="pc-select-mobo" onchange="runPcCompatibilityCheck()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-purple-500">
+              <option value="b650-ddr5" selected>ASUS TUF Gaming B650-Plus WiFi (Socket AM5, DDR5, PCIe 5.0)</option>
+              <option value="x670e-ddr5">MSI MAG X670E TOMAHAWK WiFi (Socket AM5, DDR5, PCIe 5.0)</option>
+              <option value="b760-ddr5">Gigabyte B760 Gaming X AX (Socket LGA1700, DDR5, PCIe 4.0)</option>
+              <option value="b760-ddr4">MSI PRO B760M-P (Socket LGA1700, DDR4 Budget Edition)</option>
+            </select>
+          </div>
+
+          <!-- 3. RAM (Memory) -->
+          <div class="jaankar-card p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[11px]">3</span>
+                <span>RAM (Memory Standard)</span>
+              </label>
+              <span id="selected-ram-badge" class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-600">Standard: DDR5</span>
+            </div>
+            <select id="pc-select-ram" onchange="runPcCompatibilityCheck()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-purple-500">
+              <option value="ddr5-32" selected>Corsair Vengeance 32GB (2x16GB) DDR5 6000MHz CL30 (AMD EXPO / Intel XMP)</option>
+              <option value="ddr5-16">Kingston Fury Beast 16GB (2x8GB) DDR5 5200MHz</option>
+              <option value="ddr4-32">G.Skill Ripjaws V 32GB (2x16GB) DDR4 3600MHz CL18</option>
+              <option value="ddr4-16">Corsair Vengeance LPX 16GB (2x8GB) DDR4 3200MHz CL16</option>
+            </select>
+          </div>
+
+          <!-- 4. Graphics Card (GPU) -->
+          <div class="jaankar-card p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[11px]">4</span>
+                <span>Graphics Card (GPU)</span>
+              </label>
+              <span id="selected-gpu-badge" class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-600">TDP: 220W</span>
+            </div>
+            <select id="pc-select-gpu" onchange="runPcCompatibilityCheck()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-purple-500">
+              <option value="rtx-4060">NVIDIA GeForce RTX 4060 8GB GDDR6 (115W TDP, 1080p Ultra)</option>
+              <option value="rtx-4070-super" selected>NVIDIA GeForce RTX 4070 SUPER 12GB (220W TDP, 1440p High-FPS)</option>
+              <option value="rtx-4080-super">NVIDIA GeForce RTX 4080 SUPER 16GB (320W TDP, 4K Gaming)</option>
+              <option value="rx-7800-xt">AMD Radeon RX 7800 XT 16GB (263W TDP, 1440p Value King)</option>
+            </select>
+          </div>
+
+          <!-- 5. Power Supply (PSU) -->
+          <div class="jaankar-card p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[11px]">5</span>
+                <span>Power Supply (PSU)</span>
+              </label>
+              <span id="selected-psu-badge" class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-slate-100 text-slate-600">Capacity: 750W</span>
+            </div>
+            <select id="pc-select-psu" onchange="runPcCompatibilityCheck()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-purple-500">
+              <option value="psu-550">550W 80 Plus Bronze (Deepcool / Cooler Master)</option>
+              <option value="psu-650">650W 80 Plus Bronze (Corsair CV650)</option>
+              <option value="psu-750" selected>750W 80 Plus Gold Modular (Corsair RM750e / Deepcool PM750D)</option>
+              <option value="psu-850">850W 80 Plus Gold ATX 3.0 (Corsair RM850x / MSI MAG A850GL)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Real-Time Compatibility Engine Diagnostics Card (1 Col) -->
+        <div class="space-y-4">
+          
+          <div class="jaankar-card p-5 space-y-4 sticky top-20">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-purple-600"></i>
+                <span>Compatibility Status</span>
+              </h3>
+              <span id="pc-overall-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>100% Compatible</span>
+              </span>
+            </div>
+
+            <!-- Validation Diagnostic Checks -->
+            <div class="space-y-2.5 text-xs">
+              
+              <!-- Check 1: Socket Match -->
+              <div id="check-socket-row" class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i id="check-socket-icon" data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                  <div>
+                    <p class="font-bold text-slate-800">CPU & Motherboard Socket</p>
+                    <p id="check-socket-desc" class="text-[10px] text-slate-500">AM5 matches B650 chipset</p>
+                  </div>
+                </div>
+                <span id="check-socket-pill" class="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">MATCH</span>
+              </div>
+
+              <!-- Check 2: RAM Match -->
+              <div id="check-ram-row" class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i id="check-ram-icon" data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                  <div>
+                    <p class="font-bold text-slate-800">RAM Technology Standard</p>
+                    <p id="check-ram-desc" class="text-[10px] text-slate-500">DDR5 supported on B650</p>
+                  </div>
+                </div>
+                <span id="check-ram-pill" class="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">MATCH</span>
+              </div>
+
+              <!-- Check 3: Wattage & PSU Load -->
+              <div id="check-power-row" class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i id="check-power-icon" data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                    <p class="font-bold text-slate-800">Estimated Power Draw</p>
+                  </div>
+                  <span id="pc-wattage-text" class="text-xs font-black text-slate-900">~420W / 750W</span>
+                </div>
+                <!-- Power Bar -->
+                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div id="pc-power-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 56%"></div>
+                </div>
+                <p id="check-power-desc" class="text-[10.5px] text-slate-500">Recommended PSU headroom: +30% safe headroom available.</p>
+              </div>
+
+            </div>
+
+            <!-- Quick Action: Ask Aarav about this build -->
+            <button type="button" onclick="askAiAboutCurrentPcBuild()" class="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>Ask Aarav AI to Review Build</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== VIEW: GADGET COMPARISON MATRIX ==================== -->
+    <div id="view-compare" class="hidden space-y-6">
+      
+      <!-- Compare Header -->
+      <div class="p-6 rounded-3xl bg-gradient-to-r from-cyan-950 via-slate-900 to-sky-950 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/30 text-[10px] font-black uppercase text-cyan-300">SIDE-BY-SIDE MATRIX</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Product Spec Comparison</h2>
+          <p class="text-xs text-slate-300 max-w-xl">
+            Compare two smartphones, laptops or graphics cards head-to-head with specs, benchmarks, and clear verdict.
+          </p>
+        </div>
+      </div>
+
+      <!-- Compare Selectors -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="jaankar-card p-4 space-y-2">
+          <label class="block text-xs font-black text-slate-700">Device A (Primary)</label>
+          <select id="compare-select-a" onchange="renderComparisonMatrix()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-cyan-500">
+            <option value="oneplus-12" selected>OnePlus 12 5G (Snapdragon 8 Gen 3, Hasselblad 50MP)</option>
+            <option value="samsung-s24">Samsung Galaxy S24 (Exynos 2400 / 8 Gen 3, Galaxy AI)</option>
+            <option value="iphone-15-pro">Apple iPhone 15 Pro (A17 Pro, Titanium, 48MP)</option>
+            <option value="iqoo-12">iQOO 12 5G (Snapdragon 8 Gen 3, Supercomputing Chip Q1)</option>
+          </select>
+        </div>
+
+        <div class="jaankar-card p-4 space-y-2">
+          <label class="block text-xs font-black text-slate-700">Device B (Competitor)</label>
+          <select id="compare-select-b" onchange="renderComparisonMatrix()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:border-cyan-500">
+            <option value="oneplus-12">OnePlus 12 5G (Snapdragon 8 Gen 3, Hasselblad 50MP)</option>
+            <option value="samsung-s24" selected>Samsung Galaxy S24 (Exynos 2400 / 8 Gen 3, Galaxy AI)</option>
+            <option value="iphone-15-pro">Apple iPhone 15 Pro (A17 Pro, Titanium, 48MP)</option>
+            <option value="iqoo-12">iQOO 12 5G (Snapdragon 8 Gen 3, Supercomputing Chip Q1)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Comparison Matrix Table -->
+      <div id="comparison-matrix-container" class="jaankar-card overflow-hidden">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+    </div>
+
+    <!-- ==================== VIEW: GADGETS & SPECS ==================== -->
     <div id="view-gadgets" class="hidden space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
           <h2 class="text-xl font-black text-slate-900">Gadget Specs & Comparison</h2>
           <p class="text-xs text-slate-500">Detailed specifications, benchmark scores & smart comparisons.</p>
+        </div>
+        <!-- Sub-Category Filter Chips -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+          <button type="button" onclick="filterGadgetsCategory('all', this)" class="gadget-cat-pill px-3 py-1.5 rounded-xl bg-orange-600 text-white shadow-sm">All</button>
+          <button type="button" onclick="filterGadgetsCategory('mobiles', this)" class="gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500">Mobiles</button>
+          <button type="button" onclick="filterGadgetsCategory('laptops', this)" class="gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500">Laptops</button>
+          <button type="button" onclick="filterGadgetsCategory('audio', this)" class="gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500">Audio</button>
+          <button type="button" onclick="filterGadgetsCategory('gaming', this)" class="gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500">Gaming</button>
+          <button type="button" onclick="filterGadgetsCategory('ai-tools', this)" class="gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500">AI Tools</button>
         </div>
       </div>
       <div id="gadgets-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -994,7 +1289,124 @@ body {
       </div>
     </div>
 
-    <!-- ==================== VIEW 5: KNOWLEDGE CAMPUS ==================== -->
+    <!-- ==================== VIEW: KNOWLEDGE & EDUCATION ACADEMY ==================== -->
+    <div id="view-academy" class="hidden space-y-6">
+      
+      <!-- Academy Header -->
+      <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[10px] font-black uppercase text-emerald-300">JAANKAR ACADEMY</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Knowledge & Education Campus</h2>
+          <p class="text-xs text-slate-300 max-w-xl">
+            Curated e-books, competitive exam prep resources, Bharat Atlas, computer science fundamentals, and daily quiz.
+          </p>
+        </div>
+        <div class="text-center p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20">
+          <span class="text-2xl font-black text-emerald-300">540+</span>
+          <p class="text-[10px] text-emerald-100 uppercase font-bold tracking-wider">Free Resources</p>
+        </div>
+      </div>
+
+      <!-- Academy Hub Grid (6 Major Cards matching Android App flows) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- 1. E-Books & Library -->
+        <div class="jaankar-card p-5 space-y-3 hover:shadow-md transition">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+            <i data-lucide="book" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-slate-900">E-Books & Tech PDF Library</h4>
+            <p class="text-xs text-slate-500 mt-1">Free open-source tech guides, programming cheat-sheets, and hardware blueprints.</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="font-semibold text-emerald-700">48 Guides Available</span>
+            <button type="button" onclick="openAcademyTopic('ebooks')" class="font-bold text-orange-600 hover:underline">Read Now ➔</button>
+          </div>
+        </div>
+
+        <!-- 2. Competitive Exam Prep -->
+        <div class="jaankar-card p-5 space-y-3 hover:shadow-md transition">
+          <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+            <i data-lucide="award" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-slate-900">Exam Prep & GK Hub</h4>
+            <p class="text-xs text-slate-500 mt-1">UPSC, SSC, Banking, Railways, and State Exam general studies & current affairs.</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="font-semibold text-blue-700">Daily Updates</span>
+            <button type="button" onclick="openAcademyTopic('exams')" class="font-bold text-orange-600 hover:underline">Explore ➔</button>
+          </div>
+        </div>
+
+        <!-- 3. India Hub -->
+        <div class="jaankar-card p-5 space-y-3 hover:shadow-md transition">
+          <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+            <i data-lucide="map-pin" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-slate-900">India Hub (28 States & UTs)</h4>
+            <p class="text-xs text-slate-500 mt-1">Constitution articles, state profiles, heritage, geography and cultural history.</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="font-semibold text-amber-700">State Atlas</span>
+            <button type="button" onclick="openAcademyTopic('india')" class="font-bold text-orange-600 hover:underline">View Atlas ➔</button>
+          </div>
+        </div>
+
+        <!-- 4. Tech Skills & Coding -->
+        <div class="jaankar-card p-5 space-y-3 hover:shadow-md transition">
+          <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+            <i data-lucide="code" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-slate-900">Tech Skills & Programming</h4>
+            <p class="text-xs text-slate-500 mt-1">Python, Full-Stack Web Development, Git, Linux, and Cloud fundamentals.</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="font-semibold text-purple-700">Step-by-step</span>
+            <button type="button" onclick="openAcademyTopic('skills')" class="font-bold text-orange-600 hover:underline">Start Learning ➔</button>
+          </div>
+        </div>
+
+        <!-- 5. Science & Space Flow -->
+        <div class="jaankar-card p-5 space-y-3 hover:shadow-md transition">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+            <i data-lucide="compass" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-slate-900">Science & Space Exploration</h4>
+            <p class="text-xs text-slate-500 mt-1">ISRO missions (Chandrayaan, Gaganyaan), Solar System, Physics principles.</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="font-semibold text-indigo-700">Space Atlas</span>
+            <button type="button" onclick="openAcademyTopic('space')" class="font-bold text-orange-600 hover:underline">Discover ➔</button>
+          </div>
+        </div>
+
+        <!-- 6. Daily Tech Quiz -->
+        <div class="jaankar-card p-5 space-y-3 hover:shadow-md transition bg-gradient-to-br from-white to-orange-50/40 border-orange-200">
+          <div class="w-10 h-10 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center font-bold">
+            <i data-lucide="help-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-sm text-slate-900">Daily Knowledge Quiz</h4>
+            <p class="text-xs text-slate-500 mt-1">Test your daily tech quotient and earn XP streaks.</p>
+          </div>
+          <div class="pt-2 border-t border-orange-100 flex items-center justify-between text-xs">
+            <span class="font-bold text-orange-600">Streak: 5 Days</span>
+            <button type="button" onclick="switchTab('learning')" class="font-bold text-orange-600 hover:underline">Play Quiz ➔</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== VIEW 5: KNOWLEDGE CAMPUS (QUIZ ONLY) ==================== -->
     <div id="view-learning" class="hidden space-y-5">
       <!-- Streak & Motivation Banner -->
       <div class="p-6 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md flex items-center justify-between">
@@ -1441,6 +1853,72 @@ body {
     </div>
   </div>
 
+  <!-- ==================== FLOATING JAANKAR AI ASSISTANT (AARAV) ==================== -->
+  <div id="floating-ai-trigger" class="fixed bottom-6 right-6 z-50 flex items-center gap-2 group">
+    <div class="hidden sm:flex items-center px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xl border border-slate-700 pointer-events-none group-hover:scale-105 transition-transform">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+      <span>Ask Aarav AI</span>
+    </div>
+    <button type="button" onclick="toggleJaankarAiDrawer(true)" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 via-amber-500 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-orange-500/30 hover:scale-110 active:scale-95 transition-all cursor-pointer">
+      <i data-lucide="sparkles" class="w-7 h-7 text-white animate-spin-slow"></i>
+    </button>
+  </div>
+
+  <!-- AI Chat Drawer / Modal -->
+  <div id="drawer-jaankar-ai" class="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-sm hidden items-end sm:items-center justify-end sm:justify-end p-0 sm:p-6">
+    <div class="w-full sm:w-[420px] h-[85vh] sm:h-[620px] bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 sm:slide-in-from-right-5 duration-200">
+      
+      <!-- Drawer Header -->
+      <div class="p-4 bg-gradient-to-r from-orange-600 via-amber-600 to-indigo-700 text-white flex items-center justify-between shrink-0 shadow-md">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center backdrop-blur text-white font-black">
+            <i data-lucide="bot" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h3 class="font-extrabold text-sm tracking-tight">Aarav</h3>
+              <span class="px-1.5 py-0.2 rounded text-[9.5px] font-black bg-white/25">JAANKAR AI</span>
+            </div>
+            <p class="text-[11px] text-white/80 font-medium">Expert Tech, Buying & PC Advisor</p>
+          </div>
+        </div>
+        <button type="button" onclick="toggleJaankarAiDrawer(false)" class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Quick Chips Bar -->
+      <div class="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 text-[11px]">
+        <button type="button" onclick="sendAiQuickPrompt('Best gaming laptop under ₹75,000 in India?')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 font-semibold text-slate-700 whitespace-nowrap transition cursor-pointer">💻 Gaming Laptop</button>
+        <button type="button" onclick="sendAiQuickPrompt('Best phone under ₹25,000 with 5G and OIS camera?')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 font-semibold text-slate-700 whitespace-nowrap transition cursor-pointer">📱 Best Phone ₹25k</button>
+        <button type="button" onclick="sendAiQuickPrompt('How to check if my CPU is compatible with motherboard?')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 font-semibold text-slate-700 whitespace-nowrap transition cursor-pointer">🖥️ PC Compatibility</button>
+        <button type="button" onclick="sendAiQuickPrompt('RTX 4060 vs RTX 4070 difference?')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 font-semibold text-slate-700 whitespace-nowrap transition cursor-pointer">⚡ RTX 4060 vs 4070</button>
+      </div>
+
+      <!-- Messages Scroll Area -->
+      <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[#F8FAFC]">
+        <!-- Welcome Message -->
+        <div class="flex items-start gap-2.5 max-w-[88%]">
+          <div class="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black shadow-sm">
+            AI
+          </div>
+          <div class="p-3 rounded-2xl rounded-tl-none bg-white border border-slate-200 shadow-sm text-xs text-slate-800 leading-relaxed space-y-1.5">
+            <p class="font-bold text-orange-600">Namaste! Main Aarav hoon 🙏</p>
+            <p>JAANKAR AI ka human-like expert assistant. Aap mujhse kisi bhi smartphone, laptop, PC builds ya tech gadgets ke baare mein sawaal pooch sakte hain!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <form onsubmit="handleSendAiMessage(event); return false;" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0">
+        <input type="text" id="ai-user-input" placeholder="Poochhein (e.g. Best phone under 20k)..." class="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-orange-500 font-medium">
+        <button type="submit" id="ai-send-btn" class="p-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white transition shadow-sm cursor-pointer">
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== APPLICATION LOGIC ==================== -->
   <!-- ==================== APPLICATION LOGIC (Inlined for 100% Guaranteed Zero-Failure Standalone Netlify / Web Hosting) ==================== -->
   <script id="jaankar-app-logic">
@@ -1623,12 +2101,23 @@ function listenToLiveFirestore() {
     }, (err) => {
       console.warn("Firestore update listener note:", err.message);
     });
+
+  // Listen to Website CMS Master Config from Admin Web
+  db.collection("system_settings").doc("website_config")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        const cfg = doc.data();
+        applyWebsiteCmsConfig(cfg);
+      }
+    }, (err) => {
+      console.warn("Website config listener note:", err.message);
+    });
 }
 
 // 5. Navigation & View Switching
 function switchTab(tabId) {
   currentTab = tabId;
-  const views = ["home", "news", "tools", "gadgets", "learning", "saved", "about"];
+  const views = ["home", "news", "tools", "gadgets", "pc-lab", "compare", "academy", "learning", "saved", "about"];
   views.forEach((v) => {
     const el = document.getElementById(`view-${v}`);
     if (el) {
@@ -1664,6 +2153,8 @@ function switchTab(tabId) {
 
   if (tabId === "saved") renderSavedItems();
   if (tabId === "news") renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
+  if (tabId === "pc-lab") runPcCompatibilityCheck();
+  if (tabId === "compare") renderComparisonMatrix();
 
   if (window.lucide && typeof lucide.createIcons === "function") {
     lucide.createIcons();
@@ -3007,6 +3498,556 @@ async function loginWithGoogle() {
   }
 }
 window.loginWithGoogle = loginWithGoogle;
+
+// ============================================================================
+// ==================== LIVE WEBSITE CMS & CONFIG SYNCHRONIZER =================
+// ============================================================================
+
+function applyWebsiteCmsConfig(cfg) {
+  if (!cfg) return;
+  console.log("Applying live Website CMS Config:", cfg);
+
+  // 1. Maintenance Mode Shield
+  const shield = document.getElementById("live-web-maintenance-shield");
+  const headline = document.getElementById("live-maintenance-headline");
+  const subtitle = document.getElementById("live-maintenance-subtitle");
+  const supportLink = document.getElementById("live-maintenance-support-link");
+  if (shield) {
+    if (cfg.maintenanceMode) {
+      shield.classList.remove("hidden");
+      shield.classList.add("flex");
+      if (headline && cfg.maintenanceMessage) headline.textContent = cfg.maintenanceMessage;
+      if (subtitle) subtitle.textContent = "We are currently running scheduled optimizations on JAANKAR Web. We will be back online shortly!";
+      if (supportLink && cfg.social && cfg.social.telegram) supportLink.href = cfg.social.telegram;
+    } else {
+      shield.classList.add("hidden");
+      shield.classList.remove("flex");
+    }
+  }
+
+  // 2. Top Announcement Bar
+  const annBar = document.getElementById("live-web-announcement-bar");
+  const isDismissed = sessionStorage.getItem("jaankar_announcement_dismissed") === "true";
+  if (annBar) {
+    if (cfg.announcement && cfg.announcement.enabled && !isDismissed) {
+      annBar.classList.remove("hidden");
+      const tagEl = document.getElementById("live-announcement-tag");
+      const textEl = document.getElementById("live-announcement-text");
+      const btnEl = document.getElementById("live-announcement-btn");
+      
+      if (textEl && cfg.announcement.text) textEl.textContent = cfg.announcement.text;
+      if (btnEl) {
+        if (cfg.announcement.btnText) btnEl.textContent = cfg.announcement.btnText;
+        if (cfg.announcement.url) btnEl.href = cfg.announcement.url;
+      }
+      
+      // Styling according to banner type
+      annBar.className = "transition-all duration-300 relative z-40 text-xs py-2 px-4 shadow-sm text-white " +
+        (cfg.announcement.type === "promo" ? "bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700" :
+         cfg.announcement.type === "alert" ? "bg-gradient-to-r from-rose-600 via-red-600 to-rose-700" :
+         cfg.announcement.type === "success" ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700" :
+         "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700");
+    } else {
+      annBar.classList.add("hidden");
+    }
+  }
+
+  // 3. Direct APK Download link
+  if (cfg.apkDownload && cfg.apkDownload.url) {
+    window.LATEST_APK_URL = cfg.apkDownload.url;
+    document.querySelectorAll("a[download]").forEach(a => {
+      a.href = cfg.apkDownload.url;
+    });
+  }
+
+  // 4. Feature Modules Visibility
+  if (cfg.modules) {
+    const toggleEl = (id, show) => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (show === false) el.classList.add("hidden");
+        else el.classList.remove("hidden");
+      }
+    };
+    toggleEl("desktop-tab-news", cfg.modules.news);
+    toggleEl("desktop-tab-tools", cfg.modules.tools);
+    toggleEl("desktop-tab-pc-lab", cfg.modules.pcBuilder);
+    toggleEl("desktop-tab-compare", cfg.modules.compare);
+    toggleEl("desktop-tab-gadgets", cfg.modules.gadgets);
+    toggleEl("desktop-tab-academy", cfg.modules.learning);
+    toggleEl("floating-ai-trigger", cfg.modules.aiAssistant);
+  }
+
+  // 5. SEO Title
+  if (cfg.seo && cfg.seo.title) {
+    document.title = cfg.seo.title;
+  }
+}
+window.applyWebsiteCmsConfig = applyWebsiteCmsConfig;
+
+function dismissLiveAnnouncement() {
+  const annBar = document.getElementById("live-web-announcement-bar");
+  if (annBar) annBar.classList.add("hidden");
+  sessionStorage.setItem("jaankar_announcement_dismissed", "true");
+}
+window.dismissLiveAnnouncement = dismissLiveAnnouncement;
+
+// ============================================================================
+// ==================== PC BUILD COMPATIBILITY ENGINE =========================
+// ============================================================================
+
+const PC_PARTS = {
+  cpu: {
+    "amd-7600x": { socket: "AM5", ram: "DDR5", tdp: 105, name: "AMD Ryzen 5 7600X" },
+    "amd-7800x3d": { socket: "AM5", ram: "DDR5", tdp: 120, name: "AMD Ryzen 7 7800X3D" },
+    "intel-14400f": { socket: "LGA1700", ram: ["DDR4", "DDR5"], tdp: 65, name: "Intel Core i5-14400F" },
+    "intel-14700k": { socket: "LGA1700", ram: ["DDR4", "DDR5"], tdp: 125, name: "Intel Core i7-14700K" }
+  },
+  mobo: {
+    "b650-ddr5": { socket: "AM5", ram: "DDR5", name: "ASUS TUF Gaming B650-Plus WiFi" },
+    "x670e-ddr5": { socket: "AM5", ram: "DDR5", name: "MSI MAG X670E TOMAHAWK WiFi" },
+    "b760-ddr5": { socket: "LGA1700", ram: "DDR5", name: "Gigabyte B760 Gaming X AX" },
+    "b760-ddr4": { socket: "LGA1700", ram: "DDR4", name: "MSI PRO B760M-P DDR4" }
+  },
+  ram: {
+    "ddr5-32": { type: "DDR5", name: "32GB DDR5 6000MHz" },
+    "ddr5-16": { type: "DDR5", name: "16GB DDR5 5200MHz" },
+    "ddr4-32": { type: "DDR4", name: "32GB DDR4 3600MHz" },
+    "ddr4-16": { type: "DDR4", name: "16GB DDR4 3200MHz" }
+  },
+  gpu: {
+    "rtx-4060": { tdp: 115, name: "NVIDIA GeForce RTX 4060 8GB" },
+    "rtx-4070-super": { tdp: 220, name: "NVIDIA GeForce RTX 4070 SUPER 12GB" },
+    "rtx-4080-super": { tdp: 320, name: "NVIDIA GeForce RTX 4080 SUPER 16GB" },
+    "rx-7800-xt": { tdp: 263, name: "AMD Radeon RX 7800 XT 16GB" }
+  },
+  psu: {
+    "psu-550": 550,
+    "psu-650": 650,
+    "psu-750": 750,
+    "psu-850": 850
+  }
+};
+
+function runPcCompatibilityCheck() {
+  const cpuKey = document.getElementById("pc-select-cpu")?.value || "amd-7800x3d";
+  const moboKey = document.getElementById("pc-select-mobo")?.value || "b650-ddr5";
+  const ramKey = document.getElementById("pc-select-ram")?.value || "ddr5-32";
+  const gpuKey = document.getElementById("pc-select-gpu")?.value || "rtx-4070-super";
+  const psuKey = document.getElementById("pc-select-psu")?.value || "psu-750";
+
+  const cpu = PC_PARTS.cpu[cpuKey];
+  const mobo = PC_PARTS.mobo[moboKey];
+  const ram = PC_PARTS.ram[ramKey];
+  const gpu = PC_PARTS.gpu[gpuKey];
+  const psuWatts = PC_PARTS.psu[psuKey] || 750;
+
+  // 1. Socket Check
+  const isSocketMatch = cpu.socket === mobo.socket;
+  const socketPill = document.getElementById("check-socket-pill");
+  const socketDesc = document.getElementById("check-socket-desc");
+  const socketIcon = document.getElementById("check-socket-icon");
+
+  if (socketPill && socketDesc) {
+    if (isSocketMatch) {
+      socketPill.className = "text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded";
+      socketPill.textContent = "MATCH";
+      socketDesc.textContent = `${cpu.socket} CPU matches ${mobo.socket} Motherboard Socket.`;
+      if (socketIcon) socketIcon.className = "w-4 h-4 text-emerald-600";
+    } else {
+      socketPill.className = "text-[10px] font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded";
+      socketPill.textContent = "MISMATCH";
+      socketDesc.textContent = `Error: ${cpu.name} requires ${cpu.socket}, but ${mobo.name} is ${mobo.socket}!`;
+      if (socketIcon) socketIcon.className = "w-4 h-4 text-rose-600";
+    }
+  }
+
+  // 2. RAM Check
+  const isRamMatch = mobo.ram === ram.type;
+  const ramPill = document.getElementById("check-ram-pill");
+  const ramDesc = document.getElementById("check-ram-desc");
+  const ramIcon = document.getElementById("check-ram-icon");
+
+  if (ramPill && ramDesc) {
+    if (isRamMatch) {
+      ramPill.className = "text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded";
+      ramPill.textContent = "MATCH";
+      ramDesc.textContent = `${ram.type} Memory correctly fits ${mobo.ram} slots.`;
+      if (ramIcon) ramIcon.className = "w-4 h-4 text-emerald-600";
+    } else {
+      ramPill.className = "text-[10px] font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded";
+      ramPill.textContent = "MISMATCH";
+      ramDesc.textContent = `Error: Motherboard requires ${mobo.ram}, but you selected ${ram.type}!`;
+      if (ramIcon) ramIcon.className = "w-4 h-4 text-rose-600";
+    }
+  }
+
+  // 3. Power Draw Calculation
+  const estimatedWatts = cpu.tdp + gpu.tdp + 100; // 100W buffer for mobo, SSD, fans
+  const powerPercent = Math.min(100, Math.round((estimatedWatts / psuWatts) * 100));
+  const wattageText = document.getElementById("pc-wattage-text");
+  const powerBar = document.getElementById("pc-power-bar");
+  const powerDesc = document.getElementById("check-power-desc");
+
+  if (wattageText) wattageText.textContent = `~${estimatedWatts}W / ${psuWatts}W (${powerPercent}%)`;
+  if (powerBar) {
+    powerBar.style.width = powerPercent + "%";
+    if (powerPercent > 85) powerBar.className = "bg-rose-500 h-full transition-all duration-300";
+    else if (powerPercent > 70) powerBar.className = "bg-amber-500 h-full transition-all duration-300";
+    else powerBar.className = "bg-emerald-500 h-full transition-all duration-300";
+  }
+  if (powerDesc) {
+    if (powerPercent > 85) powerDesc.textContent = `⚠️ Heavy Load: Recommended to upgrade to ${estimatedWatts + 250}W PSU for headroom.`;
+    else powerDesc.textContent = `Optimal PSU efficiency: ${100 - powerPercent}% headroom available.`;
+  }
+
+  // 4. Overall Badge Status
+  const statusBadge = document.getElementById("pc-overall-status-badge");
+  if (statusBadge) {
+    if (isSocketMatch && isRamMatch && powerPercent <= 85) {
+      statusBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1";
+      statusBadge.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i><span>100% Compatible</span>`;
+    } else {
+      statusBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-100 text-rose-800 flex items-center gap-1";
+      statusBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i><span>Incompatible Parts</span>`;
+    }
+  }
+
+  // Update selected badges
+  const cpuBadge = document.getElementById("selected-cpu-badge");
+  if (cpuBadge) cpuBadge.textContent = "Socket: " + cpu.socket;
+  const moboBadge = document.getElementById("selected-mobo-badge");
+  if (moboBadge) moboBadge.textContent = "Socket: " + mobo.socket + " (" + mobo.ram + ")";
+  const ramBadge = document.getElementById("selected-ram-badge");
+  if (ramBadge) ramBadge.textContent = "Standard: " + ram.type;
+  const gpuBadge = document.getElementById("selected-gpu-badge");
+  if (gpuBadge) gpuBadge.textContent = "TDP: " + gpu.tdp + "W";
+  const psuBadge = document.getElementById("selected-psu-badge");
+  if (psuBadge) psuBadge.textContent = "Capacity: " + psuWatts + "W";
+
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
+  }
+}
+window.runPcCompatibilityCheck = runPcCompatibilityCheck;
+
+function resetPcBuild() {
+  document.getElementById("pc-select-cpu").value = "amd-7800x3d";
+  document.getElementById("pc-select-mobo").value = "b650-ddr5";
+  document.getElementById("pc-select-ram").value = "ddr5-32";
+  document.getElementById("pc-select-gpu").value = "rtx-4070-super";
+  document.getElementById("pc-select-psu").value = "psu-750";
+  runPcCompatibilityCheck();
+}
+window.resetPcBuild = resetPcBuild;
+
+function askAiAboutCurrentPcBuild() {
+  const cpu = document.getElementById("pc-select-cpu")?.selectedOptions[0]?.text || "";
+  const gpu = document.getElementById("pc-select-gpu")?.selectedOptions[0]?.text || "";
+  const query = `Is this PC build balanced for 1440p gaming? CPU: ${cpu}, GPU: ${gpu}`;
+  toggleJaankarAiDrawer(true);
+  sendAiQuickPrompt(query);
+}
+window.askAiAboutCurrentPcBuild = askAiAboutCurrentPcBuild;
+
+// ============================================================================
+// ==================== PRODUCT COMPARISON MATRIX =============================
+// ============================================================================
+
+const COMPARE_DEVICES = {
+  "oneplus-12": {
+    name: "OnePlus 12 5G",
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=80",
+    display: '6.82" 2K 120Hz ProXDR AMOLED (4500 nits)',
+    soc: "Qualcomm Snapdragon 8 Gen 3 (4nm)",
+    ram: "12GB / 16GB LPDDR5X",
+    camera: "50MP Sony LYT-808 + 64MP 3x Periscope + 48MP UW",
+    battery: "5400 mAh, 100W SUPERVOOC + 50W Wireless",
+    os: "OxygenOS 14 (Android 14)",
+    price: "₹64,999",
+    score: 93,
+    verdict: "Top choice for Battery Life, Display Brightness & Super-Fast Charging."
+  },
+  "samsung-s24": {
+    name: "Samsung Galaxy S24",
+    image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500&auto=format&fit=crop&q=80",
+    display: '6.2" FHD+ Dynamic AMOLED 2X 120Hz (2600 nits)',
+    soc: "Exynos 2400 / Snapdragon 8 Gen 3",
+    ram: "8GB LPDDR5X",
+    camera: "50MP OIS Dual Pixel + 10MP 3x Telephoto + 12MP UW",
+    battery: "4000 mAh, 25W Fast Charging",
+    os: "One UI 6.1 with Galaxy AI (7 Years OS Updates)",
+    price: "₹74,999",
+    score: 89,
+    verdict: "Best for Compact Form Factor, Galaxy AI features & 7 Years of Updates."
+  },
+  "iphone-15-pro": {
+    name: "Apple iPhone 15 Pro",
+    image: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=80",
+    display: '6.1" Super Retina XDR OLED, 120Hz ProMotion',
+    soc: "Apple A17 Pro (3nm)",
+    ram: "8GB Unified",
+    camera: "48MP Main + 12MP 3x Telephoto + 12MP UW + LiDAR",
+    battery: "3274 mAh, 20W Wired + 15W MagSafe",
+    os: "iOS 17 / iOS 18 (Apple Intelligence)",
+    price: "₹1,27,990",
+    score: 95,
+    verdict: "Industry Leader for Video Recording, Gaming Performance & Resale Value."
+  },
+  "iqoo-12": {
+    name: "iQOO 12 5G",
+    image: "https://images.unsplash.com/photo-1567581935884-3349723552ca?w=500&auto=format&fit=crop&q=80",
+    display: '6.78" 1.5K 144Hz LTPO AMOLED (3000 nits)',
+    soc: "Snapdragon 8 Gen 3 + Q1 Dedicated Gaming Chip",
+    ram: "12GB / 16GB LPDDR5X",
+    camera: "50MP 1/1.3\" + 64MP 3x Periscope + 50MP UW",
+    battery: "5000 mAh, 120W FlashCharge",
+    os: "Funtouch OS 14 (Android 14)",
+    price: "₹52,999",
+    score: 91,
+    verdict: "Best Value Flagship for Hardcore Mobile Gamers with 144Hz screen."
+  }
+};
+
+function renderComparisonMatrix() {
+  const container = document.getElementById("comparison-matrix-container");
+  if (!container) return;
+
+  const keyA = document.getElementById("compare-select-a")?.value || "oneplus-12";
+  const keyB = document.getElementById("compare-select-b")?.value || "samsung-s24";
+
+  const devA = COMPARE_DEVICES[keyA];
+  const devB = COMPARE_DEVICES[keyB];
+
+  container.innerHTML = `
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <th class="p-4 w-1/4 font-extrabold text-slate-700">Specification</th>
+            <th class="p-4 w-3/8 font-black text-slate-900 border-l border-slate-200">
+              <div class="flex items-center justify-between">
+                <span>${devA.name}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-cyan-100 text-cyan-800">Score: ${devA.score}/100</span>
+              </div>
+            </th>
+            <th class="p-4 w-3/8 font-black text-slate-900 border-l border-slate-200">
+              <div class="flex items-center justify-between">
+                <span>${devB.name}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-200 text-slate-800">Score: ${devB.score}/100</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Display</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.display}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.display}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Processor (SoC)</td>
+            <td class="p-3.5 border-l border-slate-100 font-semibold">${devA.soc}</td>
+            <td class="p-3.5 border-l border-slate-100 font-semibold">${devB.soc}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Cameras</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.camera}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.camera}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Battery & Charging</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.battery}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.battery}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Software & OS</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.os}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.os}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Price in India</td>
+            <td class="p-3.5 border-l border-slate-100 font-black text-orange-600 text-sm">${devA.price}</td>
+            <td class="p-3.5 border-l border-slate-100 font-black text-orange-600 text-sm">${devB.price}</td>
+          </tr>
+          <tr class="bg-cyan-50/40">
+            <td class="p-3.5 font-bold text-cyan-950">Verdict & Best For</td>
+            <td class="p-3.5 border-l border-slate-200 text-slate-800 font-semibold">${devA.verdict}</td>
+            <td class="p-3.5 border-l border-slate-200 text-slate-800 font-semibold">${devB.verdict}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+window.renderComparisonMatrix = renderComparisonMatrix;
+
+// ============================================================================
+// ==================== GADGETS CATEGORY FILTER ===============================
+// ============================================================================
+
+function filterGadgetsCategory(cat, btn) {
+  document.querySelectorAll(".gadget-cat-pill").forEach(p => {
+    p.className = "gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500";
+  });
+  if (btn) {
+    btn.className = "gadget-cat-pill px-3 py-1.5 rounded-xl bg-orange-600 text-white shadow-sm";
+  }
+
+  const container = document.getElementById("gadgets-grid-container");
+  if (!container) return;
+
+  const list = liveProductsList.length ? liveProductsList : fallbackGadgets;
+  const filtered = cat === "all" ? list : list.filter(p => {
+    const sub = (p.subcategory || p.category || "").toLowerCase();
+    if (cat === "mobiles") return sub.includes("phone") || sub.includes("mobile");
+    if (cat === "laptops") return sub.includes("laptop") || sub.includes("macbook");
+    if (cat === "audio") return sub.includes("audio") || sub.includes("ear") || sub.includes("head");
+    if (cat === "gaming") return sub.includes("game") || sub.includes("gpu");
+    if (cat === "ai-tools") return sub.includes("ai") || sub.includes("software");
+    return true;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 font-bold text-xs">No products in this category yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => `
+    <div class="jaankar-card overflow-hidden group hover:border-orange-300 transition-all">
+      <div class="h-44 bg-slate-100 relative overflow-hidden flex items-center justify-center p-3">
+        <img src="${item.imageUrl}" alt="${item.modelName || item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500'">
+        <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 text-slate-800 shadow-2xs">${item.brandName || "TECH"}</span>
+      </div>
+      <div class="p-3.5 space-y-2">
+        <h4 class="font-bold text-xs text-slate-800 line-clamp-1">${item.brandName ? item.brandName + " " : ""}${item.modelName || item.title}</h4>
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-black text-orange-600">₹${item.currentPrice || item.price || "Contact"}</span>
+          <a href="${item.affiliateUrl || '#'}" target="_blank" class="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-[11px] transition">Buy ➔</a>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+window.filterGadgetsCategory = filterGadgetsCategory;
+
+// ============================================================================
+// ==================== ACADEMY TOPIC VIEWER ==================================
+// ============================================================================
+
+function openAcademyTopic(topic) {
+  const topics = {
+    ebooks: "Free E-Books Library: 48 comprehensive PDF cheat sheets on Python, Linux terminal, PC Hardware, and Cyber Safety available in the JAANKAR Android app.",
+    exams: "Competitive Exams Portal: Current Affairs, General Knowledge questions, and previous year patterns for UPSC, SSC CGL, and Banking exams.",
+    india: "Bharat Atlas & Constitution: Complete breakdown of all 28 Indian States, 8 UTs, Fundamental Rights, and historical monuments.",
+    skills: "Coding & Tech Skills: Step-by-step career roadmaps for Web Development, Python automation, and Cloud infrastructure.",
+    space: "Science & Space Exploration: ISRO Chandrayaan-3, Aditya-L1 missions, NASA Artemis overview, and astronomy guides."
+  };
+  const msg = topics[topic] || "Topic module loading...";
+  alert(msg + "\n\nFor interactive study tests & offline reading, download JAANKAR Android App!");
+}
+window.openAcademyTopic = openAcademyTopic;
+
+// ============================================================================
+// ==================== FLOATING JAANKAR AI ASSISTANT (AARAV) =================
+// ============================================================================
+
+function toggleJaankarAiDrawer(open) {
+  const drawer = document.getElementById("drawer-jaankar-ai");
+  if (!drawer) return;
+  if (open) {
+    drawer.classList.remove("hidden");
+    drawer.classList.add("flex");
+    const input = document.getElementById("ai-user-input");
+    if (input) setTimeout(() => input.focus(), 200);
+  } else {
+    drawer.classList.add("hidden");
+    drawer.classList.remove("flex");
+  }
+}
+window.toggleJaankarAiDrawer = toggleJaankarAiDrawer;
+
+function sendAiQuickPrompt(prompt) {
+  const input = document.getElementById("ai-user-input");
+  if (input) {
+    input.value = prompt;
+    handleSendAiMessage();
+  }
+}
+window.sendAiQuickPrompt = sendAiQuickPrompt;
+
+function handleSendAiMessage(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById("ai-user-input");
+  const msgContainer = document.getElementById("ai-chat-messages");
+  if (!input || !msgContainer) return;
+
+  const userQuery = input.value.trim();
+  if (!userQuery) return;
+
+  // Append User Bubble
+  const userHtml = `
+    <div class="flex items-start justify-end gap-2.5 max-w-[88%] ml-auto">
+      <div class="p-3 rounded-2xl rounded-tr-none bg-orange-600 text-white text-xs font-medium shadow-sm leading-relaxed">
+        ${escapeHtml(userQuery)}
+      </div>
+    </div>
+  `;
+  msgContainer.insertAdjacentHTML("beforeend", userHtml);
+  input.value = "";
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  // Append Typing indicator
+  const typingId = "ai-typing-" + Date.now();
+  const typingHtml = `
+    <div id="${typingId}" class="flex items-start gap-2.5 max-w-[88%]">
+      <div class="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black">
+        AI
+      </div>
+      <div class="p-3 rounded-2xl rounded-tl-none bg-white border border-slate-200 text-xs text-slate-500 font-medium">
+        <span class="inline-block animate-pulse">Aarav is thinking...</span>
+      </div>
+    </div>
+  `;
+  msgContainer.insertAdjacentHTML("beforeend", typingHtml);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  // Generate response
+  setTimeout(() => {
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.remove();
+
+    const q = userQuery.toLowerCase();
+    let reply = "";
+
+    if (q.includes("phone") || q.includes("mobile") || q.includes("20000") || q.includes("25000")) {
+      reply = "📱 **Under ₹25,000 Top Recommendations:**\n\n1. **OnePlus Nord CE4 5G**: Best overall value with Snapdragon 7 Gen 3, Sony LYT-600 50MP OIS camera, aur 100W SuperVOOC charging.\n2. **iQOO Z9s Pro 5G**: Great for gaming with 120Hz curved AMOLED display, 5500 mAh battery & robust performance.\n3. **Realme 12+ 5G**: Premium vegan leather back & 50MP Sony sensor with reliable day-to-day speed.";
+    } else if (q.includes("laptop") || q.includes("75000") || q.includes("gaming")) {
+      reply = "💻 **Under ₹75,000 Gaming & Coding Laptops:**\n\n1. **Lenovo LOQ 15**: Intel Core i5 13450HX / Ryzen 7 + NVIDIA RTX 4050 (6GB GDDR6, 100% sRGB screen).\n2. **ASUS TUF Gaming A15**: AMD Ryzen 7 7735HS + RTX 4050 with 90Whr long-lasting battery.\n3. **Acer Nitro V 15**: Balanced thermal performance, 16GB DDR5 RAM, and 512GB Gen4 NVMe SSD.";
+    } else if (q.includes("pc") || q.includes("compatible") || q.includes("compatibility")) {
+      reply = "🖥️ **PC Compatibility Quick Rules:**\n\n1. **Socket Match**: AMD Ryzen 7000/9000 requires **Socket AM5**; Intel 13th/14th Gen requires **Socket LGA1700**.\n2. **RAM Standard**: AM5 only accepts **DDR5**; LGA1700 motherboards come in either DDR4 or DDR5 versions.\n3. **Power Headroom**: Total CPU + GPU wattage mein kam se kam +30% buffer add karein taaki power spikes par crash na ho.";
+    } else if (q.includes("rtx") || q.includes("4060") || q.includes("4070")) {
+      reply = "⚡ **NVIDIA RTX 4060 vs RTX 4070 Comparison:**\n\n* **RTX 4060 (8GB)**: King of 1080p Ultra gaming with low 115W power draw and DLSS 3.5 Frame Generation support.\n* **RTX 4070 / 4070 Super (12GB)**: Best for 1440p (2K) Ultra gaming with 50% more CUDA cores and +4GB extra VRAM for heavier texture packs.";
+    } else {
+      reply = `Namaste! Aapne poochha: "${escapeHtml(userQuery)}".\n\nJAANKAR AI ke anusar, kisi bhi tech product ko chunne se pehle Processor ki generation, RAM technology (DDR5 vs DDR4), aur thermal cooling design zaroor check karein. Aap PC Lab aur Compare tabs mein bhi iska direct visual comparison dekh sakte hain!`;
+    }
+
+    const aiBubbleHtml = `
+      <div class="flex items-start gap-2.5 max-w-[88%]">
+        <div class="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black shadow-sm">
+          AI
+        </div>
+        <div class="p-3.5 rounded-2xl rounded-tl-none bg-white border border-slate-200 shadow-sm text-xs text-slate-800 leading-relaxed space-y-1.5">
+          <p class="whitespace-pre-line">${reply}</p>
+        </div>
+      </div>
+    `;
+    msgContainer.insertAdjacentHTML("beforeend", aiBubbleHtml);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  }, 600);
+}
+window.handleSendAiMessage = handleSendAiMessage;
+
 
   </script>
 </body>

@@ -177,12 +177,23 @@ function listenToLiveFirestore() {
     }, (err) => {
       console.warn("Firestore update listener note:", err.message);
     });
+
+  // Listen to Website CMS Master Config from Admin Web
+  db.collection("system_settings").doc("website_config")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        const cfg = doc.data();
+        applyWebsiteCmsConfig(cfg);
+      }
+    }, (err) => {
+      console.warn("Website config listener note:", err.message);
+    });
 }
 
 // 5. Navigation & View Switching
 function switchTab(tabId) {
   currentTab = tabId;
-  const views = ["home", "news", "tools", "gadgets", "learning", "saved", "about"];
+  const views = ["home", "news", "tools", "gadgets", "pc-lab", "compare", "academy", "learning", "saved", "about"];
   views.forEach((v) => {
     const el = document.getElementById(`view-${v}`);
     if (el) {
@@ -218,6 +229,8 @@ function switchTab(tabId) {
 
   if (tabId === "saved") renderSavedItems();
   if (tabId === "news") renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
+  if (tabId === "pc-lab") runPcCompatibilityCheck();
+  if (tabId === "compare") renderComparisonMatrix();
 
   if (window.lucide && typeof lucide.createIcons === "function") {
     lucide.createIcons();
@@ -1561,3 +1574,553 @@ async function loginWithGoogle() {
   }
 }
 window.loginWithGoogle = loginWithGoogle;
+
+// ============================================================================
+// ==================== LIVE WEBSITE CMS & CONFIG SYNCHRONIZER =================
+// ============================================================================
+
+function applyWebsiteCmsConfig(cfg) {
+  if (!cfg) return;
+  console.log("Applying live Website CMS Config:", cfg);
+
+  // 1. Maintenance Mode Shield
+  const shield = document.getElementById("live-web-maintenance-shield");
+  const headline = document.getElementById("live-maintenance-headline");
+  const subtitle = document.getElementById("live-maintenance-subtitle");
+  const supportLink = document.getElementById("live-maintenance-support-link");
+  if (shield) {
+    if (cfg.maintenanceMode) {
+      shield.classList.remove("hidden");
+      shield.classList.add("flex");
+      if (headline && cfg.maintenanceMessage) headline.textContent = cfg.maintenanceMessage;
+      if (subtitle) subtitle.textContent = "We are currently running scheduled optimizations on JAANKAR Web. We will be back online shortly!";
+      if (supportLink && cfg.social && cfg.social.telegram) supportLink.href = cfg.social.telegram;
+    } else {
+      shield.classList.add("hidden");
+      shield.classList.remove("flex");
+    }
+  }
+
+  // 2. Top Announcement Bar
+  const annBar = document.getElementById("live-web-announcement-bar");
+  const isDismissed = sessionStorage.getItem("jaankar_announcement_dismissed") === "true";
+  if (annBar) {
+    if (cfg.announcement && cfg.announcement.enabled && !isDismissed) {
+      annBar.classList.remove("hidden");
+      const tagEl = document.getElementById("live-announcement-tag");
+      const textEl = document.getElementById("live-announcement-text");
+      const btnEl = document.getElementById("live-announcement-btn");
+      
+      if (textEl && cfg.announcement.text) textEl.textContent = cfg.announcement.text;
+      if (btnEl) {
+        if (cfg.announcement.btnText) btnEl.textContent = cfg.announcement.btnText;
+        if (cfg.announcement.url) btnEl.href = cfg.announcement.url;
+      }
+      
+      // Styling according to banner type
+      annBar.className = "transition-all duration-300 relative z-40 text-xs py-2 px-4 shadow-sm text-white " +
+        (cfg.announcement.type === "promo" ? "bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700" :
+         cfg.announcement.type === "alert" ? "bg-gradient-to-r from-rose-600 via-red-600 to-rose-700" :
+         cfg.announcement.type === "success" ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700" :
+         "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700");
+    } else {
+      annBar.classList.add("hidden");
+    }
+  }
+
+  // 3. Direct APK Download link
+  if (cfg.apkDownload && cfg.apkDownload.url) {
+    window.LATEST_APK_URL = cfg.apkDownload.url;
+    document.querySelectorAll("a[download]").forEach(a => {
+      a.href = cfg.apkDownload.url;
+    });
+  }
+
+  // 4. Feature Modules Visibility
+  if (cfg.modules) {
+    const toggleEl = (id, show) => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (show === false) el.classList.add("hidden");
+        else el.classList.remove("hidden");
+      }
+    };
+    toggleEl("desktop-tab-news", cfg.modules.news);
+    toggleEl("desktop-tab-tools", cfg.modules.tools);
+    toggleEl("desktop-tab-pc-lab", cfg.modules.pcBuilder);
+    toggleEl("desktop-tab-compare", cfg.modules.compare);
+    toggleEl("desktop-tab-gadgets", cfg.modules.gadgets);
+    toggleEl("desktop-tab-academy", cfg.modules.learning);
+    toggleEl("floating-ai-trigger", cfg.modules.aiAssistant);
+  }
+
+  // 5. SEO Title
+  if (cfg.seo && cfg.seo.title) {
+    document.title = cfg.seo.title;
+  }
+}
+window.applyWebsiteCmsConfig = applyWebsiteCmsConfig;
+
+function dismissLiveAnnouncement() {
+  const annBar = document.getElementById("live-web-announcement-bar");
+  if (annBar) annBar.classList.add("hidden");
+  sessionStorage.setItem("jaankar_announcement_dismissed", "true");
+}
+window.dismissLiveAnnouncement = dismissLiveAnnouncement;
+
+// ============================================================================
+// ==================== PC BUILD COMPATIBILITY ENGINE =========================
+// ============================================================================
+
+const PC_PARTS = {
+  cpu: {
+    "amd-7600x": { socket: "AM5", ram: "DDR5", tdp: 105, name: "AMD Ryzen 5 7600X" },
+    "amd-7800x3d": { socket: "AM5", ram: "DDR5", tdp: 120, name: "AMD Ryzen 7 7800X3D" },
+    "intel-14400f": { socket: "LGA1700", ram: ["DDR4", "DDR5"], tdp: 65, name: "Intel Core i5-14400F" },
+    "intel-14700k": { socket: "LGA1700", ram: ["DDR4", "DDR5"], tdp: 125, name: "Intel Core i7-14700K" }
+  },
+  mobo: {
+    "b650-ddr5": { socket: "AM5", ram: "DDR5", name: "ASUS TUF Gaming B650-Plus WiFi" },
+    "x670e-ddr5": { socket: "AM5", ram: "DDR5", name: "MSI MAG X670E TOMAHAWK WiFi" },
+    "b760-ddr5": { socket: "LGA1700", ram: "DDR5", name: "Gigabyte B760 Gaming X AX" },
+    "b760-ddr4": { socket: "LGA1700", ram: "DDR4", name: "MSI PRO B760M-P DDR4" }
+  },
+  ram: {
+    "ddr5-32": { type: "DDR5", name: "32GB DDR5 6000MHz" },
+    "ddr5-16": { type: "DDR5", name: "16GB DDR5 5200MHz" },
+    "ddr4-32": { type: "DDR4", name: "32GB DDR4 3600MHz" },
+    "ddr4-16": { type: "DDR4", name: "16GB DDR4 3200MHz" }
+  },
+  gpu: {
+    "rtx-4060": { tdp: 115, name: "NVIDIA GeForce RTX 4060 8GB" },
+    "rtx-4070-super": { tdp: 220, name: "NVIDIA GeForce RTX 4070 SUPER 12GB" },
+    "rtx-4080-super": { tdp: 320, name: "NVIDIA GeForce RTX 4080 SUPER 16GB" },
+    "rx-7800-xt": { tdp: 263, name: "AMD Radeon RX 7800 XT 16GB" }
+  },
+  psu: {
+    "psu-550": 550,
+    "psu-650": 650,
+    "psu-750": 750,
+    "psu-850": 850
+  }
+};
+
+function runPcCompatibilityCheck() {
+  const cpuKey = document.getElementById("pc-select-cpu")?.value || "amd-7800x3d";
+  const moboKey = document.getElementById("pc-select-mobo")?.value || "b650-ddr5";
+  const ramKey = document.getElementById("pc-select-ram")?.value || "ddr5-32";
+  const gpuKey = document.getElementById("pc-select-gpu")?.value || "rtx-4070-super";
+  const psuKey = document.getElementById("pc-select-psu")?.value || "psu-750";
+
+  const cpu = PC_PARTS.cpu[cpuKey];
+  const mobo = PC_PARTS.mobo[moboKey];
+  const ram = PC_PARTS.ram[ramKey];
+  const gpu = PC_PARTS.gpu[gpuKey];
+  const psuWatts = PC_PARTS.psu[psuKey] || 750;
+
+  // 1. Socket Check
+  const isSocketMatch = cpu.socket === mobo.socket;
+  const socketPill = document.getElementById("check-socket-pill");
+  const socketDesc = document.getElementById("check-socket-desc");
+  const socketIcon = document.getElementById("check-socket-icon");
+
+  if (socketPill && socketDesc) {
+    if (isSocketMatch) {
+      socketPill.className = "text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded";
+      socketPill.textContent = "MATCH";
+      socketDesc.textContent = `${cpu.socket} CPU matches ${mobo.socket} Motherboard Socket.`;
+      if (socketIcon) socketIcon.className = "w-4 h-4 text-emerald-600";
+    } else {
+      socketPill.className = "text-[10px] font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded";
+      socketPill.textContent = "MISMATCH";
+      socketDesc.textContent = `Error: ${cpu.name} requires ${cpu.socket}, but ${mobo.name} is ${mobo.socket}!`;
+      if (socketIcon) socketIcon.className = "w-4 h-4 text-rose-600";
+    }
+  }
+
+  // 2. RAM Check
+  const isRamMatch = mobo.ram === ram.type;
+  const ramPill = document.getElementById("check-ram-pill");
+  const ramDesc = document.getElementById("check-ram-desc");
+  const ramIcon = document.getElementById("check-ram-icon");
+
+  if (ramPill && ramDesc) {
+    if (isRamMatch) {
+      ramPill.className = "text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded";
+      ramPill.textContent = "MATCH";
+      ramDesc.textContent = `${ram.type} Memory correctly fits ${mobo.ram} slots.`;
+      if (ramIcon) ramIcon.className = "w-4 h-4 text-emerald-600";
+    } else {
+      ramPill.className = "text-[10px] font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded";
+      ramPill.textContent = "MISMATCH";
+      ramDesc.textContent = `Error: Motherboard requires ${mobo.ram}, but you selected ${ram.type}!`;
+      if (ramIcon) ramIcon.className = "w-4 h-4 text-rose-600";
+    }
+  }
+
+  // 3. Power Draw Calculation
+  const estimatedWatts = cpu.tdp + gpu.tdp + 100; // 100W buffer for mobo, SSD, fans
+  const powerPercent = Math.min(100, Math.round((estimatedWatts / psuWatts) * 100));
+  const wattageText = document.getElementById("pc-wattage-text");
+  const powerBar = document.getElementById("pc-power-bar");
+  const powerDesc = document.getElementById("check-power-desc");
+
+  if (wattageText) wattageText.textContent = `~${estimatedWatts}W / ${psuWatts}W (${powerPercent}%)`;
+  if (powerBar) {
+    powerBar.style.width = powerPercent + "%";
+    if (powerPercent > 85) powerBar.className = "bg-rose-500 h-full transition-all duration-300";
+    else if (powerPercent > 70) powerBar.className = "bg-amber-500 h-full transition-all duration-300";
+    else powerBar.className = "bg-emerald-500 h-full transition-all duration-300";
+  }
+  if (powerDesc) {
+    if (powerPercent > 85) powerDesc.textContent = `⚠️ Heavy Load: Recommended to upgrade to ${estimatedWatts + 250}W PSU for headroom.`;
+    else powerDesc.textContent = `Optimal PSU efficiency: ${100 - powerPercent}% headroom available.`;
+  }
+
+  // 4. Overall Badge Status
+  const statusBadge = document.getElementById("pc-overall-status-badge");
+  if (statusBadge) {
+    if (isSocketMatch && isRamMatch && powerPercent <= 85) {
+      statusBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1";
+      statusBadge.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i><span>100% Compatible</span>`;
+    } else {
+      statusBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-100 text-rose-800 flex items-center gap-1";
+      statusBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i><span>Incompatible Parts</span>`;
+    }
+  }
+
+  // Update selected badges
+  const cpuBadge = document.getElementById("selected-cpu-badge");
+  if (cpuBadge) cpuBadge.textContent = "Socket: " + cpu.socket;
+  const moboBadge = document.getElementById("selected-mobo-badge");
+  if (moboBadge) moboBadge.textContent = "Socket: " + mobo.socket + " (" + mobo.ram + ")";
+  const ramBadge = document.getElementById("selected-ram-badge");
+  if (ramBadge) ramBadge.textContent = "Standard: " + ram.type;
+  const gpuBadge = document.getElementById("selected-gpu-badge");
+  if (gpuBadge) gpuBadge.textContent = "TDP: " + gpu.tdp + "W";
+  const psuBadge = document.getElementById("selected-psu-badge");
+  if (psuBadge) psuBadge.textContent = "Capacity: " + psuWatts + "W";
+
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
+  }
+}
+window.runPcCompatibilityCheck = runPcCompatibilityCheck;
+
+function resetPcBuild() {
+  document.getElementById("pc-select-cpu").value = "amd-7800x3d";
+  document.getElementById("pc-select-mobo").value = "b650-ddr5";
+  document.getElementById("pc-select-ram").value = "ddr5-32";
+  document.getElementById("pc-select-gpu").value = "rtx-4070-super";
+  document.getElementById("pc-select-psu").value = "psu-750";
+  runPcCompatibilityCheck();
+}
+window.resetPcBuild = resetPcBuild;
+
+function askAiAboutCurrentPcBuild() {
+  const cpu = document.getElementById("pc-select-cpu")?.selectedOptions[0]?.text || "";
+  const gpu = document.getElementById("pc-select-gpu")?.selectedOptions[0]?.text || "";
+  const query = `Is this PC build balanced for 1440p gaming? CPU: ${cpu}, GPU: ${gpu}`;
+  toggleJaankarAiDrawer(true);
+  sendAiQuickPrompt(query);
+}
+window.askAiAboutCurrentPcBuild = askAiAboutCurrentPcBuild;
+
+// ============================================================================
+// ==================== PRODUCT COMPARISON MATRIX =============================
+// ============================================================================
+
+const COMPARE_DEVICES = {
+  "oneplus-12": {
+    name: "OnePlus 12 5G",
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=80",
+    display: '6.82" 2K 120Hz ProXDR AMOLED (4500 nits)',
+    soc: "Qualcomm Snapdragon 8 Gen 3 (4nm)",
+    ram: "12GB / 16GB LPDDR5X",
+    camera: "50MP Sony LYT-808 + 64MP 3x Periscope + 48MP UW",
+    battery: "5400 mAh, 100W SUPERVOOC + 50W Wireless",
+    os: "OxygenOS 14 (Android 14)",
+    price: "₹64,999",
+    score: 93,
+    verdict: "Top choice for Battery Life, Display Brightness & Super-Fast Charging."
+  },
+  "samsung-s24": {
+    name: "Samsung Galaxy S24",
+    image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500&auto=format&fit=crop&q=80",
+    display: '6.2" FHD+ Dynamic AMOLED 2X 120Hz (2600 nits)',
+    soc: "Exynos 2400 / Snapdragon 8 Gen 3",
+    ram: "8GB LPDDR5X",
+    camera: "50MP OIS Dual Pixel + 10MP 3x Telephoto + 12MP UW",
+    battery: "4000 mAh, 25W Fast Charging",
+    os: "One UI 6.1 with Galaxy AI (7 Years OS Updates)",
+    price: "₹74,999",
+    score: 89,
+    verdict: "Best for Compact Form Factor, Galaxy AI features & 7 Years of Updates."
+  },
+  "iphone-15-pro": {
+    name: "Apple iPhone 15 Pro",
+    image: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=80",
+    display: '6.1" Super Retina XDR OLED, 120Hz ProMotion',
+    soc: "Apple A17 Pro (3nm)",
+    ram: "8GB Unified",
+    camera: "48MP Main + 12MP 3x Telephoto + 12MP UW + LiDAR",
+    battery: "3274 mAh, 20W Wired + 15W MagSafe",
+    os: "iOS 17 / iOS 18 (Apple Intelligence)",
+    price: "₹1,27,990",
+    score: 95,
+    verdict: "Industry Leader for Video Recording, Gaming Performance & Resale Value."
+  },
+  "iqoo-12": {
+    name: "iQOO 12 5G",
+    image: "https://images.unsplash.com/photo-1567581935884-3349723552ca?w=500&auto=format&fit=crop&q=80",
+    display: '6.78" 1.5K 144Hz LTPO AMOLED (3000 nits)',
+    soc: "Snapdragon 8 Gen 3 + Q1 Dedicated Gaming Chip",
+    ram: "12GB / 16GB LPDDR5X",
+    camera: "50MP 1/1.3\" + 64MP 3x Periscope + 50MP UW",
+    battery: "5000 mAh, 120W FlashCharge",
+    os: "Funtouch OS 14 (Android 14)",
+    price: "₹52,999",
+    score: 91,
+    verdict: "Best Value Flagship for Hardcore Mobile Gamers with 144Hz screen."
+  }
+};
+
+function renderComparisonMatrix() {
+  const container = document.getElementById("comparison-matrix-container");
+  if (!container) return;
+
+  const keyA = document.getElementById("compare-select-a")?.value || "oneplus-12";
+  const keyB = document.getElementById("compare-select-b")?.value || "samsung-s24";
+
+  const devA = COMPARE_DEVICES[keyA];
+  const devB = COMPARE_DEVICES[keyB];
+
+  container.innerHTML = `
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <th class="p-4 w-1/4 font-extrabold text-slate-700">Specification</th>
+            <th class="p-4 w-3/8 font-black text-slate-900 border-l border-slate-200">
+              <div class="flex items-center justify-between">
+                <span>${devA.name}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-cyan-100 text-cyan-800">Score: ${devA.score}/100</span>
+              </div>
+            </th>
+            <th class="p-4 w-3/8 font-black text-slate-900 border-l border-slate-200">
+              <div class="flex items-center justify-between">
+                <span>${devB.name}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-200 text-slate-800">Score: ${devB.score}/100</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Display</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.display}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.display}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Processor (SoC)</td>
+            <td class="p-3.5 border-l border-slate-100 font-semibold">${devA.soc}</td>
+            <td class="p-3.5 border-l border-slate-100 font-semibold">${devB.soc}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Cameras</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.camera}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.camera}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Battery & Charging</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.battery}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.battery}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Software & OS</td>
+            <td class="p-3.5 border-l border-slate-100">${devA.os}</td>
+            <td class="p-3.5 border-l border-slate-100">${devB.os}</td>
+          </tr>
+          <tr>
+            <td class="p-3.5 font-bold text-slate-800 bg-slate-50/50">Price in India</td>
+            <td class="p-3.5 border-l border-slate-100 font-black text-orange-600 text-sm">${devA.price}</td>
+            <td class="p-3.5 border-l border-slate-100 font-black text-orange-600 text-sm">${devB.price}</td>
+          </tr>
+          <tr class="bg-cyan-50/40">
+            <td class="p-3.5 font-bold text-cyan-950">Verdict & Best For</td>
+            <td class="p-3.5 border-l border-slate-200 text-slate-800 font-semibold">${devA.verdict}</td>
+            <td class="p-3.5 border-l border-slate-200 text-slate-800 font-semibold">${devB.verdict}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+window.renderComparisonMatrix = renderComparisonMatrix;
+
+// ============================================================================
+// ==================== GADGETS CATEGORY FILTER ===============================
+// ============================================================================
+
+function filterGadgetsCategory(cat, btn) {
+  document.querySelectorAll(".gadget-cat-pill").forEach(p => {
+    p.className = "gadget-cat-pill px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-orange-500";
+  });
+  if (btn) {
+    btn.className = "gadget-cat-pill px-3 py-1.5 rounded-xl bg-orange-600 text-white shadow-sm";
+  }
+
+  const container = document.getElementById("gadgets-grid-container");
+  if (!container) return;
+
+  const list = liveProductsList.length ? liveProductsList : fallbackGadgets;
+  const filtered = cat === "all" ? list : list.filter(p => {
+    const sub = (p.subcategory || p.category || "").toLowerCase();
+    if (cat === "mobiles") return sub.includes("phone") || sub.includes("mobile");
+    if (cat === "laptops") return sub.includes("laptop") || sub.includes("macbook");
+    if (cat === "audio") return sub.includes("audio") || sub.includes("ear") || sub.includes("head");
+    if (cat === "gaming") return sub.includes("game") || sub.includes("gpu");
+    if (cat === "ai-tools") return sub.includes("ai") || sub.includes("software");
+    return true;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 font-bold text-xs">No products in this category yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => `
+    <div class="jaankar-card overflow-hidden group hover:border-orange-300 transition-all">
+      <div class="h-44 bg-slate-100 relative overflow-hidden flex items-center justify-center p-3">
+        <img src="${item.imageUrl}" alt="${item.modelName || item.title}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform" onerror="this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500'">
+        <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 text-slate-800 shadow-2xs">${item.brandName || "TECH"}</span>
+      </div>
+      <div class="p-3.5 space-y-2">
+        <h4 class="font-bold text-xs text-slate-800 line-clamp-1">${item.brandName ? item.brandName + " " : ""}${item.modelName || item.title}</h4>
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-black text-orange-600">₹${item.currentPrice || item.price || "Contact"}</span>
+          <a href="${item.affiliateUrl || '#'}" target="_blank" class="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-[11px] transition">Buy ➔</a>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+window.filterGadgetsCategory = filterGadgetsCategory;
+
+// ============================================================================
+// ==================== ACADEMY TOPIC VIEWER ==================================
+// ============================================================================
+
+function openAcademyTopic(topic) {
+  const topics = {
+    ebooks: "Free E-Books Library: 48 comprehensive PDF cheat sheets on Python, Linux terminal, PC Hardware, and Cyber Safety available in the JAANKAR Android app.",
+    exams: "Competitive Exams Portal: Current Affairs, General Knowledge questions, and previous year patterns for UPSC, SSC CGL, and Banking exams.",
+    india: "Bharat Atlas & Constitution: Complete breakdown of all 28 Indian States, 8 UTs, Fundamental Rights, and historical monuments.",
+    skills: "Coding & Tech Skills: Step-by-step career roadmaps for Web Development, Python automation, and Cloud infrastructure.",
+    space: "Science & Space Exploration: ISRO Chandrayaan-3, Aditya-L1 missions, NASA Artemis overview, and astronomy guides."
+  };
+  const msg = topics[topic] || "Topic module loading...";
+  alert(msg + "\n\nFor interactive study tests & offline reading, download JAANKAR Android App!");
+}
+window.openAcademyTopic = openAcademyTopic;
+
+// ============================================================================
+// ==================== FLOATING JAANKAR AI ASSISTANT (AARAV) =================
+// ============================================================================
+
+function toggleJaankarAiDrawer(open) {
+  const drawer = document.getElementById("drawer-jaankar-ai");
+  if (!drawer) return;
+  if (open) {
+    drawer.classList.remove("hidden");
+    drawer.classList.add("flex");
+    const input = document.getElementById("ai-user-input");
+    if (input) setTimeout(() => input.focus(), 200);
+  } else {
+    drawer.classList.add("hidden");
+    drawer.classList.remove("flex");
+  }
+}
+window.toggleJaankarAiDrawer = toggleJaankarAiDrawer;
+
+function sendAiQuickPrompt(prompt) {
+  const input = document.getElementById("ai-user-input");
+  if (input) {
+    input.value = prompt;
+    handleSendAiMessage();
+  }
+}
+window.sendAiQuickPrompt = sendAiQuickPrompt;
+
+function handleSendAiMessage(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById("ai-user-input");
+  const msgContainer = document.getElementById("ai-chat-messages");
+  if (!input || !msgContainer) return;
+
+  const userQuery = input.value.trim();
+  if (!userQuery) return;
+
+  // Append User Bubble
+  const userHtml = `
+    <div class="flex items-start justify-end gap-2.5 max-w-[88%] ml-auto">
+      <div class="p-3 rounded-2xl rounded-tr-none bg-orange-600 text-white text-xs font-medium shadow-sm leading-relaxed">
+        ${escapeHtml(userQuery)}
+      </div>
+    </div>
+  `;
+  msgContainer.insertAdjacentHTML("beforeend", userHtml);
+  input.value = "";
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  // Append Typing indicator
+  const typingId = "ai-typing-" + Date.now();
+  const typingHtml = `
+    <div id="${typingId}" class="flex items-start gap-2.5 max-w-[88%]">
+      <div class="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black">
+        AI
+      </div>
+      <div class="p-3 rounded-2xl rounded-tl-none bg-white border border-slate-200 text-xs text-slate-500 font-medium">
+        <span class="inline-block animate-pulse">Aarav is thinking...</span>
+      </div>
+    </div>
+  `;
+  msgContainer.insertAdjacentHTML("beforeend", typingHtml);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  // Generate response
+  setTimeout(() => {
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.remove();
+
+    const q = userQuery.toLowerCase();
+    let reply = "";
+
+    if (q.includes("phone") || q.includes("mobile") || q.includes("20000") || q.includes("25000")) {
+      reply = "📱 **Under ₹25,000 Top Recommendations:**\n\n1. **OnePlus Nord CE4 5G**: Best overall value with Snapdragon 7 Gen 3, Sony LYT-600 50MP OIS camera, aur 100W SuperVOOC charging.\n2. **iQOO Z9s Pro 5G**: Great for gaming with 120Hz curved AMOLED display, 5500 mAh battery & robust performance.\n3. **Realme 12+ 5G**: Premium vegan leather back & 50MP Sony sensor with reliable day-to-day speed.";
+    } else if (q.includes("laptop") || q.includes("75000") || q.includes("gaming")) {
+      reply = "💻 **Under ₹75,000 Gaming & Coding Laptops:**\n\n1. **Lenovo LOQ 15**: Intel Core i5 13450HX / Ryzen 7 + NVIDIA RTX 4050 (6GB GDDR6, 100% sRGB screen).\n2. **ASUS TUF Gaming A15**: AMD Ryzen 7 7735HS + RTX 4050 with 90Whr long-lasting battery.\n3. **Acer Nitro V 15**: Balanced thermal performance, 16GB DDR5 RAM, and 512GB Gen4 NVMe SSD.";
+    } else if (q.includes("pc") || q.includes("compatible") || q.includes("compatibility")) {
+      reply = "🖥️ **PC Compatibility Quick Rules:**\n\n1. **Socket Match**: AMD Ryzen 7000/9000 requires **Socket AM5**; Intel 13th/14th Gen requires **Socket LGA1700**.\n2. **RAM Standard**: AM5 only accepts **DDR5**; LGA1700 motherboards come in either DDR4 or DDR5 versions.\n3. **Power Headroom**: Total CPU + GPU wattage mein kam se kam +30% buffer add karein taaki power spikes par crash na ho.";
+    } else if (q.includes("rtx") || q.includes("4060") || q.includes("4070")) {
+      reply = "⚡ **NVIDIA RTX 4060 vs RTX 4070 Comparison:**\n\n* **RTX 4060 (8GB)**: King of 1080p Ultra gaming with low 115W power draw and DLSS 3.5 Frame Generation support.\n* **RTX 4070 / 4070 Super (12GB)**: Best for 1440p (2K) Ultra gaming with 50% more CUDA cores and +4GB extra VRAM for heavier texture packs.";
+    } else {
+      reply = `Namaste! Aapne poochha: "${escapeHtml(userQuery)}".\n\nJAANKAR AI ke anusar, kisi bhi tech product ko chunne se pehle Processor ki generation, RAM technology (DDR5 vs DDR4), aur thermal cooling design zaroor check karein. Aap PC Lab aur Compare tabs mein bhi iska direct visual comparison dekh sakte hain!`;
+    }
+
+    const aiBubbleHtml = `
+      <div class="flex items-start gap-2.5 max-w-[88%]">
+        <div class="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black shadow-sm">
+          AI
+        </div>
+        <div class="p-3.5 rounded-2xl rounded-tl-none bg-white border border-slate-200 shadow-sm text-xs text-slate-800 leading-relaxed space-y-1.5">
+          <p class="whitespace-pre-line">${reply}</p>
+        </div>
+      </div>
+    `;
+    msgContainer.insertAdjacentHTML("beforeend", aiBubbleHtml);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  }, 600);
+}
+window.handleSendAiMessage = handleSendAiMessage;
+

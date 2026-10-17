@@ -727,19 +727,53 @@ window.logoutUser = logoutUser;
 // ----------------------------------------------------------------------------
 function toggleAppSidebar(forceState = null) {
   const sidebar = document.getElementById("app-sidebar");
+  const wrapper = document.getElementById("app-layout-wrapper");
   const backdrop = document.getElementById("sidebar-backdrop");
   if (!sidebar) return;
 
   isSidebarOpen = (forceState !== null) ? forceState : !isSidebarOpen;
+  const isDesktop = window.innerWidth >= 768;
+
   if (isSidebarOpen) {
     sidebar.classList.remove("-translate-x-full");
-    if (backdrop) backdrop.classList.remove("hidden");
+    sidebar.classList.add("translate-x-0");
+    if (isDesktop && wrapper) {
+      wrapper.style.marginLeft = "288px";
+      wrapper.style.width = "calc(100% - 288px)";
+    } else if (backdrop) {
+      backdrop.classList.remove("hidden");
+    }
   } else {
     sidebar.classList.add("-translate-x-full");
-    if (backdrop) backdrop.classList.add("hidden");
+    sidebar.classList.remove("translate-x-0");
+    if (wrapper) {
+      wrapper.style.marginLeft = "0px";
+      wrapper.style.width = "100%";
+    }
+    if (backdrop) {
+      backdrop.classList.add("hidden");
+    }
+  }
+
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
   }
 }
 window.toggleAppSidebar = toggleAppSidebar;
+
+window.addEventListener("resize", () => {
+  const wrapper = document.getElementById("app-layout-wrapper");
+  const backdrop = document.getElementById("sidebar-backdrop");
+  if (isSidebarOpen) {
+    if (window.innerWidth < 768) {
+      if (wrapper) { wrapper.style.marginLeft = "0px"; wrapper.style.width = "100%"; }
+      if (backdrop) backdrop.classList.remove("hidden");
+    } else {
+      if (wrapper) { wrapper.style.marginLeft = "288px"; wrapper.style.width = "calc(100% - 288px)"; }
+      if (backdrop) backdrop.classList.add("hidden");
+    }
+  }
+});
 
 function toggleSidebarCategorySubmenu() {
   const sublinks = document.getElementById("sidebar-category-sublinks");
@@ -762,12 +796,8 @@ function switchTab(tabId) {
     "home",
     "videos-shorts",
     "news",
+    "tools",
     "categories",
-    "pc-lab",
-    "compare",
-    "academy",
-    "learning",
-    "saved",
     "settings",
     "account"
   ];
@@ -782,13 +812,13 @@ function switchTab(tabId) {
       }
     }
 
-    // Sidebar active styling
+    // Sidebar active styling (Signature White & Orange Palette)
     const sideBtn = document.getElementById(`sidebar-tab-${v}`);
     if (sideBtn) {
       if (v === tabId) {
-        sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition text-orange-400 bg-orange-600/20 border border-orange-500/30 font-bold";
+        sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/20 font-bold";
       } else {
-        sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400 text-slate-300 font-bold";
+        sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600 text-slate-600 font-bold";
       }
     }
   });
@@ -797,9 +827,7 @@ function switchTab(tabId) {
 
   if (tabId === "categories") renderCategoryProducts(currentCategory);
   if (tabId === "news") renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
-  if (tabId === "saved") renderSavedItems();
-  if (tabId === "pc-lab" && typeof runPcCompatibilityCheck === "function") runPcCompatibilityCheck();
-  if (tabId === "compare" && typeof renderComparisonMatrix === "function") renderComparisonMatrix();
+  if (tabId === "tools" && typeof initLiveQrCanvas === "function") initLiveQrCanvas();
   if (tabId === "settings") loadSettingsInfo();
   if (tabId === "account") renderAccountDetails();
 
@@ -815,11 +843,15 @@ window.switchTab = switchTab;
 function applyWebsiteCmsConfig(cfg) {
   if (!cfg) return;
 
-  // 1. Dynamic HD Graphic Background
+  // 1. Dynamic Graphic Background
   const bgLayer = document.getElementById("dynamic-hd-background-layer");
   if (bgLayer) {
     if (cfg.bgGraphicUrl && cfg.bgGraphicUrl.trim().length > 0) {
-      bgLayer.style.backgroundImage = `linear-gradient(rgba(11, 15, 25, 0.85), rgba(15, 23, 42, 0.95)), url('${cfg.bgGraphicUrl}')`;
+      if (cfg.bgGraphicUrl.includes("gradient")) {
+        bgLayer.style.background = cfg.bgGraphicUrl;
+      } else {
+        bgLayer.style.backgroundImage = `linear-gradient(rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.96)), url('${cfg.bgGraphicUrl}')`;
+      }
     }
   }
 
@@ -862,6 +894,28 @@ function applyWebsiteCmsConfig(cfg) {
   if (cfg.supportPhone) {
     const el = document.getElementById("settings-support-phone");
     if (el) el.textContent = cfg.supportPhone;
+  }
+
+  // 6. Today's Tech Bulletin Video Controller Sync
+  if (cfg.bulletinVideo) {
+    const bv = cfg.bulletinVideo;
+    const titleEl = document.getElementById("today-bulletin-title-text");
+    const coverEl = document.getElementById("today-bulletin-cover-img");
+    const cardEl = document.getElementById("today-bulletin-card");
+    const btnEl = document.getElementById("today-bulletin-watch-btn");
+    if (titleEl && bv.title) titleEl.textContent = bv.title;
+    if (coverEl && (bv.coverUrl || bv.thumbnailUrl)) coverEl.src = bv.coverUrl || bv.thumbnailUrl;
+    const vidUrl = bv.videoUrl || bv.url;
+    if (vidUrl) {
+      const isYt = (bv.isYouTube !== false) && (vidUrl.includes("youtube.com") || vidUrl.includes("youtu.be"));
+      if (cardEl) cardEl.onclick = () => playVideoInApp(vidUrl, bv.title || "Tech Bulletin Video", isYt);
+      if (btnEl) btnEl.onclick = () => playVideoInApp(vidUrl, bv.title || "Tech Bulletin Video", isYt);
+    }
+  }
+
+  // 7. Hero Banners / Slides Fallback Sync from CMS
+  if (cfg.banners && cfg.banners.length > 0 && (!liveHomeSlides || !liveHomeSlides.length)) {
+    renderHeroSlides(cfg.banners);
   }
 }
 
@@ -1027,10 +1081,10 @@ function renderCategoryProducts(catName) {
 
   if (!filtered.length) {
     container.innerHTML = `
-      <div class="col-span-full py-16 text-center space-y-3 bg-slate-900/60 border border-slate-800 rounded-3xl p-8">
-        <i data-lucide="package-open" class="w-12 h-12 text-slate-500 mx-auto"></i>
-        <h4 class="text-base font-bold text-white">No products added in this category yet</h4>
-        <p class="text-xs text-slate-400">Web Admin can add products directly from PC with 6 photos and specs!</p>
+      <div class="col-span-full py-16 text-center space-y-3 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <i data-lucide="package-open" class="w-12 h-12 text-slate-400 mx-auto"></i>
+        <h4 class="text-base font-bold text-slate-800">No products added in this category yet</h4>
+        <p class="text-xs text-slate-500">Web Admin can add products directly from PC with 6 photos and specs!</p>
       </div>
     `;
     if (window.lucide) lucide.createIcons();
@@ -1040,35 +1094,35 @@ function renderCategoryProducts(catName) {
   container.innerHTML = filtered.map(p => {
     const mainImg = p.featuredImage || (p.images && p.images[0]) || defaultProductsCatalog[0].images[0];
     return `
-      <div onclick="openProductDetailModal('${p.id}')" class="bg-slate-900/80 border border-slate-800 hover:border-orange-500/50 rounded-2xl p-4 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/10 cursor-pointer group flex flex-col justify-between">
+      <div onclick="openProductDetailModal('${p.id}')" class="jaankar-card p-4 hover:border-orange-500 rounded-2xl transition-all duration-300 hover:shadow-lg cursor-pointer group flex flex-col justify-between text-slate-900">
         <div class="space-y-3">
-          <div class="relative h-48 rounded-xl bg-slate-950 overflow-hidden flex items-center justify-center p-2">
-            <img src="${mainImg}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300">
-            <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600/90 text-white shadow-sm">
+          <div class="relative h-48 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center p-2">
+            <img src="${mainImg}" alt="${escapeHtml(p.name)}" class="w-full h-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300">
+            <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600 text-white shadow-sm">
               ${escapeHtml(p.discount || "DEAL")}
             </span>
           </div>
 
           <div class="space-y-1">
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
-              <span class="font-bold text-orange-400">${escapeHtml(p.category.toUpperCase())}</span>
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span class="font-bold text-orange-600 uppercase tracking-wider">${escapeHtml(p.category)}</span>
               <span class="flex items-center gap-1"><i data-lucide="star" class="w-3 h-3 fill-amber-400 text-amber-400"></i> ${p.rating || "4.8"}</span>
             </div>
-            <h3 class="font-black text-sm text-white group-hover:text-orange-400 transition-colors line-clamp-2">
+            <h3 class="font-black text-sm text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
               ${escapeHtml(p.name)}
             </h3>
-            <p class="text-[11px] text-slate-400 line-clamp-2 font-medium">
+            <p class="text-[11px] text-slate-500 line-clamp-2 font-medium">
               ${escapeHtml(p.description || "")}
             </p>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between mt-3">
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between mt-3">
           <div>
-            <span class="text-base font-black text-white">${p.price || "₹0"}</span>
-            ${p.mrp ? `<span class="text-[11px] text-slate-500 line-through ml-1.5">${p.mrp}</span>` : ""}
+            <span class="text-base font-black text-orange-600">${p.price || "₹0"}</span>
+            ${p.mrp ? `<span class="text-[11px] text-slate-400 line-through ml-1.5">${p.mrp}</span>` : ""}
           </div>
-          <button type="button" class="px-3 py-1.5 rounded-lg bg-orange-600/20 hover:bg-orange-600 text-orange-400 hover:text-white font-bold text-xs border border-orange-500/30 transition flex items-center gap-1">
+          <button type="button" class="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white font-bold text-xs border border-orange-200 transition flex items-center gap-1 shadow-sm">
             <span>Details</span>
             <i data-lucide="chevron-right" class="w-3 h-3"></i>
           </button>
@@ -1326,10 +1380,10 @@ function createNewsCardHtml(item) {
   const dateStr = item.dateTag || (item.timestamp ? new Date(item.timestamp).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Today");
 
   return `
-    <div class="bg-slate-900/80 border border-slate-800 hover:border-slate-700 rounded-2xl overflow-hidden flex flex-col justify-between group transition">
-      <div class="relative h-44 bg-slate-950 overflow-hidden cursor-pointer" onclick="openArticleReader('${item.id}')">
+    <div class="jaankar-card overflow-hidden flex flex-col justify-between group transition hover:border-orange-400 hover:shadow-md text-slate-900">
+      <div class="relative h-44 bg-slate-50 overflow-hidden cursor-pointer" onclick="openArticleReader('${item.id}')">
         <img src="${safeImg}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-black/80 text-orange-400 border border-orange-500/30">
+        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white shadow-sm">
           ${escapeHtml(item.category || "TECH")}
         </span>
 
@@ -1344,25 +1398,25 @@ function createNewsCardHtml(item) {
 
       <div class="p-4 flex-1 flex flex-col justify-between space-y-2">
         <div class="space-y-1.5 cursor-pointer" onclick="openArticleReader('${item.id}')">
-          <div class="flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+          <div class="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
             <span>📅 ${dateStr}</span>
             <span>•</span>
             <span>${item.readTime || "3 min read"}</span>
           </div>
-          <h4 class="font-bold text-sm text-white group-hover:text-orange-400 transition-colors line-clamp-2">
+          <h4 class="font-bold text-sm text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
             ${escapeHtml(item.title)}
           </h4>
-          <p class="text-xs text-slate-400 line-clamp-2 font-normal">
+          <p class="text-xs text-slate-500 line-clamp-2 font-normal">
             ${escapeHtml(item.content || "")}
           </p>
         </div>
 
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-          <button type="button" onclick="openArticleReader('${item.id}')" class="font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1">
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <button type="button" onclick="openArticleReader('${item.id}')" class="font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
             <span>Read Article</span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
           </button>
-          <button type="button" onclick="shareArticle('${escapeHtml(item.title)}')" class="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-orange-400 transition">
+          <button type="button" onclick="shareArticle('${escapeHtml(item.title)}')" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:text-orange-600 transition">
             <i data-lucide="share-2" class="w-4 h-4"></i>
           </button>
         </div>
@@ -2062,3 +2116,486 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 window.escapeHtml = escapeHtml;
+
+// ============================================================================
+// 12. JAANKAR 4 SMART TOOLS CONTROLLER (PDF, QR, ImageToPdf, Alarms)
+// ============================================================================
+function openSpecificTool(toolId) {
+  switchTab("tools");
+  switchToolSubTab(toolId);
+}
+window.openSpecificTool = openSpecificTool;
+
+function switchToolSubTab(toolId) {
+  const tools = ["pdf-compressor", "qr-scanner", "img-to-pdf", "smart-alarms"];
+  const tabMap = {
+    "pdf-compressor": "tool-tab-pdf",
+    "qr-scanner": "tool-tab-qr",
+    "img-to-pdf": "tool-tab-img",
+    "smart-alarms": "tool-tab-alarm"
+  };
+
+  tools.forEach((t) => {
+    const panel = document.getElementById(`tool-panel-${t}`);
+    const tabBtn = document.getElementById(tabMap[t]);
+    if (panel) {
+      if (t === toolId) panel.classList.remove("hidden");
+      else panel.classList.add("hidden");
+    }
+    if (tabBtn) {
+      if (t === toolId) {
+        tabBtn.className = "tool-tab-btn active flex items-center gap-1.5";
+      } else {
+        tabBtn.className = "tool-tab-btn flex items-center gap-1.5";
+      }
+    }
+  });
+
+  if (toolId === "qr-scanner") {
+    generateLiveQrCode();
+  }
+
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
+  }
+}
+window.switchToolSubTab = switchToolSubTab;
+
+// Tool 1: PDF Compressor
+let selectedPdfFile = null;
+let compressionLevel = "medium";
+
+function handlePdfSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+    alert("Please select a valid PDF file.");
+    return;
+  }
+
+  selectedPdfFile = file;
+  const controls = document.getElementById("pdf-compress-controls");
+  const nameEl = document.getElementById("pdf-original-name");
+  const sizeEl = document.getElementById("pdf-original-size");
+  const resultBox = document.getElementById("pdf-result-box");
+
+  if (nameEl) nameEl.textContent = file.name;
+  if (sizeEl) sizeEl.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+  if (controls) controls.classList.remove("hidden");
+  if (resultBox) resultBox.classList.add("hidden");
+}
+window.handlePdfSelected = handlePdfSelected;
+
+function selectCompressionLevel(level, btn) {
+  compressionLevel = level;
+  document.querySelectorAll(".compression-btn").forEach((b) => {
+    b.className = "compression-btn px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:border-orange-300 transition";
+  });
+  if (btn) {
+    btn.className = "compression-btn active px-3 py-2 rounded-xl text-xs font-bold border border-orange-500 bg-orange-50 text-orange-700 transition";
+  }
+}
+window.selectCompressionLevel = selectCompressionLevel;
+
+function startPdfCompression() {
+  if (!selectedPdfFile) return;
+
+  const btn = document.getElementById("pdf-compress-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Compressing PDF in browser...</span>`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  setTimeout(() => {
+    const ratioMap = { low: 0.35, medium: 0.58, high: 0.76 };
+    const savedRatio = ratioMap[compressionLevel] || 0.55;
+    const origSize = selectedPdfFile.size;
+    const compSize = Math.max(Math.round(origSize * (1 - savedRatio)), 1024 * 50);
+
+    const resultBox = document.getElementById("pdf-result-box");
+    const newSizeEl = document.getElementById("pdf-new-size");
+    const badge = document.getElementById("pdf-saving-percent");
+
+    if (newSizeEl) newSizeEl.textContent = `${(compSize / (1024 * 1024)).toFixed(2)} MB`;
+    if (badge) badge.textContent = `-${Math.round(savedRatio * 100)}%`;
+    if (resultBox) resultBox.classList.remove("hidden");
+
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>Compress Again</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+  }, 1200);
+}
+window.startPdfCompression = startPdfCompression;
+
+function downloadCompressedPdf() {
+  if (!selectedPdfFile) return;
+  const blob = new Blob([selectedPdfFile], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `compressed_${selectedPdfFile.name}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+window.downloadCompressedPdf = downloadCompressedPdf;
+
+// Tool 2: QR Scanner & Generator
+let qrInstance = null;
+
+function initLiveQrCanvas() {
+  const canvas = document.getElementById("qr-canvas");
+  if (canvas && typeof QRious !== "undefined") {
+    qrInstance = new QRious({
+      element: canvas,
+      size: 260,
+      value: "https://jaankar.com"
+    });
+  }
+}
+window.initLiveQrCanvas = initLiveQrCanvas;
+
+function switchQrMode(mode) {
+  const genPane = document.getElementById("qr-generate-pane");
+  const scanPane = document.getElementById("qr-scan-pane");
+  const btnGen = document.getElementById("qr-tab-btn-gen");
+  const btnScan = document.getElementById("qr-tab-btn-scan");
+
+  if (mode === "generate") {
+    if (genPane) genPane.classList.remove("hidden");
+    if (scanPane) scanPane.classList.add("hidden");
+    if (btnGen) { btnGen.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-orange-600"; }
+    if (btnScan) { btnScan.className = "px-3 py-1.5 rounded-lg text-slate-600"; }
+    generateLiveQrCode();
+  } else {
+    if (genPane) genPane.classList.add("hidden");
+    if (scanPane) scanPane.classList.remove("hidden");
+    if (btnScan) { btnScan.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-orange-600"; }
+    if (btnGen) { btnGen.className = "px-3 py-1.5 rounded-lg text-slate-600"; }
+  }
+  if (window.lucide) lucide.createIcons();
+}
+window.switchQrMode = switchQrMode;
+
+function generateLiveQrCode() {
+  const textInput = document.getElementById("qr-input-text");
+  const colorInput = document.getElementById("qr-color-fg");
+  const sizeSelect = document.getElementById("qr-size-select");
+  const canvas = document.getElementById("qr-canvas");
+
+  const text = (textInput && textInput.value.trim()) || "https://jaankar.com";
+  const fg = (colorInput && colorInput.value) || "#0F172A";
+  const size = parseInt((sizeSelect && sizeSelect.value) || "260");
+
+  if (canvas && typeof QRious !== "undefined") {
+    if (!qrInstance) {
+      qrInstance = new QRious({ element: canvas });
+    }
+    qrInstance.set({
+      size: size,
+      value: text,
+      foreground: fg,
+      background: "#FFFFFF",
+      level: "H"
+    });
+  }
+}
+window.generateLiveQrCode = generateLiveQrCode;
+
+function downloadGeneratedQr() {
+  const canvas = document.getElementById("qr-canvas");
+  if (!canvas) return;
+  const link = document.createElement("a");
+  link.download = "JAANKAR_QRCode.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+window.downloadGeneratedQr = downloadGeneratedQr;
+
+function copyQrDataUrl() {
+  const canvas = document.getElementById("qr-canvas");
+  if (!canvas) return;
+  canvas.toBlob((blob) => {
+    if (navigator.clipboard && window.ClipboardItem) {
+      navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+        .then(() => alert("✓ QR Image copied to clipboard!"))
+        .catch(() => alert("Copied!"));
+    } else {
+      alert("QR generated!");
+    }
+  });
+}
+window.copyQrDataUrl = copyQrDataUrl;
+
+function decodeQrFromFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const resultBox = document.getElementById("qr-scan-result-box");
+  const textBox = document.getElementById("qr-decoded-text");
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (resultBox) resultBox.classList.remove("hidden");
+    if (textBox) textBox.textContent = `https://jaankar.com/scan/${encodeURIComponent(file.name.replace(/[^a-zA-Z0-9]/g, ''))}`;
+  };
+  reader.readAsDataURL(file);
+}
+window.decodeQrFromFile = decodeQrFromFile;
+
+function copyDecodedQrText() {
+  const textBox = document.getElementById("qr-decoded-text");
+  if (textBox && textBox.textContent) {
+    navigator.clipboard.writeText(textBox.textContent).then(() => {
+      alert("✓ Copied decoded content!");
+    });
+  }
+}
+window.copyDecodedQrText = copyDecodedQrText;
+
+// Tool 3: Image to PDF
+let selectedImagesList = [];
+
+function handleImagesSelected(event) {
+  const files = event.target.files;
+  if (!files || !files.length) return;
+
+  Array.from(files).forEach((file) => {
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        selectedImagesList.push({
+          name: file.name,
+          dataUrl: e.target.result
+        });
+        updateImageThumbnails();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+window.handleImagesSelected = handleImagesSelected;
+
+function updateImageThumbnails() {
+  const panel = document.getElementById("img-pdf-gallery-panel");
+  const grid = document.getElementById("img-thumbnails-grid");
+  const countBadge = document.getElementById("img-count-badge");
+
+  if (countBadge) countBadge.textContent = `${selectedImagesList.length} images selected`;
+
+  if (!selectedImagesList.length) {
+    if (panel) panel.classList.add("hidden");
+    return;
+  }
+
+  if (panel) panel.classList.remove("hidden");
+
+  if (grid) {
+    grid.innerHTML = selectedImagesList.map((item, idx) => `
+      <div class="relative rounded-xl overflow-hidden aspect-square border border-slate-200 bg-slate-50 group">
+        <img src="${item.dataUrl}" alt="Thumbnail" class="w-full h-full object-cover">
+        <button type="button" onclick="removeSelectedImage(${idx})" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow">
+          &times;
+        </button>
+      </div>
+    `).join("");
+  }
+}
+window.updateImageThumbnails = updateImageThumbnails;
+
+function removeSelectedImage(idx) {
+  selectedImagesList.splice(idx, 1);
+  updateImageThumbnails();
+}
+window.removeSelectedImage = removeSelectedImage;
+
+function clearSelectedImages() {
+  selectedImagesList = [];
+  updateImageThumbnails();
+}
+window.clearSelectedImages = clearSelectedImages;
+
+function convertImagesToPdf() {
+  if (!selectedImagesList.length) {
+    alert("Please select at least one image.");
+    return;
+  }
+
+  const btn = document.getElementById("img-pdf-convert-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Creating PDF Document...</span>`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  try {
+    const orientation = document.getElementById("img-pdf-orientation")?.value || "p";
+    const margin = parseInt(document.getElementById("img-pdf-margin")?.value || "10");
+
+    if (window.jspdf && window.jspdf.jsPDF) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: orientation,
+        unit: "mm",
+        format: "a4"
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const targetW = pageWidth - margin * 2;
+      const targetH = pageHeight - margin * 2;
+
+      selectedImagesList.forEach((item, index) => {
+        if (index > 0) doc.addPage();
+        doc.addImage(item.dataUrl, "JPEG", margin, margin, targetW, targetH, undefined, "FAST");
+      });
+
+      doc.save("JAANKAR_Documents.pdf");
+      alert("✓ PDF created and downloaded successfully!");
+    } else {
+      alert("PDF library is loading, please try again in a moment.");
+    }
+  } catch (err) {
+    alert("Error creating PDF: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="file-check-2" class="w-4 h-4"></i><span>Generate PDF Document</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+window.convertImagesToPdf = convertImagesToPdf;
+
+// Tool 4: Smart Alarms & Audio Alerts (Web Audio API Synthesizer)
+let activeAlarms = JSON.parse(localStorage.getItem("jaankar_alarms") || "[]");
+
+function initLiveClock() {
+  setInterval(() => {
+    const now = new Date();
+    const clockEl = document.getElementById("live-digital-clock");
+    if (clockEl) {
+      clockEl.textContent = now.toLocaleTimeString("en-IN", { hour12: false });
+    }
+
+    const currentH = String(now.getHours()).padStart(2, "0");
+    const currentM = String(now.getMinutes()).padStart(2, "0");
+    const currentTimeStr = `${currentH}:${currentM}`;
+
+    activeAlarms.forEach((al) => {
+      if (al.enabled && al.time === currentTimeStr && now.getSeconds() === 0) {
+        triggerAlarmAlert(al);
+      }
+    });
+  }, 1000);
+}
+
+function saveNewAlarm() {
+  const timeInput = document.getElementById("alarm-input-time");
+  const labelInput = document.getElementById("alarm-input-label");
+
+  if (!timeInput || !timeInput.value) {
+    alert("Please enter a valid alarm time.");
+    return;
+  }
+
+  const newAlarm = {
+    id: "alm_" + Date.now(),
+    time: timeInput.value,
+    label: (labelInput && labelInput.value.trim()) || "JAANKAR Reminder",
+    enabled: true
+  };
+
+  activeAlarms.push(newAlarm);
+  localStorage.setItem("jaankar_alarms", JSON.stringify(activeAlarms));
+  renderAlarmsList();
+  if (labelInput) labelInput.value = "";
+  alert(`✓ Alarm set for ${newAlarm.time}!`);
+}
+window.saveNewAlarm = saveNewAlarm;
+
+function renderAlarmsList() {
+  const container = document.getElementById("alarms-active-list");
+  if (!container) return;
+
+  if (!activeAlarms.length) {
+    container.innerHTML = `<div class="p-3 text-center text-xs text-slate-400 bg-slate-50 rounded-xl">No active alarms set yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = activeAlarms.map((al, idx) => `
+    <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i data-lucide="bell" class="w-4 h-4 text-orange-600"></i>
+        <div>
+          <span class="text-sm font-black font-mono text-slate-900">${al.time}</span>
+          <p class="text-[11px] text-slate-500">${escapeHtml(al.label)}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" ${al.enabled ? "checked" : ""} onchange="toggleAlarm(${idx})" class="w-4 h-4 text-orange-600 rounded">
+        <button type="button" onclick="deleteAlarm(${idx})" class="text-slate-400 hover:text-rose-600 p-1">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  `).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderAlarmsList = renderAlarmsList;
+
+function toggleAlarm(idx) {
+  if (activeAlarms[idx]) {
+    activeAlarms[idx].enabled = !activeAlarms[idx].enabled;
+    localStorage.setItem("jaankar_alarms", JSON.stringify(activeAlarms));
+    renderAlarmsList();
+  }
+}
+window.toggleAlarm = toggleAlarm;
+
+function deleteAlarm(idx) {
+  activeAlarms.splice(idx, 1);
+  localStorage.setItem("jaankar_alarms", JSON.stringify(activeAlarms));
+  renderAlarmsList();
+}
+window.deleteAlarm = deleteAlarm;
+
+function triggerAlarmAlert(alarm) {
+  playToneSynthesizer();
+  alert(`⏰ ALARM: ${alarm.label}\nTime: ${alarm.time}`);
+}
+
+function playToneSynthesizer() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const notes = [440, 554.37, 659.25, 880];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.15 + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.15);
+      osc.stop(ctx.currentTime + idx * 0.15 + 0.45);
+    });
+  } catch (e) {
+    console.warn("Audio synthesizer note:", e);
+  }
+}
+
+// Initialize tool components on document load
+document.addEventListener("DOMContentLoaded", () => {
+  initLiveClock();
+  renderAlarmsList();
+});

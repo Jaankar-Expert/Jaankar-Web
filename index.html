@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>JAANKAR — Technology, Knowledge & Gadgets Portal</title>
-  <meta name="description" content="Official JAANKAR Web Hub. Explore gadget specs, PC build compatibility lab, today's tech news bulletins, 60s shorts, and Gemini AI voice assistant." />
+  <meta name="description" content="Official JAANKAR Web Hub. Explore gadget specs, PC build compatibility lab, today's tech news bulletins, 4 Smart Tools, 60s shorts, and Gemini AI voice assistant." />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF5722'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>" />
 
   <!-- Google Fonts: Plus Jakarta Sans & Inter -->
@@ -39,27 +39,51 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- QRious & jsPDF for 4 Smart Tools -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- Firebase Compatibility SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
-  <!-- Custom Core Styles -->
+  <!-- Signature White & Orange Palette Core Styles -->
   <style>
     :root {
       --primary-orange: #FF5722;
       --primary-orange-hover: #E64A19;
+      --primary-orange-light: #FFF3E0;
+      --secondary-orange: #FF6A00;
+      --accent-amber: #F59E0B;
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --border-subtle: #E2E8F0;
+      --border-focus: #FF5722;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
     }
 
     body {
-      background-color: #0b0f19;
-      color: #f1f5f9;
+      background-color: #F8FAFC;
+      color: #0F172A;
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
+    .jaankar-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 1.25rem;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+      transition: all 0.2s ease-in-out;
+    }
+    .jaankar-card:hover {
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+    }
+
     .btn-primary-orange {
-      background: linear-gradient(135deg, #FF5722 0%, #FF7043 100%);
+      background: linear-gradient(135deg, #FF5722 0%, #FF6A00 100%);
       color: #ffffff;
       font-weight: 700;
       border-radius: 0.875rem;
@@ -68,12 +92,48 @@
       align-items: center;
       gap: 0.5rem;
       transition: all 0.2s ease-in-out;
-      box-shadow: 0 4px 14px 0 rgba(255, 87, 34, 0.35);
+      box-shadow: 0 4px 14px 0 rgba(255, 87, 34, 0.25);
     }
     .btn-primary-orange:hover {
       background: linear-gradient(135deg, #E64A19 0%, #F4511E 100%);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px 0 rgba(255, 87, 34, 0.45);
+      box-shadow: 0 6px 20px 0 rgba(255, 87, 34, 0.35);
+    }
+
+    .btn-secondary-clean {
+      background: #FFFFFF;
+      color: #334155;
+      font-weight: 700;
+      border: 1px solid #E2E8F0;
+      border-radius: 0.875rem;
+      padding: 0.625rem 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease-in-out;
+    }
+    .btn-secondary-clean:hover {
+      background: #FFF3E0;
+      color: #E64A19;
+      border-color: #FFCCBC;
+    }
+
+    .tool-tab-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #64748B;
+      cursor: pointer;
+      background: #F1F5F9;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .tool-tab-btn.active {
+      background: #FFFFFF;
+      color: #FF5722;
+      border: 1px solid #FFCCBC;
+      box-shadow: 0 2px 8px rgba(255, 87, 34, 0.15);
     }
 
     /* Modal Backdrop Transitions */
@@ -81,8 +141,8 @@
       position: fixed;
       inset: 0;
       z-index: 99999;
-      background: rgba(11, 15, 25, 0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -95,42 +155,36 @@
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: #F1F5F9;
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
+      background: #CBD5E1;
       border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #FF5722;
     }
-
-    .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
   </style>
 </head>
-<body id="user-web-body" class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-orange-500 selection:text-white pb-20 md:pb-8 relative overflow-x-hidden">
+<body id="user-web-body" class="bg-[#F8FAFC] text-slate-800 min-h-screen flex flex-col font-sans selection:bg-orange-500 selection:text-white pb-20 md:pb-8 relative overflow-x-hidden">
 
-  <!-- ==================== DYNAMIC HD GRAPHIC BACKGROUND LAYER (WEB ADMIN CONTROLLABLE) ==================== -->
-  <div id="dynamic-hd-background-layer" class="fixed inset-0 -z-10 pointer-events-none transition-all duration-700 bg-cover bg-center bg-no-repeat" style="background-image: radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.18) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%), linear-gradient(180deg, #0b0f19 0%, #0f172a 100%);"></div>
+  <!-- ==================== DYNAMIC GRAPHIC BACKGROUND LAYER (LIGHT/SIGNATURE THEME) ==================== -->
+  <div id="dynamic-hd-background-layer" class="fixed inset-0 -z-10 pointer-events-none transition-all duration-700 bg-cover bg-center bg-no-repeat" style="background-image: radial-gradient(at 0% 0%, rgba(255, 87, 34, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%), linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);"></div>
 
-  <!-- ==================== MANDATORY LOGIN GATE ==================== -->
-  <div id="mandatory-auth-gate" class="fixed inset-0 z-[999999] bg-slate-950/95 backdrop-blur-2xl hidden flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto">
-    <div class="max-w-md w-full bg-slate-900/95 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-white space-y-5">
+  <!-- ==================== MANDATORY LOGIN GATE (WHITE & ORANGE) ==================== -->
+  <div id="mandatory-auth-gate" class="fixed inset-0 z-[999999] bg-slate-900/50 backdrop-blur-md hidden flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div class="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-slate-900 space-y-5">
       
       <!-- Brand Logo & Header -->
       <div class="text-center space-y-2">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-orange-500/30 border border-orange-400/30">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-orange-500/30">
           <i data-lucide="sparkles" class="w-8 h-8 text-white"></i>
         </div>
-        <h2 class="text-2xl font-black tracking-tight text-white">JAANKAR</h2>
-        <p class="text-xs text-slate-400 font-medium">Technology, Gadgets & Knowledge Portal</p>
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[11px] font-bold mt-1">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900">JAANKAR</h2>
+        <p class="text-xs text-slate-500 font-medium">Technology, Gadgets & Knowledge Portal</p>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-bold mt-1">
           <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-          <span>Official Secure Access Gate</span>
+          <span>Official Secure Login Gate</span>
         </div>
       </div>
 
@@ -138,86 +192,68 @@
       <div id="gate-auth-alert-box" class="hidden p-3 rounded-xl text-xs font-semibold flex items-center gap-2"></div>
 
       <!-- 1-Click Google Sign In -->
-      <button type="button" onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm shadow-md transition cursor-pointer">
-        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+      <button type="button" onclick="handleGoogleSignIn()" class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs border border-slate-300 shadow-sm transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
         </svg>
-        <span>Continue with Google (1-Click)</span>
+        <span>Continue with Google</span>
       </button>
 
-      <!-- Divider -->
-      <div class="relative flex items-center justify-center my-2">
-        <div class="border-t border-slate-700 w-full"></div>
-        <span class="bg-slate-900 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">या फिर Email OTP</span>
-        <div class="border-t border-slate-700 w-full"></div>
+      <div class="relative flex items-center justify-center">
+        <div class="border-t border-slate-200 w-full"></div>
+        <span class="bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 absolute">OR EMAIL OTP</span>
       </div>
 
-      <!-- Step 1: Email Form -->
-      <div id="gate-step-email" class="space-y-3">
+      <!-- Step 1: Request OTP -->
+      <form id="gate-email-form" onsubmit="handleSendGateOtp(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1.5">Email Address</label>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Enter Your Email Address</label>
           <div class="relative">
             <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="email" id="gate-email-input" placeholder="apka-email@gmail.com" class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-700 bg-slate-800/90 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition font-medium" />
+            <input type="email" id="gate-input-email" required placeholder="name@example.com"
+                   class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 outline-none transition font-medium">
           </div>
         </div>
-        <button type="button" id="gate-send-otp-btn" onclick="requestEmailOtp(false, true)" class="w-full btn-primary-orange justify-center py-2.5 text-sm font-bold shadow-lg shadow-orange-600/30">
-          <i data-lucide="send" class="w-4 h-4"></i>
-          <span id="gate-send-btn-text">Send 6-Digit OTP</span>
+        <button type="submit" id="btn-gate-send-otp" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <span>Send Verification OTP</span>
         </button>
-      </div>
+      </form>
 
-      <!-- Step 2: OTP Form -->
-      <div id="gate-step-otp" class="hidden space-y-3">
+      <!-- Step 2: Verify OTP -->
+      <form id="gate-otp-form" onsubmit="handleVerifyGateOtp(event)" class="space-y-3 hidden">
         <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-bold text-slate-300">Enter Verification Code</label>
-            <button type="button" onclick="switchGateAuthStep('email')" class="text-[11px] font-bold text-orange-400 hover:underline">Change Email</button>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold text-slate-600">Enter 6-Digit OTP</label>
+            <button type="button" onclick="switchGateToEmail()" class="text-[10px] text-orange-600 hover:underline font-bold">Change Email</button>
           </div>
-          <input type="text" id="gate-otp-input" maxlength="6" placeholder="• • • • • •" class="w-full text-center tracking-[12px] text-2xl font-black py-2.5 rounded-xl border-2 border-orange-500 bg-orange-500/10 text-white focus:outline-none focus:ring-4 focus:ring-orange-500/20 transition font-mono" />
-          <p class="text-[11px] text-slate-400 mt-1.5 text-center">Code sent to: <span class="font-bold text-slate-200" id="gate-target-email-display"></span></p>
+          <div class="relative">
+            <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="gate-input-otp" required maxlength="6" placeholder="123456"
+                   class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 tracking-widest font-mono text-center outline-none transition font-bold">
+          </div>
         </div>
-        <button type="button" id="gate-verify-btn" onclick="verifyEmailOtp(true)" class="w-full btn-primary-orange justify-center py-2.5 text-sm font-bold shadow-lg shadow-orange-600/30">
-          <i data-lucide="check-circle" class="w-4 h-4"></i>
-          <span id="gate-verify-btn-text">Verify & Enter</span>
+        <button type="submit" id="btn-gate-verify-otp" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+          <span>Verify & Enter JAANKAR</span>
         </button>
-        <div class="text-center pt-1">
-          <button type="button" onclick="requestEmailOtp(true, true)" class="text-xs font-bold text-slate-400 hover:text-orange-400 transition">
-            Did not receive code? <span class="text-orange-400 underline">Resend OTP</span>
-          </button>
-        </div>
-      </div>
+      </form>
 
-      <div class="text-center pt-2 border-t border-slate-800">
-        <p class="text-[11px] text-slate-400">100% Free • Powered by JAANKAR Cloud</p>
-      </div>
+      <p class="text-[10px] text-slate-400 text-center font-medium">By logging in, you accept JAANKAR Privacy Terms & Community Policy.</p>
     </div>
   </div>
 
-  <!-- ==================== TOP ANNOUNCEMENT BAR (MANAGED VIA ADMIN CMS) ==================== -->
-  <div id="live-web-announcement-bar" class="hidden transition-all duration-300 relative z-40 text-xs py-2 px-4 shadow-sm bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white md:pl-72">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 text-center sm:text-left">
-      <div class="flex-1 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20">ALERT</span>
-        <span id="live-announcement-text" class="font-bold">⚡ JAANKAR 2.0 Web Portal is now live with PC Lab & Electronics Matrix!</span>
-      </div>
-      <button type="button" onclick="document.getElementById('live-web-announcement-bar').classList.add('hidden')" class="text-white/80 hover:text-white p-0.5 cursor-pointer">
-        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- ==================== MAINTENANCE MODE OVERLAY ==================== -->
-  <div id="live-web-maintenance-shield" class="fixed inset-0 z-[999999] bg-slate-950/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center text-white">
-    <div class="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-6 shadow-2xl animate-pulse">
+  <!-- ==================== EMERGENCY MAINTENANCE SHIELD ==================== -->
+  <div id="live-web-maintenance-shield" class="fixed inset-0 z-[99999] bg-white hidden flex-col items-center justify-center p-6 text-center">
+    <div class="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-6 shadow-md animate-pulse">
       <i data-lucide="wrench" class="w-10 h-10"></i>
     </div>
     <div class="max-w-md space-y-3">
-      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">System Upgrade in Progress</h1>
-      <p class="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed">
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">System Upgrade in Progress</h1>
+      <p class="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
         We are currently upgrading JAANKAR servers with new gadget benchmarks. We will be back online shortly!
       </p>
       <div class="pt-4">
@@ -226,116 +262,123 @@
     </div>
   </div>
 
-  <!-- ==================== STEADY FIXED 3-DOT SIDEBAR (DOES NOT SCROLL AWAY) ==================== -->
-  <aside id="app-sidebar" class="fixed top-0 bottom-0 left-0 z-50 w-72 bg-slate-900/95 text-slate-100 backdrop-blur-2xl border-r border-slate-800 shadow-2xl flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+  <!-- ==================== FIXED STEADY 3-DOT SIDEBAR (STARTS HIDDEN: -translate-x-full) ==================== -->
+  <aside id="app-sidebar" class="fixed top-0 bottom-0 left-0 z-50 w-72 bg-white text-slate-800 border-r border-slate-200 shadow-2xl flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
     
-    <!-- Sidebar Header -->
-    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+    <!-- Sidebar Header with Close Button -->
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/30">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/25">
           <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
         </div>
         <div>
-          <h2 class="text-base font-extrabold tracking-tight text-white leading-none">JAANKAR</h2>
-          <span class="text-[10px] text-orange-400 font-bold uppercase tracking-wider">Tech & Knowledge</span>
+          <h2 class="text-base font-extrabold tracking-tight text-slate-900 leading-none">JAANKAR</h2>
+          <span class="text-[10px] text-orange-600 font-bold uppercase tracking-wider">Tech & Knowledge</span>
         </div>
       </div>
-      <button type="button" onclick="toggleAppSidebar(false)" class="md:hidden w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+      <button type="button" onclick="toggleAppSidebar(false)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 flex items-center justify-center transition">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
     </div>
 
-    <!-- Navigation Menu (The 7 Exact Required Destinations) -->
-    <nav class="flex-1 overflow-y-auto p-4 space-y-1.5 text-xs font-bold text-slate-300">
+    <!-- Navigation Menu (8 Exact Options) -->
+    <nav class="flex-1 overflow-y-auto p-4 space-y-1 text-xs font-bold text-slate-600">
       
       <!-- 1. Home -->
-      <button type="button" onclick="switchTab('home'); toggleAppSidebar(false)" id="sidebar-tab-home" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition text-orange-400 bg-orange-600/20 border border-orange-500/30 font-bold">
-        <i data-lucide="home" class="w-4 h-4 text-orange-400"></i>
+      <button type="button" onclick="switchTab('home'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-home" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/20 font-bold">
+        <i data-lucide="home" class="w-4 h-4"></i>
         <span>Home</span>
       </button>
 
       <!-- 2. Videos & Shorts -->
-      <button type="button" onclick="switchTab('videos-shorts'); toggleAppSidebar(false)" id="sidebar-tab-videos-shorts" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400">
-        <i data-lucide="play-square" class="w-4 h-4 text-rose-400"></i>
+      <button type="button" onclick="switchTab('videos-shorts'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-videos-shorts" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+        <i data-lucide="play-square" class="w-4 h-4 text-rose-500"></i>
         <span>Videos & Shorts</span>
-        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-bold">Reels</span>
+        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-600 font-bold">Reels</span>
       </button>
 
       <!-- 3. News Desk (Positioned right below Videos & Shorts) -->
-      <button type="button" onclick="switchTab('news'); toggleAppSidebar(false)" id="sidebar-tab-news" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400">
-        <i data-lucide="newspaper" class="w-4 h-4 text-blue-400"></i>
+      <button type="button" onclick="switchTab('news'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-news" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+        <i data-lucide="newspaper" class="w-4 h-4 text-blue-500"></i>
         <span>News Desk</span>
       </button>
 
-      <!-- 4. Categories (With 6 Electronics Sub-Pages) -->
+      <!-- 4. Smart Tools (4 Productivity Tools requested by user) -->
+      <button type="button" onclick="switchTab('tools'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-tools" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+        <i data-lucide="wrench" class="w-4 h-4 text-amber-500"></i>
+        <span>Smart Tools</span>
+        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-700 font-bold">4 Tools</span>
+      </button>
+
+      <!-- 5. Categories (With 6 Electronics Sub-Pages) -->
       <div class="space-y-1 pt-1">
-        <button type="button" onclick="toggleSidebarCategorySubmenu()" class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400">
+        <button type="button" onclick="toggleSidebarCategorySubmenu()" class="w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
           <div class="flex items-center gap-3">
-            <i data-lucide="layout-grid" class="w-4 h-4 text-amber-400"></i>
+            <i data-lucide="layout-grid" class="w-4 h-4 text-emerald-500"></i>
             <span>Categories</span>
           </div>
           <i data-lucide="chevron-down" id="sidebar-cat-chevron" class="w-3.5 h-3.5 text-slate-400 transition-transform"></i>
         </button>
         <!-- 6 Electronics Sub-Pages -->
-        <div id="sidebar-category-sublinks" class="pl-7 space-y-1 text-[11px] font-semibold text-slate-400">
-          <a href="javascript:void(0)" onclick="openCategoryTab('computers'); toggleAppSidebar(false)" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-400 hover:bg-slate-800/60 transition">
-            <i data-lucide="monitor" class="w-3.5 h-3.5 text-cyan-400"></i>
+        <div id="sidebar-category-sublinks" class="pl-7 space-y-1 text-[11px] font-semibold text-slate-500">
+          <a href="javascript:void(0)" onclick="openCategoryTab('computers'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-600 hover:bg-orange-50 transition">
+            <i data-lucide="monitor" class="w-3.5 h-3.5 text-cyan-600"></i>
             <span>Computers</span>
           </a>
-          <a href="javascript:void(0)" onclick="openCategoryTab('laptops'); toggleAppSidebar(false)" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-400 hover:bg-slate-800/60 transition">
-            <i data-lucide="laptop" class="w-3.5 h-3.5 text-blue-400"></i>
+          <a href="javascript:void(0)" onclick="openCategoryTab('laptops'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-600 hover:bg-orange-50 transition">
+            <i data-lucide="laptop" class="w-3.5 h-3.5 text-blue-600"></i>
             <span>Laptops</span>
           </a>
-          <a href="javascript:void(0)" onclick="openCategoryTab('mobiles'); toggleAppSidebar(false)" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-400 hover:bg-slate-800/60 transition">
-            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <a href="javascript:void(0)" onclick="openCategoryTab('mobiles'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-600 hover:bg-orange-50 transition">
+            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-600"></i>
             <span>Mobiles</span>
           </a>
-          <a href="javascript:void(0)" onclick="openCategoryTab('tv'); toggleAppSidebar(false)" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-400 hover:bg-slate-800/60 transition">
-            <i data-lucide="tv" class="w-3.5 h-3.5 text-purple-400"></i>
+          <a href="javascript:void(0)" onclick="openCategoryTab('tv'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-600 hover:bg-orange-50 transition">
+            <i data-lucide="tv" class="w-3.5 h-3.5 text-purple-600"></i>
             <span>TV & Display</span>
           </a>
-          <a href="javascript:void(0)" onclick="openCategoryTab('cameras'); toggleAppSidebar(false)" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-400 hover:bg-slate-800/60 transition">
-            <i data-lucide="camera" class="w-3.5 h-3.5 text-amber-400"></i>
+          <a href="javascript:void(0)" onclick="openCategoryTab('cameras'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-600 hover:bg-orange-50 transition">
+            <i data-lucide="camera" class="w-3.5 h-3.5 text-amber-600"></i>
             <span>Cameras</span>
           </a>
-          <a href="javascript:void(0)" onclick="openCategoryTab('audio'); toggleAppSidebar(false)" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-400 hover:bg-slate-800/60 transition">
-            <i data-lucide="headphones" class="w-3.5 h-3.5 text-pink-400"></i>
+          <a href="javascript:void(0)" onclick="openCategoryTab('audio'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg hover:text-orange-600 hover:bg-orange-50 transition">
+            <i data-lucide="headphones" class="w-3.5 h-3.5 text-pink-600"></i>
             <span>Audio Products</span>
           </a>
         </div>
       </div>
 
-      <!-- 5. Jaankar AI -->
-      <button type="button" onclick="openJaankarAiDrawer(); toggleAppSidebar(false)" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400">
-        <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
+      <!-- 6. Jaankar AI -->
+      <button type="button" onclick="openJaankarAiDrawer(); if(window.innerWidth < 768) toggleAppSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+        <i data-lucide="sparkles" class="w-4 h-4 text-purple-600"></i>
         <span>Jaankar AI</span>
-        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300 font-bold">Voice</span>
+        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-700 font-bold">Voice</span>
       </button>
 
-      <!-- 6. Settings -->
-      <button type="button" onclick="switchTab('settings'); toggleAppSidebar(false)" id="sidebar-tab-settings" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400">
-        <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+      <!-- 7. Settings -->
+      <button type="button" onclick="switchTab('settings'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-settings" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+        <i data-lucide="settings" class="w-4 h-4 text-slate-500"></i>
         <span>Settings</span>
       </button>
 
-      <!-- 7. Account -->
-      <button type="button" onclick="switchTab('account'); toggleAppSidebar(false)" id="sidebar-tab-account" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-600/10 hover:text-orange-400">
-        <i data-lucide="user" class="w-4 h-4 text-emerald-400"></i>
+      <!-- 8. Account -->
+      <button type="button" onclick="switchTab('account'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-account" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+        <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
         <span>Account</span>
       </button>
 
     </nav>
 
     <!-- Sidebar Footer / Active User & Logout -->
-    <div class="p-4 border-t border-slate-800 space-y-2">
-      <div onclick="switchTab('account'); toggleAppSidebar(false)" class="flex items-center gap-3 p-2 rounded-xl bg-slate-800/60 border border-slate-700/50 cursor-pointer hover:border-orange-500/40 transition">
-        <img id="sidebar-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover border border-orange-500/40" />
+    <div class="p-4 border-t border-slate-100 space-y-2">
+      <div onclick="switchTab('account'); if(window.innerWidth < 768) toggleAppSidebar(false);" class="flex items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-orange-400 transition">
+        <img id="sidebar-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover border border-orange-400" />
         <div class="flex-1 min-w-0">
-          <p id="sidebar-user-name" class="text-xs font-bold text-white truncate">Expert Shiva</p>
-          <p id="sidebar-user-email" class="text-[10px] text-slate-400 truncate">expertshiba@gmail.com</p>
+          <p id="sidebar-user-name" class="text-xs font-bold text-slate-900 truncate">Expert Shiva</p>
+          <p id="sidebar-user-email" class="text-[10px] text-slate-500 truncate">expertshiba@gmail.com</p>
         </div>
       </div>
-      <button type="button" onclick="logoutUser()" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold transition cursor-pointer">
+      <button type="button" onclick="logoutUser()" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition cursor-pointer">
         <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
         <span>Logout</span>
       </button>
@@ -344,686 +387,905 @@
   </aside>
 
   <!-- Sidebar Backdrop for Mobile -->
-  <div id="sidebar-backdrop" onclick="toggleAppSidebar(false)" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm hidden md:hidden"></div>
+  <div id="sidebar-backdrop" onclick="toggleAppSidebar(false)" class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm hidden transition-opacity"></div>
 
-  <!-- ==================== MASTER TOP HEADER ==================== -->
-  <header class="glass-header sticky top-0 z-30 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl md:pl-72 transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-      
-      <!-- Left: 3-Dot Sidebar Toggle Button -->
-      <div class="flex items-center gap-3">
-        <button type="button" onclick="toggleAppSidebar()" class="w-10 h-10 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white flex items-center justify-center border border-slate-700 shadow-sm transition cursor-pointer" title="Open Sidebar">
-          <i data-lucide="more-vertical" class="w-5 h-5 text-orange-400"></i>
-        </button>
+  <!-- ==================== MASTER APP LAYOUT WRAPPER (SHIFTS RIGHT ON SIDEBAR OPEN) ==================== -->
+  <div id="app-layout-wrapper" class="min-h-screen flex flex-col transition-all duration-300 ease-in-out">
 
-        <!-- Brand Icon & Jaankar Search Name -->
-        <a href="javascript:void(0)" onclick="switchTab('home')" class="flex items-center gap-2.5 text-decoration-none group">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/25 group-hover:scale-105 transition-transform">
-            <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-lg font-black tracking-tight text-white">JAANKAR</span>
-              <span class="px-1.5 py-0.2 rounded-md text-[9px] font-black bg-orange-500/20 text-orange-400 border border-orange-500/30">SEARCH</span>
-            </div>
-          </div>
-        </a>
-      </div>
-
-      <!-- Right Header Actions (User Pill, Language Switcher) -->
-      <div class="flex items-center gap-2.5">
-        <!-- User Account Pill (Navigates to Account page) -->
-        <button type="button" onclick="switchTab('account')" class="px-3 py-1.5 rounded-xl border border-slate-700/80 bg-slate-800/90 hover:bg-slate-700/90 text-xs font-bold text-white flex items-center gap-2 shadow-sm transition cursor-pointer">
-          <div class="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center text-[10px] font-black" id="header-user-avatar-badge">S</div>
-          <span id="header-user-name" class="font-bold text-white">Expert Shiva</span>
-        </button>
-
-        <!-- Language Switcher (Hindi / English) -->
-        <button type="button" onclick="toggleLanguage()" id="lang-toggle-btn" class="px-2.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-800/90 hover:bg-slate-700/90 text-xs font-bold text-slate-200 flex items-center gap-1 shadow-sm transition cursor-pointer">
-          <i data-lucide="languages" class="w-3.5 h-3.5 text-orange-400"></i>
-          <span id="current-lang-text">हिन्दी</span>
-        </button>
-      </div>
-
-    </div>
-  </header>
-
-  <!-- ==================== MAIN CONTENT WRAPPER ==================== -->
-  <main id="app-main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 md:pl-[19rem]">
-
-    <!-- ==================== VIEW 1: HOME ==================== -->
-    <div id="view-home" class="space-y-6">
-
-      <!-- TOP WORKING JAANKAR SEARCH BAR -->
-      <div class="relative w-full max-w-3xl mx-auto">
-        <div class="relative flex items-center">
-          <i data-lucide="search" class="w-5 h-5 text-orange-400 absolute left-4"></i>
-          <input type="text" id="main-home-search" oninput="handleGlobalSearch(this.value)" placeholder="Search gadgets, specs, PC parts, news, reviews..." class="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 shadow-xl transition text-sm font-medium" />
-          <button type="button" onclick="openJaankarAiDrawer()" class="absolute right-3 px-2 py-1 rounded-lg bg-orange-600/20 text-orange-400 hover:bg-orange-600 hover:text-white text-[11px] font-black transition flex items-center gap-1">
-            <i data-lucide="sparkles" class="w-3 h-3"></i>
-            <span>AI</span>
-          </button>
-        </div>
-        <!-- Live Instant Search Dropdown -->
-        <div id="home-search-results-dropdown" class="absolute left-0 right-0 top-full mt-2 bg-slate-900/95 border border-slate-700 rounded-2xl shadow-2xl z-50 hidden max-h-80 overflow-y-auto"></div>
-      </div>
-
-      <!-- DYNAMIC HERO SLIDER (MANAGED VIA WEB ADMIN WITH PC IMAGE UPLOAD) -->
-      <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
-        <div id="hero-slider-track" class="flex transition-transform duration-500 ease-out">
-          <!-- Slide cards injected dynamically by JavaScript -->
-        </div>
-
-        <!-- Slider Arrows -->
-        <button type="button" onclick="prevSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm border border-white/10 transition z-20">
-          <i data-lucide="chevron-left" class="w-5 h-5"></i>
-        </button>
-        <button type="button" onclick="nextSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm border border-white/10 transition z-20">
-          <i data-lucide="chevron-right" class="w-5 h-5"></i>
-        </button>
-
-        <!-- Slider Dots -->
-        <div id="hero-slider-dots" class="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 z-20"></div>
-      </div>
-
-      <!-- 4 SQUARE ACTION HUB BUTTONS -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <!-- 1. Electronics -->
-        <div onclick="switchTab('categories')" class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-orange-500/50 shadow-lg hover:shadow-orange-500/10 transition cursor-pointer group flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-xl bg-orange-600/20 text-orange-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            <i data-lucide="cpu" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h4 class="font-black text-sm text-white group-hover:text-orange-400 transition-colors">Electronics</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">6 Product hubs & specs</p>
-          </div>
-        </div>
-
-        <!-- 2. Knowledge Campus -->
-        <div onclick="switchTab('academy')" class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-500/50 shadow-lg hover:shadow-emerald-500/10 transition cursor-pointer group flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            <i data-lucide="book-open" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h4 class="font-black text-sm text-white group-hover:text-emerald-400 transition-colors">Knowledge Campus</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">Tech tutorials & academy</p>
-          </div>
-        </div>
-
-        <!-- 3. PC Knowledge (PC Lab) -->
-        <div onclick="switchTab('pc-lab')" class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-cyan-500/50 shadow-lg hover:shadow-cyan-500/10 transition cursor-pointer group flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            <i data-lucide="monitor" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h4 class="font-black text-sm text-white group-hover:text-cyan-400 transition-colors">PC Knowledge</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">Socket & DDR5 simulator</p>
-          </div>
-        </div>
-
-        <!-- 4. News Desk -->
-        <div onclick="switchTab('news')" class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-blue-500/50 shadow-lg hover:shadow-blue-500/10 transition cursor-pointer group flex flex-col justify-between">
-          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            <i data-lucide="newspaper" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h4 class="font-black text-sm text-white group-hover:text-blue-400 transition-colors">News Desk</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">Live bulletins & calendar</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- TODAY'S BULLETINS VIDEO (IN-SITE MODAL PLAYER) -->
-      <div class="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></div>
-            <h3 class="font-black text-base text-white tracking-tight">Today's Tech Bulletins & Videos</h3>
-          </div>
-          <button type="button" onclick="switchTab('news')" class="text-xs font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1">
-            <span>View All</span>
-            <i data-lucide="chevron-right" class="w-4 h-4"></i>
-          </button>
-        </div>
-
-        <div id="home-news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Populated dynamically by JavaScript -->
-        </div>
-      </div>
-
-      <!-- QUICK TECH SHORTS & REELS RAIL -->
-      <div class="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-rose-600/20 text-rose-400 flex items-center justify-center">
-              <i data-lucide="play-square" class="w-4 h-4"></i>
-            </div>
-            <div>
-              <h3 class="font-black text-base text-white tracking-tight">Quick Tech Shorts & Top Reels</h3>
-              <p class="text-[11px] text-slate-400">60-second tech reviews & tips</p>
-            </div>
-          </div>
-          <button type="button" onclick="switchTab('videos-shorts')" class="text-xs font-bold text-rose-400 hover:text-rose-300">
-            Watch More Shorts →
-          </button>
-        </div>
-
-        <div id="home-reels-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <!-- Reels injected by JS -->
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ==================== VIEW 2: VIDEOS & SHORTS ==================== -->
-    <div id="view-videos-shorts" class="hidden space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-        <div>
-          <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <i data-lucide="play-square" class="w-6 h-6 text-rose-500"></i>
-            <span>Videos & Shorts Portal</span>
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">Watch tech reviews, smartphone unboxings, and quick shorts directly in-app.</p>
-        </div>
-      </div>
-
-      <!-- Shorts Grid -->
-      <div id="videos-shorts-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <!-- Re-uses reels & video cards -->
-      </div>
-    </div>
-
-    <!-- ==================== VIEW 3: NEWS DESK ==================== -->
-    <div id="view-news" class="hidden space-y-6">
-      
-      <!-- Breaking News Top Carousel -->
-      <div class="space-y-2">
-        <div class="flex items-center gap-2 text-xs font-bold text-orange-400">
-          <i data-lucide="zap" class="w-4 h-4"></i>
-          <span>Breaking News Headlines</span>
-        </div>
-        <div id="breaking-news-carousel" class="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <!-- News Desk Control Bar (Search, Date Calendar Picker, Share) -->
-      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <!-- MASTER TOP HEADER (WHITE & ORANGE GLASS) -->
+    <header id="app-header" class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-all duration-300">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         
-        <!-- Live News Search -->
-        <div class="relative flex-1">
-          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-          <input type="text" id="news-search-input" oninput="handleNewsSearch(this.value)" placeholder="Search news stories, leaks, launches..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-orange-500 font-medium" />
-        </div>
-
-        <!-- Date-Picker Calendar & Share Button -->
-        <div class="flex items-center gap-2 shrink-0">
-          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-300">
-            <i data-lucide="calendar" class="w-4 h-4 text-orange-400"></i>
-            <input type="date" id="news-calendar-filter" onchange="filterNewsByDate(this.value)" class="bg-transparent text-white text-xs focus:outline-none cursor-pointer" />
-          </div>
-          <button type="button" id="news-date-reset-btn" onclick="resetNewsDateFilter()" class="hidden px-2.5 py-1.5 rounded-xl bg-slate-800 text-orange-400 hover:text-white border border-slate-700 text-xs font-bold">
-            All
-          </button>
-          <button type="button" onclick="shareCurrentPage()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition">
-            <i data-lucide="share-2" class="w-3.5 h-3.5 text-orange-400"></i>
-            <span>Share</span>
-          </button>
-        </div>
-
-      </div>
-
-      <!-- Main News Grid -->
-      <div id="news-desk-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <!-- ==================== VIEW 4: CATEGORIES (6 ELECTRONICS PAGES) ==================== -->
-    <div id="view-categories" class="hidden space-y-6">
-      
-      <!-- 6 Category Navigation Pills -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <button type="button" id="cat-pill-computers" onclick="openCategoryTab('computers')" class="px-4 py-2 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-md transition shrink-0 flex items-center gap-1.5">
-          <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
-          <span>Computers</span>
-        </button>
-        <button type="button" id="cat-pill-laptops" onclick="openCategoryTab('laptops')" class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 font-bold text-xs transition shrink-0 flex items-center gap-1.5">
-          <i data-lucide="laptop" class="w-3.5 h-3.5"></i>
-          <span>Laptops</span>
-        </button>
-        <button type="button" id="cat-pill-mobiles" onclick="openCategoryTab('mobiles')" class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 font-bold text-xs transition shrink-0 flex items-center gap-1.5">
-          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-          <span>Mobiles</span>
-        </button>
-        <button type="button" id="cat-pill-tv" onclick="openCategoryTab('tv')" class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 font-bold text-xs transition shrink-0 flex items-center gap-1.5">
-          <i data-lucide="tv" class="w-3.5 h-3.5"></i>
-          <span>TV & Display</span>
-        </button>
-        <button type="button" id="cat-pill-cameras" onclick="openCategoryTab('cameras')" class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 font-bold text-xs transition shrink-0 flex items-center gap-1.5">
-          <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-          <span>Cameras</span>
-        </button>
-        <button type="button" id="cat-pill-audio" onclick="openCategoryTab('audio')" class="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 font-bold text-xs transition shrink-0 flex items-center gap-1.5">
-          <i data-lucide="headphones" class="w-3.5 h-3.5"></i>
-          <span>Audio Products</span>
-        </button>
-      </div>
-
-      <!-- Category Heading -->
-      <div class="pb-2 border-b border-slate-800">
-        <h2 id="category-page-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">Desktop Computers & Workstations</h2>
-        <p id="category-page-desc" class="text-xs text-slate-400 mt-0.5">Explore custom gaming rigs, workstations, and specs.</p>
-      </div>
-
-      <!-- Products Grid -->
-      <div id="category-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <!-- Injected dynamically by JS -->
-      </div>
-    </div>
-
-    <!-- ==================== VIEW 5: PC LAB ==================== -->
-    <div id="view-pc-lab" class="hidden space-y-6">
-      <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <!-- Left: 3-Dot Sidebar Toggle Button + Jaankar Search Brand -->
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center">
-            <i data-lucide="cpu" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <h2 class="text-xl font-black text-white">PC Build Compatibility Simulator</h2>
-            <p class="text-xs text-slate-400">Match CPU Socket, DDR5 RAM, and GPU Power Headroom</p>
-          </div>
-        </div>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Select components to verify compatibility before building. AM5 socket strictly requires DDR5 memory, while LGA1700 supports both DDR4 and DDR5 configurations.
-        </p>
-      </div>
-    </div>
-
-    <!-- ==================== VIEW 6: KNOWLEDGE ACADEMY ==================== -->
-    <div id="view-academy" class="hidden space-y-6">
-      <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
-            <i data-lucide="graduation-cap" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <h2 class="text-xl font-black text-white">Knowledge Campus</h2>
-            <p class="text-xs text-slate-400">Master Hardware Architecture, Cyber Security, and AI</p>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-            <h4 class="font-bold text-sm text-white">ARM vs x86 Silicon</h4>
-            <p class="text-xs text-slate-400">Understand power curves and why modern laptops run cooler with ARM architectures.</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-            <h4 class="font-bold text-sm text-white">NPU & On-Device AI</h4>
-            <p class="text-xs text-slate-400">How 45+ TOPS neural processing units run local LLMs on your smartphone without internet.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== VIEW 7: ACCOUNT PORTAL ==================== -->
-    <div id="view-account" class="hidden space-y-6">
-      
-      <!-- Top Profile Card -->
-      <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div class="flex flex-col sm:flex-row items-center gap-5 relative z-10 text-center sm:text-left">
-          
-          <!-- Avatar with Direct Local PC File Upload -->
-          <div class="relative group cursor-pointer" onclick="document.getElementById('user-avatar-file-input').click()">
-            <img id="account-avatar-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80" class="w-20 h-20 rounded-2xl object-cover border-2 border-orange-500 shadow-xl" />
-            <div class="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <i data-lucide="camera" class="w-6 h-6 text-white"></i>
-            </div>
-            <input type="file" id="user-avatar-file-input" onchange="handleUserAvatarUpload(event)" accept="image/*" class="hidden" />
-          </div>
-
-          <div class="space-y-1 flex-1">
-            <div class="flex items-center justify-center sm:justify-start gap-2">
-              <h2 id="account-display-name" class="text-xl font-black text-white">Expert Shiva</h2>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Verified</span>
-            </div>
-            <p id="account-display-email" class="text-xs text-slate-400">expertshiba@gmail.com</p>
-            <p class="text-[11px] text-slate-500">Member since 2026 • JAANKAR Cloud User</p>
-          </div>
-
-          <button type="button" onclick="openEditProfileModal()" class="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition shadow-lg shadow-orange-600/30 flex items-center gap-2">
-            <i data-lucide="edit-3" class="w-4 h-4"></i>
-            <span>Edit Profile</span>
+          <button type="button" onclick="toggleAppSidebar()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-orange-50 text-slate-700 hover:text-orange-600 border border-slate-200 flex items-center justify-center shadow-sm transition cursor-pointer" title="Toggle Sidebar">
+            <i data-lucide="more-vertical" class="w-5 h-5 text-orange-600"></i>
           </button>
-        </div>
-      </div>
 
-      <!-- 3 Account Sub-Tabs -->
-      <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
-        <button type="button" id="acc-subtab-learning" onclick="switchAccountSubTab('learning')" class="flex-1 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-md transition">
-          My Learning Progress
-        </button>
-        <button type="button" id="acc-subtab-saved" onclick="switchAccountSubTab('saved')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-400 font-bold text-xs hover:text-white transition">
-          Saved Items
-        </button>
-        <button type="button" id="acc-subtab-downloads" onclick="switchAccountSubTab('downloads')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-400 font-bold text-xs hover:text-white transition">
-          Download History
-        </button>
-      </div>
-
-      <!-- Sub-Tab 1: Learning Progress -->
-      <div id="acc-section-learning" class="space-y-3">
-        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between text-xs font-bold text-white">
-            <span>Hardware Architecture 101</span>
-            <span class="text-orange-400">75% Completed</span>
-          </div>
-          <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-            <div class="w-3/4 h-full bg-orange-500"></div>
-          </div>
-        </div>
-        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
-          <div class="flex items-center justify-between text-xs font-bold text-white">
-            <span>PC Building & Thermal Mechanics</span>
-            <span class="text-emerald-400">100% Completed</span>
-          </div>
-          <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-            <div class="w-full h-full bg-emerald-500"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sub-Tab 2: Saved Items -->
-      <div id="acc-section-saved" class="hidden space-y-3">
-        <div id="saved-items-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <!-- Sub-Tab 3: Download History -->
-      <div id="acc-section-downloads" class="hidden space-y-3">
-        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-orange-600/20 text-orange-400 flex items-center justify-center">
-              <i data-lucide="smartphone" class="w-5 h-5"></i>
+          <!-- Brand Icon & Jaankar Search Name -->
+          <a href="javascript:void(0)" onclick="switchTab('home')" class="flex items-center gap-2.5 text-decoration-none group">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/25">
+              <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
             </div>
-            <div>
-              <p class="text-xs font-bold text-white">JAANKAR Official Android App v1.1.0</p>
-              <p class="text-[10px] text-slate-400">Downloaded APK (~25MB)</p>
+            <div class="flex items-center gap-1.5">
+              <span class="text-lg font-black tracking-tight text-slate-900">JAANKAR</span>
+              <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">Search</span>
             </div>
-          </div>
-          <a href="${window.LATEST_APK_URL || 'https://github.com/Jaankar-Expert/Jaankar/releases/download/v1.1.0/app-release.apk'}" target="_blank" download class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-orange-400 transition">
-            Re-Download
           </a>
         </div>
-      </div>
 
-    </div>
-
-    <!-- ==================== VIEW 8: SETTINGS & 2-WAY LIVE HELP DESK ==================== -->
-    <div id="view-settings" class="hidden space-y-6">
-      
-      <!-- 1. Language Preferences -->
-      <div class="p-5 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-3">
-        <div class="flex items-center gap-2 text-sm font-bold text-white">
-          <i data-lucide="languages" class="w-4 h-4 text-orange-400"></i>
-          <span>Language Preferences</span>
-        </div>
-        <p class="text-xs text-slate-400">Select your preferred user interface language.</p>
-        <div class="flex items-center gap-3 pt-1">
-          <button type="button" onclick="if(currentLanguage !== 'hi') toggleLanguage()" class="px-4 py-2 rounded-xl bg-orange-600 text-white font-bold text-xs transition">
-            हिन्दी (Hindi)
+        <!-- Right Header Actions (User Pill, Language Switcher) -->
+        <div class="flex items-center gap-2.5">
+          <!-- User Account Pill (Navigates to Account page) -->
+          <button type="button" onclick="switchTab('account')" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50 text-xs font-bold text-slate-800 flex items-center gap-2 shadow-sm transition cursor-pointer">
+            <div class="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black" id="header-user-avatar-badge">S</div>
+            <span id="header-user-name" class="font-bold text-slate-800">Expert Shiva</span>
           </button>
-          <button type="button" onclick="if(currentLanguage !== 'en') toggleLanguage()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition">
-            English
+
+          <!-- Language Switcher (Hindi / English) -->
+          <button type="button" onclick="toggleLanguage()" id="lang-toggle-btn" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50 text-xs font-bold text-slate-700 flex items-center gap-1 shadow-sm transition cursor-pointer">
+            <i data-lucide="languages" class="w-3.5 h-3.5 text-orange-600"></i>
+            <span id="current-lang-text">हिन्दी</span>
           </button>
         </div>
-      </div>
 
-      <!-- 2. Help & Support Center (2-Way Live Chat with Audio Voice Notes) -->
-      <div class="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-          <div>
-            <h3 class="text-base font-black text-white flex items-center gap-2">
-              <i data-lucide="headphones" class="w-5 h-5 text-orange-400"></i>
-              <span>Help & Support Center</span>
+      </div>
+    </header>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main id="app-main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
+
+      <!-- ==================== VIEW 1: HOME ==================== -->
+      <div id="view-home" class="space-y-6">
+
+        <!-- TOP WORKING JAANKAR SEARCH BAR -->
+        <div class="relative w-full max-w-3xl mx-auto">
+          <div class="relative flex items-center">
+            <i data-lucide="search" class="w-5 h-5 text-orange-500 absolute left-4"></i>
+            <input type="text" id="global-search-input" oninput="handleGlobalSearch(this.value)" placeholder="Search gadgets, specs, PC parts, news, reviews..."
+                   class="w-full bg-white border-2 border-slate-200 hover:border-orange-400 focus:border-orange-500 rounded-2xl pl-12 pr-28 py-3.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-medium outline-none shadow-sm transition">
+            <button type="button" onclick="openJaankarAiDrawer()" class="absolute right-2 px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200 text-xs font-bold flex items-center gap-1 transition">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-600"></i>
+              <span>AI</span>
+            </button>
+          </div>
+          <!-- Live Real-Time Search Results Dropdown -->
+          <div id="search-results-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl p-3 shadow-xl z-50 max-h-96 overflow-y-auto space-y-2"></div>
+        </div>
+
+        <!-- DYNAMIC HERO SLIDER (AUTO-PLAY + ARROWS + PC UPLOAD FROM ADMIN) -->
+        <div class="relative w-full rounded-3xl overflow-hidden shadow-lg border border-slate-200 bg-slate-900 group">
+          <div id="hero-slider-track" class="relative w-full h-56 sm:h-72 md:h-80 overflow-hidden">
+            <!-- Dynamic slides rendered via renderHeroSlides() -->
+          </div>
+
+          <!-- Slider Arrows -->
+          <button type="button" onclick="prevSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-slate-800 flex items-center justify-center shadow-md transition z-20">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
+          <button type="button" onclick="nextSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-slate-800 flex items-center justify-center shadow-md transition z-20">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+
+          <!-- Slider Dots -->
+          <div id="hero-slider-dots" class="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 z-20"></div>
+        </div>
+
+        <!-- 4 SQUARE ACTION HUB BUTTONS -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <!-- 1. Electronics -->
+          <div onclick="switchTab('categories')" class="jaankar-card p-4 hover:border-orange-500 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="cpu" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Electronics</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Mobiles, Laptops & Gear</p>
+            </div>
+          </div>
+
+          <!-- 2. Knowledge Campus -->
+          <div onclick="switchTab('account')" class="jaankar-card p-4 hover:border-blue-500 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="book-open" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Knowledge Campus</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Tech tutorials & academy</p>
+            </div>
+          </div>
+
+          <!-- 3. PC Knowledge -->
+          <div onclick="openCategoryTab('computers')" class="jaankar-card p-4 hover:border-purple-500 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="monitor" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">PC Knowledge</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Socket & DDR5 simulator</p>
+            </div>
+          </div>
+
+          <!-- 4. News Desk -->
+          <div onclick="switchTab('news')" class="jaankar-card p-4 hover:border-emerald-500 shadow-sm hover:shadow-md transition cursor-pointer group flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="newspaper" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">News Desk</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Live bulletins & calendar</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== 4 SMART TOOLS QUICK LAUNCH HUB ==================== -->
+        <div class="jaankar-card p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-sm">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-black text-sm text-slate-900">JAANKAR 4 Smart Tools</h3>
+                <p class="text-[11px] text-slate-500">100% Client-Side, Fast & Secure in your Browser</p>
+              </div>
+            </div>
+            <button type="button" onclick="switchTab('tools')" class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer">
+              <span>Open All Tools</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <!-- Tool 1: PDF Compressor -->
+            <div onclick="openSpecificTool('pdf-compressor')" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-red-400 hover:bg-red-50/40 transition cursor-pointer group">
+              <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <i data-lucide="file-down" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs font-bold text-slate-900">PDF Compressor</p>
+              <p class="text-[10px] text-slate-500">Reduce MB size</p>
+            </div>
+
+            <!-- Tool 2: QR Scanner -->
+            <div onclick="openSpecificTool('qr-scanner')" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 transition cursor-pointer group">
+              <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <i data-lucide="qr-code" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs font-bold text-slate-900">QR Scanner & Maker</p>
+              <p class="text-[10px] text-slate-500">Scan & generate codes</p>
+            </div>
+
+            <!-- Tool 3: Image to PDF -->
+            <div onclick="openSpecificTool('img-to-pdf')" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 transition cursor-pointer group">
+              <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <i data-lucide="images" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs font-bold text-slate-900">Image to PDF</p>
+              <p class="text-[10px] text-slate-500">Combine photos</p>
+            </div>
+
+            <!-- Tool 4: Smart Alarms -->
+            <div onclick="openSpecificTool('smart-alarms')" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 transition cursor-pointer group">
+              <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <i data-lucide="alarm-clock" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs font-bold text-slate-900">Smart Alarms</p>
+              <p class="text-[10px] text-slate-500">Timers & reminders</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TODAY'S BULLETINS VIDEO (IN-SITE MODAL PLAYER) -->
+        <div class="jaankar-card p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                <i data-lucide="video" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-black text-sm text-slate-900">Today's Tech Bulletin Video</h3>
+                <p class="text-[11px] text-slate-500">Watch full in-depth review right on JAANKAR</p>
+              </div>
+            </div>
+            <button id="today-bulletin-watch-btn" type="button" onclick="playVideoInApp('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'JAANKAR Daily Tech Rundown', true)" class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer">
+              <span>Watch Now</span>
+              <i data-lucide="play" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div id="today-bulletin-card" class="relative w-full rounded-2xl overflow-hidden aspect-video bg-slate-900 shadow-md group cursor-pointer" onclick="playVideoInApp('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'JAANKAR Daily Tech Rundown', true)">
+            <img id="today-bulletin-cover-img" src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80" class="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500" alt="Video Cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-5">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-600 text-white mb-2 inline-block">TODAY'S SPECIAL</span>
+                <h4 id="today-bulletin-title-text" class="text-base sm:text-xl font-black text-white">Next-Gen Smartphone & Laptop Breakthroughs</h4>
+                <p class="text-xs text-slate-300 font-medium mt-1">Plays directly in website video player. Separate YouTube button available.</p>
+              </div>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-orange-600/90 hover:bg-orange-600 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                <i data-lucide="play" class="w-6 h-6 ml-0.5 text-white"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOP REELS & SHORTS RAIL -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+              <span>Top 60s Tech Shorts</span>
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Direct 2-way real-time communication with the JAANKAR Admin Desk.</p>
+            <button type="button" onclick="switchTab('videos-shorts')" class="text-xs font-bold text-orange-600 hover:text-orange-700">View All</button>
           </div>
-          <!-- Contact Badges (Dynamic from Web Admin) -->
-          <div class="flex items-center gap-3 text-xs">
-            <span class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center gap-1.5">
-              <i data-lucide="mail" class="w-3.5 h-3.5 text-orange-400"></i>
-              <span id="settings-support-email">expertshiba@gmail.com</span>
-            </span>
-            <span class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center gap-1.5">
-              <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-400"></i>
-              <span id="settings-support-phone">+91 98765 43210</span>
-            </span>
+          <div id="home-reels-rail" class="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+            <!-- Rendered dynamically -->
           </div>
         </div>
 
-        <!-- 2-Way Chat Stream Box -->
-        <div id="support-chat-stream" class="h-64 sm:h-72 overflow-y-auto p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-          <!-- Real-time chat bubbles populated by Firestore -->
+      </div>
+
+      <!-- ==================== VIEW 2: 4 SMART TOOLS (FULL VIEW) ==================== -->
+      <div id="view-tools" class="hidden space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <span>JAANKAR 4 Smart Tools</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">100% Client-Side</span>
+            </h2>
+            <p class="text-xs text-slate-500">Fast, private & reliable tools running directly in your browser without uploading to external servers.</p>
+          </div>
         </div>
 
-        <!-- Chat Input Bar (Text, Image Upload, Voice Note Recording) -->
-        <div class="flex items-center gap-2 pt-2">
-          <!-- Image Upload Button -->
-          <button type="button" onclick="document.getElementById('support-image-file').click()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center border border-slate-700 transition cursor-pointer" title="Attach Image">
-            <i data-lucide="image" class="w-4 h-4"></i>
+        <!-- Tool Selector Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button type="button" onclick="switchToolSubTab('pdf-compressor')" id="tool-tab-pdf" class="tool-tab-btn active flex items-center gap-1.5">
+            <i data-lucide="file-down" class="w-4 h-4 text-red-500"></i>
+            <span>PDF Compressor</span>
           </button>
-          <input type="file" id="support-image-file" onchange="handleSupportImageUpload(event)" accept="image/*" class="hidden" />
-
-          <!-- Audio Voice Note Record Button -->
-          <button type="button" id="support-voice-btn" onclick="toggleSupportVoiceRecording()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center border border-slate-700 transition cursor-pointer" title="Hold or Click to Record Voice Note">
-            <i data-lucide="mic" class="w-4 h-4"></i>
+          <button type="button" onclick="switchToolSubTab('qr-scanner')" id="tool-tab-qr" class="tool-tab-btn flex items-center gap-1.5">
+            <i data-lucide="qr-code" class="w-4 h-4 text-blue-500"></i>
+            <span>QR Scanner & Maker</span>
           </button>
-
-          <!-- Text Message Input -->
-          <input type="text" id="support-chat-input" placeholder="Type a message or issue to admin..." class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 text-white placeholder-slate-400 text-xs border border-slate-700 focus:outline-none focus:border-orange-500 font-medium" onkeydown="if(event.key === 'Enter') sendSupportTextMessage()" />
-
-          <!-- Send Button -->
-          <button type="button" onclick="sendSupportTextMessage()" class="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
-            <span>Send</span>
-            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <button type="button" onclick="switchToolSubTab('img-to-pdf')" id="tool-tab-img" class="tool-tab-btn flex items-center gap-1.5">
+            <i data-lucide="images" class="w-4 h-4 text-emerald-500"></i>
+            <span>Image to PDF</span>
           </button>
+          <button type="button" onclick="switchToolSubTab('smart-alarms')" id="tool-tab-alarm" class="tool-tab-btn flex items-center gap-1.5">
+            <i data-lucide="alarm-clock" class="w-4 h-4 text-amber-500"></i>
+            <span>Smart Alarms</span>
+          </button>
+        </div>
+
+        <!-- ================= TOOL 1: PDF COMPRESSOR ================= -->
+        <div id="tool-panel-pdf-compressor" class="jaankar-card p-5 sm:p-7 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+              <i data-lucide="file-down" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">PDF Compressor</h3>
+              <p class="text-xs text-slate-500">Compress your PDF documents while retaining readable clarity.</p>
+            </div>
+          </div>
+
+          <!-- File Upload Area -->
+          <div id="pdf-drop-zone" onclick="document.getElementById('pdf-file-input').click()" 
+               class="border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50 hover:bg-orange-50/50 rounded-2xl p-8 text-center transition cursor-pointer space-y-3">
+            <input type="file" id="pdf-file-input" accept=".pdf" class="hidden" onchange="handlePdfSelected(event)">
+            <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center">
+              <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-slate-800">Click to select PDF or drag & drop here</p>
+              <p class="text-xs text-slate-400">All compression happens safely inside your browser</p>
+            </div>
+          </div>
+
+          <!-- Compression Controls -->
+          <div id="pdf-compress-controls" class="hidden space-y-4 pt-3 border-t border-slate-200">
+            <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="flex items-center gap-2.5">
+                <i data-lucide="file-text" class="w-5 h-5 text-red-500"></i>
+                <div>
+                  <p id="pdf-original-name" class="text-xs font-bold text-slate-800 truncate max-w-xs">document.pdf</p>
+                  <p id="pdf-original-size" class="text-[11px] text-slate-400">0 MB</p>
+                </div>
+              </div>
+              <button type="button" onclick="document.getElementById('pdf-file-input').click()" class="text-xs font-bold text-orange-600 hover:underline">Change</button>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-2">Select Target Compression Quality</label>
+              <div class="grid grid-cols-3 gap-3">
+                <button type="button" onclick="selectCompressionLevel('low', this)" class="compression-btn px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:border-orange-300 transition">Light (90% Quality)</button>
+                <button type="button" onclick="selectCompressionLevel('medium', this)" class="compression-btn active px-3 py-2 rounded-xl text-xs font-bold border border-orange-500 bg-orange-50 text-orange-700 transition">Recommended (60% Size)</button>
+                <button type="button" onclick="selectCompressionLevel('high', this)" class="compression-btn px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:border-orange-300 transition">Extreme (Maximum)</button>
+              </div>
+            </div>
+
+            <button type="button" id="pdf-compress-btn" onclick="startPdfCompression()" class="btn-primary-orange w-full py-3 justify-center text-xs">
+              <i data-lucide="minimize-2" class="w-4 h-4"></i>
+              <span>Compress PDF Now</span>
+            </button>
+          </div>
+
+          <!-- Result Area -->
+          <div id="pdf-result-box" class="hidden p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-emerald-800 font-bold text-xs">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                <span>Compression Finished!</span>
+              </div>
+              <span id="pdf-saving-percent" class="text-xs font-black text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">-45%</span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-600">
+              <span>New File Size: <strong id="pdf-new-size" class="text-slate-900 font-bold">0 MB</strong></span>
+            </div>
+            <button type="button" id="pdf-download-btn" onclick="downloadCompressedPdf()" class="btn-primary-orange w-full py-2.5 justify-center text-xs">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Download Compressed PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= TOOL 2: QR CODE SCANNER & MAKER ================= -->
+        <div id="tool-panel-qr-scanner" class="hidden jaankar-card p-5 sm:p-7 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <i data-lucide="qr-code" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-base text-slate-900">QR Code Studio</h3>
+                <p class="text-xs text-slate-500">Generate high-res QR codes for URLs, WiFi, Text or scan QR images.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-bold">
+              <button type="button" onclick="switchQrMode('generate')" id="qr-tab-btn-gen" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-orange-600">Make QR</button>
+              <button type="button" onclick="switchQrMode('scan')" id="qr-tab-btn-scan" class="px-3 py-1.5 rounded-lg text-slate-600">Scan QR</button>
+            </div>
+          </div>
+
+          <!-- Mode A: Generate QR -->
+          <div id="qr-generate-pane" class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Enter URL, Text, UPI ID or WiFi</label>
+                <textarea id="qr-input-text" rows="3" placeholder="e.g. https://jaankar.com or UPI: user@upi or any message"
+                          oninput="generateLiveQrCode()"
+                          class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:border-orange-500 font-sans"></textarea>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">QR Foreground Color</label>
+                  <div class="flex items-center gap-2">
+                    <input type="color" id="qr-color-fg" value="#0F172A" onchange="generateLiveQrCode()" class="w-9 h-9 rounded-xl border-0 cursor-pointer">
+                    <span class="text-xs text-slate-500 font-mono">Dark</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">QR Size</label>
+                  <select id="qr-size-select" onchange="generateLiveQrCode()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold">
+                    <option value="200">Standard (200px)</option>
+                    <option value="300" selected>High Res (300px)</option>
+                    <option value="500">Ultra Print (500px)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex gap-2 pt-2">
+                <button type="button" onclick="downloadGeneratedQr()" class="btn-primary-orange flex-1 py-2.5 justify-center text-xs">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Download QR (PNG)</span>
+                </button>
+                <button type="button" onclick="copyQrDataUrl()" class="btn-secondary-clean py-2.5 text-xs">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-center justify-center p-6 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
+                <canvas id="qr-canvas"></canvas>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-3 font-medium">Scan with any phone camera to test</p>
+            </div>
+          </div>
+
+          <!-- Mode B: Scan QR -->
+          <div id="qr-scan-pane" class="hidden space-y-4">
+            <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-3">
+              <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center">
+                <i data-lucide="camera" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">Scan QR from Image File</p>
+                <p class="text-xs text-slate-500">Upload a screenshot or photo containing a QR code</p>
+              </div>
+              <input type="file" id="qr-image-input" accept="image/*" class="hidden" onchange="decodeQrFromFile(event)">
+              <button type="button" onclick="document.getElementById('qr-image-input').click()" class="btn-secondary-clean text-xs py-2 px-4 mx-auto">
+                <i data-lucide="image" class="w-4 h-4"></i>
+                <span>Select QR Image</span>
+              </button>
+            </div>
+
+            <div id="qr-scan-result-box" class="hidden p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-2">
+              <div class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                <i data-lucide="check" class="w-4 h-4 text-blue-600"></i>
+                <span>Decoded QR Content:</span>
+              </div>
+              <div id="qr-decoded-text" class="p-3 bg-white rounded-lg text-xs font-mono break-all text-slate-800 border border-blue-100"></div>
+              <button type="button" onclick="copyDecodedQrText()" class="btn-secondary-clean text-xs py-1.5 px-3">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copy Content</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= TOOL 3: IMAGE TO PDF ================= -->
+        <div id="tool-panel-img-to-pdf" class="hidden jaankar-card p-5 sm:p-7 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+              <i data-lucide="images" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Image to PDF Converter</h3>
+              <p class="text-xs text-slate-500">Combine photos, screenshots, or documents into a single PDF.</p>
+            </div>
+          </div>
+
+          <div onclick="document.getElementById('img-pdf-files').click()" 
+               class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 rounded-2xl p-7 text-center transition cursor-pointer space-y-2.5">
+            <input type="file" id="img-pdf-files" accept="image/*" multiple class="hidden" onchange="handleImagesSelected(event)">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
+              <i data-lucide="image-plus" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-slate-800">Choose Images (JPG, PNG)</p>
+              <p class="text-xs text-slate-400">Select multiple images to combine into one PDF</p>
+            </div>
+          </div>
+
+          <!-- Thumbnails Gallery & Conversion Options -->
+          <div id="img-pdf-gallery-panel" class="hidden space-y-4 pt-3 border-t border-slate-200">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+              <span id="img-count-badge">0 images selected</span>
+              <button type="button" onclick="clearSelectedImages()" class="text-rose-600 hover:underline">Clear all</button>
+            </div>
+
+            <!-- Preview Grid -->
+            <div id="img-thumbnails-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-3"></div>
+
+            <!-- Options -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Page Orientation</label>
+                <select id="img-pdf-orientation" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold">
+                  <option value="p">Portrait (Vertical)</option>
+                  <option value="l">Landscape (Horizontal)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Margin</label>
+                <select id="img-pdf-margin" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold">
+                  <option value="0">Zero Margin (Full Page)</option>
+                  <option value="10" selected>Small Margin (10mm)</option>
+                  <option value="20">Large Margin (20mm)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" id="img-pdf-convert-btn" onclick="convertImagesToPdf()" class="btn-primary-orange w-full py-3 justify-center text-xs">
+              <i data-lucide="file-check-2" class="w-4 h-4"></i>
+              <span>Generate PDF Document</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= TOOL 4: SMART ALARMS & TIMERS ================= -->
+        <div id="tool-panel-smart-alarms" class="hidden jaankar-card p-5 sm:p-7 space-y-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+              <i data-lucide="alarm-clock" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Smart Alarms & Sound Alerts</h3>
+              <p class="text-xs text-slate-500">Audio reminder clock synthesized using Web Audio API in your browser.</p>
+            </div>
+          </div>
+
+          <!-- Digital Clock Display -->
+          <div class="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white text-center shadow-lg">
+            <span class="text-xs font-bold uppercase tracking-widest text-orange-400">Current Standard Time</span>
+            <div id="live-digital-clock" class="text-4xl sm:text-5xl font-black font-mono tracking-tight my-2">00:00:00</div>
+            <p class="text-[11px] text-slate-400">Keep tab open for alerts to ring</p>
+          </div>
+
+          <!-- Add Alarm Form -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Set Time (HH:MM)</label>
+              <input type="time" id="alarm-input-time" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-bold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Reminder Label</label>
+              <input type="text" id="alarm-input-label" placeholder="e.g. Check Tech News" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium">
+            </div>
+            <div>
+              <button type="button" onclick="saveNewAlarm()" class="btn-primary-orange w-full py-2.5 justify-center text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Set Alarm</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Alarms List -->
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Scheduled Alarms</h4>
+            <div id="alarms-active-list" class="space-y-2"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== VIEW 3: VIDEOS & SHORTS ==================== -->
+      <div id="view-videos-shorts" class="hidden space-y-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Videos & Tech Shorts Hub</h2>
+            <p class="text-xs text-slate-500">In-depth video analyses, teardowns, and quick 60s tips</p>
+          </div>
+        </div>
+        <div id="videos-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </div>
+
+      <!-- ==================== VIEW 4: NEWS DESK HUB ==================== -->
+      <div id="view-news" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">JAANKAR News Desk</h2>
+            <p class="text-xs text-slate-500">Verified technology updates, industry leaks, and bulletin archives</p>
+          </div>
+          <!-- Calendar Date Picker Filter -->
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-sm text-xs text-slate-700">
+              <i data-lucide="calendar" class="w-4 h-4 text-orange-600"></i>
+              <input type="date" id="news-calendar-filter" onchange="filterNewsByDate(this.value)" class="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer">
+            </div>
+            <button type="button" id="news-date-reset-btn" onclick="resetNewsDateFilter()" class="hidden px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">Reset</button>
+          </div>
+        </div>
+        <div id="news-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </div>
+
+      <!-- ==================== VIEW 5: 6 ELECTRONICS CATEGORIES ==================== -->
+      <div id="view-categories" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
+          <div>
+            <h2 class="text-xl font-black text-slate-900" id="category-page-title">Electronics Catalog</h2>
+            <p class="text-xs text-slate-500">Explore specs, benchmarks, and compare verified buying links</p>
+          </div>
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <button onclick="openCategoryTab('computers')" id="cat-pill-computers" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">🖥️ Computers</button>
+            <button onclick="openCategoryTab('laptops')" id="cat-pill-laptops" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">💻 Laptops</button>
+            <button onclick="openCategoryTab('mobiles')" id="cat-pill-mobiles" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">📱 Mobiles</button>
+            <button onclick="openCategoryTab('tv')" id="cat-pill-tv" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">📺 TV & Display</button>
+            <button onclick="openCategoryTab('cameras')" id="cat-pill-cameras" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">📷 Cameras</button>
+            <button onclick="openCategoryTab('audio')" id="cat-pill-audio" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">🎧 Audio</button>
+          </div>
+        </div>
+        <div id="category-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </div>
+
+      <!-- ==================== VIEW 6: SETTINGS & 2-WAY LIVE SUPPORT ==================== -->
+      <div id="view-settings" class="hidden space-y-6">
+        <div class="pb-3 border-b border-slate-200">
+          <h2 class="text-xl font-black text-slate-900">Settings & Help Desk</h2>
+          <p class="text-xs text-slate-500">Configure language, audio talk, and direct 2-way real-time support</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- General Settings -->
+          <div class="jaankar-card p-5 space-y-5">
+            <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-orange-600"></i>
+              <span>Language & Experience</span>
+            </h3>
+            <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+              <div>
+                <p class="text-xs font-bold text-slate-800">Interface Language</p>
+                <p class="text-[11px] text-slate-500">Toggle between Hindi and English</p>
+              </div>
+              <button type="button" onclick="toggleLanguage()" class="btn-secondary-clean text-xs py-1.5 px-3">
+                <span id="settings-lang-label">हिन्दी</span>
+              </button>
+            </div>
+            <div class="p-4 rounded-2xl bg-orange-50 border border-orange-200 space-y-2">
+              <p class="text-xs font-bold text-orange-900">About JAANKAR Web App</p>
+              <p class="text-[11px] text-orange-700">Official cross-platform portal for tech specifications, live news, and AI gadget assistance.</p>
+              <a href="https://github.com/Jaankar-Expert/Jaankar/releases/download/v1.1.0/app-release.apk" target="_blank" class="btn-primary-orange text-xs py-2 px-3 mt-2 inline-flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Download Android APK (v1.1.0)</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 2-Way Live Support Desk -->
+          <div class="jaankar-card p-5 flex flex-col h-[520px]">
+            <div class="border-b border-slate-100 pb-3 mb-3 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                <h3 class="font-bold text-sm text-slate-900">Live Support Desk</h3>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono">2-Way Sync</span>
+            </div>
+
+            <!-- Messages Stream -->
+            <div id="support-messages-stream" class="flex-1 overflow-y-auto space-y-3 p-2 bg-slate-50 rounded-2xl border border-slate-200 mb-3">
+              <div class="text-center py-6 text-xs text-slate-400">Loading support chat history...</div>
+            </div>
+
+            <!-- Chat Input Controls -->
+            <form onsubmit="handleSendSupportChatMessage(event)" class="space-y-2">
+              <div class="flex items-center gap-2">
+                <input type="text" id="support-chat-input-text" placeholder="Type a message to admin..."
+                       class="flex-1 bg-white border border-slate-200 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none">
+                <!-- PC Image Attachment -->
+                <label class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-orange-50 text-slate-600 hover:text-orange-600 border border-slate-200 flex items-center justify-center cursor-pointer transition shrink-0" title="Attach Photo from PC">
+                  <i data-lucide="image" class="w-4 h-4"></i>
+                  <input type="file" id="support-chat-file-input" accept="image/*" onchange="handleSupportImageAttached(event)" class="hidden">
+                </label>
+                <!-- Voice Note Recorder -->
+                <button type="button" id="btn-voice-record" onclick="toggleVoiceNoteRecording()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 flex items-center justify-center transition shrink-0" title="Hold/Click to Record Voice">
+                  <i data-lucide="mic" class="w-4 h-4"></i>
+                </button>
+                <!-- Send Button -->
+                <button type="submit" class="btn-primary-orange py-2 px-3 text-xs shrink-0">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <div id="support-attachment-preview" class="hidden flex items-center gap-2 p-1.5 bg-orange-50 rounded-lg text-[11px] text-orange-800"></div>
+            </form>
+          </div>
         </div>
       </div>
 
-      <!-- 3. About Jaankar & Latest APK Version -->
-      <div class="p-5 rounded-3xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h4 class="font-bold text-sm text-white">About JAANKAR Platform</h4>
-          <p class="text-xs text-slate-400 mt-0.5">Version 2.0.0 (Web Edition) • Real-time Cloud Synced with Admin</p>
+      <!-- ==================== VIEW 7: ACCOUNT PORTAL ==================== -->
+      <div id="view-account" class="hidden space-y-6">
+        <!-- Top Profile Banner Card -->
+        <div class="jaankar-card p-6 flex flex-col sm:flex-row items-center gap-5">
+          <div class="relative group">
+            <img id="account-avatar-large" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
+                 class="w-24 h-24 rounded-full object-cover border-4 border-orange-500 shadow-md">
+            <label class="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center text-white text-[10px] opacity-0 group-hover:opacity-100 cursor-pointer transition">
+              <i data-lucide="camera" class="w-5 h-5 mb-1"></i>
+              <span>Change</span>
+              <input type="file" id="user-avatar-file-input" accept="image/*" onchange="handleUserAvatarUpload(event)" class="hidden">
+            </label>
+          </div>
+          <div class="flex-1 text-center sm:text-left space-y-1">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <h2 id="account-name-heading" class="text-xl font-black text-slate-900">Expert Shiva</h2>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 w-max mx-auto sm:mx-0">Active Member</span>
+            </div>
+            <p id="account-email-sub" class="text-xs text-slate-500">expertshiba@gmail.com</p>
+            <div class="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
+              <button type="button" onclick="openEditProfileModal()" class="btn-secondary-clean text-xs py-1.5 px-3">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                <span>Edit Profile</span>
+              </button>
+              <button type="button" onclick="logoutUser()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition">
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <a href="${window.LATEST_APK_URL || 'https://github.com/Jaankar-Expert/Jaankar/releases/download/v1.1.0/app-release.apk'}" target="_blank" download="JAANKAR-v1.1.0.apk" class="btn-primary-orange text-xs py-2 px-4 shadow-sm shrink-0">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span>Download Latest APK</span>
-        </a>
+
+        <!-- 3 Account Sub-Pages -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- 1. Learning Progress -->
+          <div class="jaankar-card p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+              </div>
+              <h3 class="font-bold text-sm text-slate-900">My Learning</h3>
+            </div>
+            <div class="space-y-2">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <p class="text-xs font-bold text-slate-800">DDR5 vs DDR4 Architecture</p>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-blue-600 h-full w-4/5"></div>
+                </div>
+                <span class="text-[10px] text-slate-500">80% Completed</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Saved Items -->
+          <div class="jaankar-card p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <i data-lucide="bookmark" class="w-4 h-4"></i>
+              </div>
+              <h3 class="font-bold text-sm text-slate-900">Saved Items</h3>
+            </div>
+            <div class="space-y-2">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <p class="text-xs font-bold text-slate-800">ROG Strix SCAR 16 Specs</p>
+                <p class="text-[10px] text-slate-500">Saved to wishlist</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Download History -->
+          <div class="jaankar-card p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="download-cloud" class="w-4 h-4"></i>
+              </div>
+              <h3 class="font-bold text-sm text-slate-900">Download History</h3>
+            </div>
+            <div class="space-y-2">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <p class="text-xs font-bold text-slate-800">JAANKAR App v1.1.0 APK</p>
+                <p class="text-[10px] text-slate-500">Downloaded yesterday (26 MB)</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-    </div>
+    </main>
+  </div>
 
-  </main>
-
-  <!-- ==================== MODAL 1: UNIVERSAL IN-SITE VIDEO PLAYER MODAL ==================== -->
+  <!-- ==================== MODAL: IN-SITE VIDEO PLAYER ==================== -->
   <div id="modal-video-player" class="modal-overlay">
-    <div class="max-w-3xl w-full bg-slate-900 border border-slate-700 rounded-3xl p-5 space-y-3 relative shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h4 id="video-modal-title" class="text-sm font-bold text-white truncate max-w-md">Video Player</h4>
-        <button type="button" onclick="closeInAppVideoModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+    <div class="bg-white border border-slate-200 w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl relative text-slate-900">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="video-modal-title" class="font-black text-sm text-slate-900 truncate pr-4">Tech Bulletin Video</h3>
+        <div class="flex items-center gap-2">
+          <a id="video-modal-youtube-link" href="#" target="_blank" class="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
+            <i data-lucide="youtube" class="w-3.5 h-3.5"></i>
+            <span>Open in YouTube</span>
+          </a>
+          <button type="button" onclick="closeVideoModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
       </div>
-
-      <!-- Responsive Player Frame (Handles HTML5 Video or YouTube Embed) -->
-      <div id="video-frame-container" class="w-full aspect-video rounded-2xl overflow-hidden bg-black flex items-center justify-center"></div>
-
-      <!-- Action Row (YouTube Launch Button if video is YouTube) -->
-      <div class="flex items-center justify-between pt-2 text-xs">
-        <span class="text-slate-400">Playing on JAANKAR In-Site Player</span>
-        <a id="video-external-youtube-btn" href="javascript:void(0)" target="_blank" class="hidden px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 transition">
-          <i data-lucide="youtube" class="w-4 h-4"></i>
-          <span>Open on YouTube</span>
-        </a>
+      <div class="aspect-video bg-black relative flex items-center justify-center">
+        <iframe id="video-modal-iframe" class="w-full h-full border-0 hidden" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        <video id="video-modal-native" class="w-full h-full hidden" controls autoplay></video>
       </div>
     </div>
   </div>
 
-  <!-- ==================== MODAL 2: INTERACTIVE PRODUCT DETAIL MODAL (5–6 PHOTO GALLERY) ==================== -->
+  <!-- ==================== MODAL: PRODUCT DETAIL WITH 5-6 PHOTO GALLERY ==================== -->
   <div id="modal-product-detail" class="modal-overlay">
-    <div class="max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-3xl p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto space-y-5">
-      
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <span id="prod-modal-category" class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600/20 text-orange-400 border border-orange-500/30">CATEGORY</span>
-        <button type="button" onclick="closeProductDetailModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+    <div class="bg-white border border-slate-200 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8 shadow-2xl relative text-slate-900 space-y-6">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <span id="product-modal-category" class="px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Category</span>
+        <button type="button" onclick="closeProductModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Left Side: 5 to 6 Image Gallery -->
+        <!-- Gallery Section (5-6 Photos) -->
         <div class="space-y-3">
-          <div class="h-64 sm:h-72 rounded-2xl bg-slate-950 overflow-hidden flex items-center justify-center p-2 border border-slate-800">
-            <img id="prod-modal-main-image" src="" class="w-full h-full object-cover rounded-xl" />
+          <div class="w-full rounded-2xl overflow-hidden aspect-square border border-slate-200 bg-slate-50 shadow-inner flex items-center justify-center">
+            <img id="product-modal-main-img" src="" class="w-full h-full object-contain">
           </div>
-          <!-- Thumbnails Row -->
-          <div id="prod-modal-thumbnails" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <!-- 5-6 Thumbnails injected by JS -->
-          </div>
+          <!-- 5-6 Thumbnails Gallery -->
+          <div id="product-modal-thumbnails-rail" class="flex gap-2 overflow-x-auto pb-1 scrollbar-none"></div>
         </div>
 
-        <!-- Right Side: Details & Specs -->
+        <!-- Details Section -->
         <div class="space-y-4 flex flex-col justify-between">
           <div class="space-y-2">
-            <h3 id="prod-modal-title" class="text-xl font-black text-white leading-tight">Product Title</h3>
-            <div class="flex items-baseline gap-2">
-              <span id="prod-modal-price" class="text-2xl font-black text-white">₹0</span>
-              <span id="prod-modal-mrp" class="text-xs text-slate-500 line-through"></span>
-              <span id="prod-modal-discount" class="text-xs font-bold text-orange-400"></span>
+            <h3 id="product-modal-name" class="text-xl sm:text-2xl font-black text-slate-900 leading-tight"></h3>
+            <div class="flex items-center gap-3">
+              <span id="product-modal-price" class="text-2xl font-black text-orange-600"></span>
+              <span id="product-modal-mrp" class="text-sm line-through text-slate-400 font-medium"></span>
+              <span id="product-modal-discount" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-700"></span>
             </div>
-            <p id="prod-modal-description" class="text-xs text-slate-300 leading-relaxed"></p>
           </div>
 
-          <!-- Specifications Table -->
-          <div class="space-y-2 pt-2 border-t border-slate-800">
-            <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Hardware Specifications</h4>
-            <div id="prod-modal-specs-table" class="space-y-1 max-h-40 overflow-y-auto pr-1"></div>
+          <!-- Hardware Specs Table -->
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Key Specifications</h4>
+            <div id="product-modal-specs-table" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 text-slate-700"></div>
           </div>
 
-          <!-- Buy Buttons (Amazon & Flipkart) -->
-          <div class="pt-3 border-t border-slate-800 flex items-center gap-3">
-            <a id="prod-modal-amazon-link" href="#" target="_blank" class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs text-center transition shadow-md">
-              Buy on Amazon
-            </a>
-            <a id="prod-modal-flipkart-link" href="#" target="_blank" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs text-center transition shadow-md">
-              Buy on Flipkart
-            </a>
+          <!-- Amazon & Flipkart Purchase Links -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <p class="text-[11px] font-bold text-slate-500">Verified Online Stores:</p>
+            <div class="grid grid-cols-2 gap-3">
+              <a id="product-modal-btn-amazon" href="#" target="_blank" class="py-2.5 px-4 rounded-xl bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                <span>Buy on Amazon</span>
+              </a>
+              <a id="product-modal-btn-flipkart" href="#" target="_blank" class="py-2.5 px-4 rounded-xl bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                <span>Buy on Flipkart</span>
+              </a>
+            </div>
           </div>
         </div>
-
       </div>
-
     </div>
   </div>
 
-  <!-- ==================== MODAL 3: ARTICLE READER MODAL ==================== -->
-  <div id="article-reader-modal" class="modal-overlay">
-    <div class="max-w-2xl w-full bg-slate-900 border border-slate-700 rounded-3xl p-6 relative shadow-2xl max-h-[85vh] overflow-y-auto space-y-4">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <span id="reader-category" class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600/20 text-orange-400">TECH</span>
-        <button type="button" onclick="closeArticleReader()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <h3 id="reader-title" class="text-lg font-black text-white leading-tight">Article Title</h3>
-      <div class="flex items-center gap-3 text-[11px] text-slate-400">
-        <span id="reader-author">Editorial</span>
-        <span>•</span>
-        <span id="reader-date">Today</span>
-      </div>
-      <img id="reader-image" src="" class="w-full h-56 rounded-2xl object-cover" />
-      <p id="reader-body" class="text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line"></p>
-    </div>
-  </div>
-
-  <!-- ==================== MODAL 4: EDIT PROFILE MODAL ==================== -->
+  <!-- ==================== MODAL: EDIT PROFILE ==================== -->
   <div id="modal-edit-profile" class="modal-overlay">
-    <div class="max-w-md w-full bg-slate-900 border border-slate-700 rounded-3xl p-6 space-y-4 relative shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h4 class="text-sm font-bold text-white">Edit Your Profile</h4>
-        <button type="button" onclick="closeEditProfileModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+    <div class="bg-white border border-slate-200 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative text-slate-900 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-bold text-sm text-slate-900">Edit Your Profile</h3>
+        <button type="button" onclick="closeEditProfileModal()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-
-      <div class="space-y-3">
+      <form onsubmit="handleSaveUserProfile(event)" class="space-y-3.5 text-xs">
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Display Name</label>
-          <input type="text" id="profile-name-input" class="w-full py-2.5 px-3.5 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-orange-500 font-medium" />
+          <label class="block font-bold text-slate-700 mb-1">Display Name</label>
+          <input type="text" id="edit-profile-input-name" required class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl px-3 py-2 text-slate-900">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Mobile Number</label>
-          <input type="text" id="profile-phone-input" placeholder="+91 98765 43210" class="w-full py-2.5 px-3.5 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-orange-500 font-medium" />
+          <label class="block font-bold text-slate-700 mb-1">Phone Number</label>
+          <input type="tel" id="edit-profile-input-phone" placeholder="+91 98765 43210" class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl px-3 py-2 text-slate-900">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Address / City</label>
-          <input type="text" id="profile-address-input" placeholder="New Delhi, India" class="w-full py-2.5 px-3.5 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:outline-none focus:border-orange-500 font-medium" />
+          <label class="block font-bold text-slate-700 mb-1">Location / City</label>
+          <input type="text" id="edit-profile-input-city" placeholder="e.g. New Delhi, India" class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl px-3 py-2 text-slate-900">
         </div>
-      </div>
-
-      <div class="pt-2 flex items-center gap-2">
-        <button type="button" onclick="closeEditProfileModal()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Cancel</button>
-        <button type="button" onclick="saveUserProfile()" class="flex-1 btn-primary-orange text-xs py-2 justify-center">Save Profile</button>
-      </div>
+        <button type="submit" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold mt-2">
+          <span>Save Changes</span>
+        </button>
+      </form>
     </div>
   </div>
 
   <!-- ==================== DRAWER: JAANKAR AI VOICE ASSISTANT ==================== -->
-  <div id="drawer-jaankar-ai" class="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-sm hidden items-end sm:items-center justify-end p-0 sm:p-6">
-    <div class="w-full sm:max-w-md h-[90vh] sm:h-[85vh] bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden">
-      
-      <!-- Drawer Header -->
-      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-600/30">
-            <i data-lucide="sparkles" class="w-4 h-4"></i>
-          </div>
-          <div>
-            <h4 class="font-black text-sm text-white">JAANKAR AI Voice</h4>
-            <p class="text-[10px] text-purple-400 font-bold">Powered by Gemini 3.8 / Flash</p>
-          </div>
+  <div id="drawer-jaankar-ai" class="fixed top-0 bottom-0 right-0 z-[9999] w-full max-w-md bg-white border-l border-slate-200 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-md">
+          <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
         </div>
-        <button type="button" onclick="closeJaankarAiDrawer()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <!-- Messages Stream -->
-      <div id="ai-chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
-        <div class="flex items-start gap-2.5 max-w-[85%]">
-          <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 text-xs font-black shadow-md">AI</div>
-          <div class="p-3.5 rounded-2xl rounded-tl-none bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium space-y-1.5">
-            <p>Namaste! Mai JAANKAR AI Assistant hoon. Aap mujhse bolkar ya type karke kisi bhi phone, laptop ya PC components ke bare me poochh sakte hain!</p>
-          </div>
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900">Jaankar AI Assistant</h3>
+          <p class="text-[10px] text-orange-600 font-bold">Voice-Powered & Product Recommendation</p>
         </div>
       </div>
+      <button type="button" onclick="closeJaankarAiDrawer()" class="w-8 h-8 rounded-lg bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center shadow-sm">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
 
-      <!-- Input Bar (Mic Voice Button + Text Input) -->
-      <div class="p-3 border-t border-slate-800 flex items-center gap-2 bg-slate-950">
-        <!-- Mic Voice Button -->
-        <button type="button" id="ai-mic-btn" onclick="toggleVoiceMic()" class="w-10 h-10 rounded-xl bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white flex items-center justify-center transition cursor-pointer" title="Speak with Voice">
+    <div id="ai-chat-history" class="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
+      <div class="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-1">
+        <p class="font-bold text-orange-900">Namaste! Main Jaankar AI hoon.</p>
+        <p class="text-slate-700">Aap mujhse kisi bhi gadget ke specs, laptop recommendations, ya direct Amazon/Flipkart links pooch sakte hain.</p>
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-slate-100 space-y-2 bg-slate-50">
+      <form onsubmit="handleSendAiMessage(event)" class="flex items-center gap-2">
+        <input type="text" id="ai-user-query-input" placeholder="Ask about laptops, processors, or deals..."
+               class="flex-1 bg-white border border-slate-200 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none">
+        <button type="button" id="btn-ai-voice-talk" onclick="toggleAiVoiceTalk()" class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 hover:bg-orange-200 flex items-center justify-center transition shrink-0" title="Speak via Microphone">
           <i data-lucide="mic" class="w-4 h-4"></i>
         </button>
-        <input type="text" id="ai-chat-input" placeholder="Type or click mic to ask AI..." class="flex-1 py-2.5 px-3.5 rounded-xl bg-slate-800 text-white placeholder-slate-400 text-xs border border-slate-700 focus:outline-none focus:border-purple-500 font-medium" onkeydown="if(event.key === 'Enter') handleSendAiMessage()" />
-        <button type="button" onclick="handleSendAiMessage()" class="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition">
+        <button type="submit" class="btn-primary-orange py-2 px-3 text-xs shrink-0">
           <i data-lucide="send" class="w-4 h-4"></i>
         </button>
-      </div>
-
+      </form>
     </div>
   </div>
 

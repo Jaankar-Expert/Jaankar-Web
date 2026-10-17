@@ -1501,6 +1501,7 @@ function closeInAppVideoModal() {
   }
 }
 window.closeInAppVideoModal = closeInAppVideoModal;
+window.closeVideoModal = closeInAppVideoModal;
 
 // ----------------------------------------------------------------------------
 // 10. News Desk with Date Calendar & Search
@@ -2115,35 +2116,54 @@ window.explainVideoWithAi = explainVideoWithAi;
 // ----------------------------------------------------------------------------
 
 function openReelsFeed(reelId) {
-  const list = liveReelsList.length ? liveReelsList : fallbackReels;
-  let idx = list.findIndex(r => r.id === reelId);
-  if (idx === -1) idx = 0;
-  currentReelIndex = idx;
+  try {
+    const list = (liveReelsList && liveReelsList.length) ? liveReelsList : fallbackReels;
+    let idx = -1;
+    if (reelId) {
+      idx = list.findIndex(r => String(r.id) === String(reelId));
+    }
+    if (idx === -1) idx = 0;
+    currentReelIndex = idx;
 
-  const modal = document.getElementById("modal-reels-feed");
-  if (modal) {
-    modal.classList.add("active");
-    document.body.classList.add("overflow-hidden");
+    const modal = document.getElementById("modal-reels-feed");
+    if (modal) {
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      modal.classList.add("active");
+      modal.style.display = "flex";
+      document.body.classList.add("overflow-hidden");
+    }
+
+    showReelAtIndex(currentReelIndex);
+    window.addEventListener("keydown", handleReelsKeyNavigation);
+  } catch (err) {
+    console.error("Error opening reels feed:", err);
+    document.body.classList.remove("overflow-hidden");
   }
-
-  showReelAtIndex(currentReelIndex);
-  window.addEventListener("keydown", handleReelsKeyNavigation);
 }
 window.openReelsFeed = openReelsFeed;
 
 function closeReelsFeed() {
-  const modal = document.getElementById("modal-reels-feed");
-  if (modal) {
-    modal.classList.remove("active");
+  try {
+    const modal = document.getElementById("modal-reels-feed");
+    if (modal) {
+      modal.classList.remove("active");
+      modal.classList.remove("flex");
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    const iframe = document.getElementById("reels-feed-iframe");
+    const video = document.getElementById("reels-feed-video");
+    if (iframe) iframe.src = "";
+    if (video) { video.pause(); video.src = ""; }
+
+    window.removeEventListener("keydown", handleReelsKeyNavigation);
+  } catch (err) {
+    console.error("Error closing reels feed:", err);
     document.body.classList.remove("overflow-hidden");
   }
-
-  const iframe = document.getElementById("reels-feed-iframe");
-  const video = document.getElementById("reels-feed-video");
-  if (iframe) iframe.src = "";
-  if (video) { video.pause(); video.src = ""; }
-
-  window.removeEventListener("keydown", handleReelsKeyNavigation);
 }
 window.closeReelsFeed = closeReelsFeed;
 
@@ -2160,43 +2180,57 @@ function handleReelsKeyNavigation(e) {
 }
 
 function showReelAtIndex(idx) {
-  const list = liveReelsList.length ? liveReelsList : fallbackReels;
-  if (!list.length) return;
+  try {
+    const list = (liveReelsList && liveReelsList.length) ? liveReelsList : fallbackReels;
+    if (!list || !list.length) return;
 
-  if (idx < 0) idx = list.length - 1;
-  if (idx >= list.length) idx = 0;
-  currentReelIndex = idx;
+    if (idx < 0) idx = list.length - 1;
+    if (idx >= list.length) idx = 0;
+    currentReelIndex = idx;
 
-  const reel = list[currentReelIndex];
-  const iframe = document.getElementById("reels-feed-iframe");
-  const video = document.getElementById("reels-feed-video");
-  const titleEl = document.getElementById("reels-feed-title");
-  const viewsEl = document.getElementById("reels-feed-views");
+    const reel = list[currentReelIndex];
+    if (!reel) return;
 
-  if (titleEl) titleEl.textContent = reel.title || "Quick Tech Breakdown";
-  if (viewsEl) viewsEl.textContent = `${reel.views || "120K"} views`;
+    const iframe = document.getElementById("reels-feed-iframe");
+    const video = document.getElementById("reels-feed-video");
+    const titleEl = document.getElementById("reels-feed-title");
+    const viewsEl = document.getElementById("reels-feed-views");
 
-  updateReelLikeDisplay(reel.id);
+    if (titleEl) titleEl.textContent = reel.title || "Quick Tech Breakdown";
+    if (viewsEl) viewsEl.textContent = `${reel.viewsCount || reel.views || "120K"} views`;
 
-  const rawUrl = reel.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-  const isDirect = rawUrl.includes(".mp4") || rawUrl.includes(".webm") || rawUrl.includes("cloudinary.com");
+    try { updateReelLikeDisplay(reel.id); } catch (_) {}
 
-  if (isDirect) {
-    if (iframe) { iframe.src = ""; iframe.classList.add("hidden"); }
-    if (video) {
-      video.src = rawUrl;
-      video.classList.remove("hidden");
-      video.play().catch(() => {});
+    const rawUrl = reel.videoUrl || reel.url || "";
+    const isDirect = rawUrl.includes(".mp4") || rawUrl.includes(".webm") || rawUrl.includes("cloudinary.com");
+
+    if (isDirect) {
+      if (iframe) { iframe.src = ""; iframe.classList.add("hidden"); }
+      if (video) {
+        video.src = rawUrl;
+        video.classList.remove("hidden");
+        video.play().catch(() => {});
+      }
+    } else if (rawUrl) {
+      if (video) { video.pause(); video.src = ""; video.classList.add("hidden"); }
+      if (iframe) {
+        iframe.src = getYouTubeEmbedUrl(rawUrl);
+        iframe.classList.remove("hidden");
+      }
+    } else {
+      if (video) { video.pause(); video.src = ""; video.classList.add("hidden"); }
+      if (iframe) {
+        iframe.src = "https://www.youtube-nocookie.com/embed/ScMzIvxBSi4?autoplay=1&rel=0&modestbranding=1";
+        iframe.classList.remove("hidden");
+      }
     }
-  } else {
-    if (video) { video.pause(); video.src = ""; video.classList.add("hidden"); }
-    if (iframe) {
-      iframe.src = getYouTubeEmbedUrl(rawUrl);
-      iframe.classList.remove("hidden");
+
+    if (window.lucide && typeof lucide.createIcons === "function") {
+      try { lucide.createIcons(); } catch (_) {}
     }
+  } catch (err) {
+    console.error("Error in showReelAtIndex:", err);
   }
-
-  if (window.lucide) lucide.createIcons();
 }
 
 function nextReel() {

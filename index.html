@@ -141,12 +141,21 @@
       position: fixed;
       inset: 0;
       z-index: 99999;
-      background: rgba(15, 23, 42, 0.5);
+      background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 1rem;
+    }
+    .modal-overlay.active,
+    .modal-overlay.flex,
+    .modal-overlay[style*="display: flex"] {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
     }
 
     /* Custom Scrollbars */
@@ -1446,8 +1455,8 @@
   </div>
 
   <!-- ==================== MODAL: FULL-SCREEN INTERACTIVE REELS FEED ==================== -->
-  <div id="modal-reels-feed" class="modal-overlay bg-black/90 backdrop-blur-md">
-    <div class="relative w-full max-w-sm sm:max-w-md h-[92vh] max-h-[850px] bg-slate-950 rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between border border-slate-800">
+  <div id="modal-reels-feed" onclick="if (event.target === this) closeReelsFeed()" class="modal-overlay fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md hidden items-center justify-center p-2 sm:p-4" style="display: none;">
+    <div class="relative w-full max-w-sm sm:max-w-md h-[92vh] max-h-[850px] bg-slate-950 rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between border border-slate-800" onclick="event.stopPropagation()">
       
       <!-- Top Reels Overlay: Close Button, Brand & Category -->
       <div class="absolute top-4 left-4 right-4 z-30 flex items-center justify-between text-white pointer-events-auto">
@@ -1661,6 +1670,6 @@
   </div>
 
   <!-- Master Logic Script -->
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

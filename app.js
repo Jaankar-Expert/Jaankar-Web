@@ -955,6 +955,13 @@ function applyWebsiteCmsConfig(cfg) {
   if (cfg.banners && cfg.banners.length > 0 && (!liveHomeSlides || !liveHomeSlides.length)) {
     renderHeroSlides(cfg.banners);
   }
+
+  // 8. Dynamic Copyright Notice & Social Links
+  const copyrightText = cfg.social?.copyright || cfg.copyright;
+  if (copyrightText) {
+    const copyEl = document.getElementById("web-copyright-text");
+    if (copyEl) copyEl.textContent = copyrightText;
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -977,8 +984,8 @@ function renderHeroSlides(slides) {
   currentSlideIndex = 0;
 
   track.innerHTML = list.map((s, idx) => `
-    <div class="hero-slide min-w-full h-64 sm:h-80 md:h-96 relative rounded-3xl overflow-hidden flex items-end p-6 sm:p-10 select-none">
-      <img src="${s.imageUrl || fallbackSlides[0].imageUrl}" alt="${escapeHtml(s.title)}" class="absolute inset-0 w-full h-full object-cover">
+    <div class="hero-slide min-w-full h-full relative rounded-3xl overflow-hidden flex items-end p-6 sm:p-10 pb-14 sm:pb-16 select-none">
+      <img src="${s.imageUrl || fallbackSlides[0].imageUrl}" alt="${escapeHtml(s.title)}" class="absolute inset-0 w-full h-full object-cover object-center">
       <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
       
       <div class="relative z-10 max-w-2xl space-y-2.5">
@@ -991,12 +998,12 @@ function renderHeroSlides(slides) {
         <p class="text-xs sm:text-sm text-slate-200 line-clamp-2 font-medium max-w-lg">
           ${escapeHtml(s.subtitle || "")}
         </p>
-        <div class="pt-2 flex items-center gap-3">
-          <button type="button" onclick="handleSlideAction('${s.tabAction || 'categories'}')" class="btn-primary-orange text-xs py-2.5 px-4 sm:px-5 shadow-lg shadow-orange-600/40">
+        <div class="pt-2 flex items-center gap-3 flex-wrap">
+          <button type="button" onclick="handleSlideAction('${s.tabAction || 'categories'}')" class="btn-primary-orange text-xs py-2.5 px-4 sm:px-5 shadow-lg shadow-orange-600/40 cursor-pointer">
             <span>${escapeHtml(s.btnText || "Explore Now")}</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </button>
-          <a href="${window.LATEST_APK_URL || 'https://github.com/Jaankar-Expert/Jaankar/releases/download/v1.1.0/app-release.apk'}" target="_blank" download="JAANKAR-v1.1.0.apk" class="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 backdrop-blur-md transition flex items-center gap-2">
+          <a href="${window.LATEST_APK_URL || 'https://github.com/Jaankar-Expert/Jaankar/releases/download/v1.1.0/app-release.apk'}" target="_blank" download="JAANKAR-v1.1.0.apk" class="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-md transition flex items-center gap-2 cursor-pointer shadow-md">
             <i data-lucide="smartphone" class="w-4 h-4 text-orange-400"></i>
             <span>Download App</span>
           </a>
@@ -1007,7 +1014,7 @@ function renderHeroSlides(slides) {
 
   if (dotsContainer) {
     dotsContainer.innerHTML = list.map((_, i) => `
-      <button type="button" onclick="goToSlide(${i})" class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === 0 ? 'w-8 bg-orange-500' : 'bg-white/40 hover:bg-white/80'}"></button>
+      <button type="button" onclick="goToSlide(${i})" class="w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${i === 0 ? 'w-8 bg-orange-500' : 'bg-white/40 hover:bg-white/80'}"></button>
     `).join("");
   }
 
@@ -1467,27 +1474,29 @@ function createNewsCardHtml(item) {
 // 11. Reels & Shorts Rail
 // ----------------------------------------------------------------------------
 function renderReelsRail() {
-  const container = document.getElementById("home-reels-container");
+  const container = document.getElementById("home-reels-rail") || document.getElementById("home-reels-container");
   if (!container) return;
 
-  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  const list = (liveReelsList && liveReelsList.length) ? liveReelsList : fallbackReels;
   container.innerHTML = list.map(reel => `
-    <div onclick="playVideoInApp('${escapeHtml(reel.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ")}', '${escapeHtml(reel.title)}')"
-         class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-slate-950 group cursor-pointer border border-slate-800 hover:border-orange-500/50 shadow-md transition">
-      <img src="${reel.thumbnail}" alt="${escapeHtml(reel.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+    <div onclick="playVideoInApp('${escapeHtml(reel.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ")}', '${escapeHtml(reel.title || "Tech Reel")}', true)"
+         class="shrink-0 w-36 sm:w-44 relative rounded-2xl overflow-hidden aspect-[9/16] bg-slate-950 group cursor-pointer border border-slate-200 hover:border-orange-500 shadow-sm hover:shadow-md transition">
+      <img src="${reel.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400'}" alt="${escapeHtml(reel.title || 'Tech Reel')}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
       
       <div class="absolute inset-0 m-auto w-10 h-10 rounded-full bg-orange-600/90 text-white flex items-center justify-center group-hover:scale-110 transition shadow-lg">
-        <i data-lucide="play" class="w-5 h-5 fill-white ml-0.5"></i>
+        <i data-lucide="play" class="w-4 h-4 fill-white ml-0.5"></i>
       </div>
 
       <div class="absolute bottom-3 left-3 right-3 text-white space-y-1">
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/20 backdrop-blur-xs">${reel.views || "100K"} views</span>
-        <h5 class="text-[11px] font-bold line-clamp-2 leading-tight">${escapeHtml(reel.title)}</h5>
+        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/20 backdrop-blur-xs">${reel.views || "120K"} views</span>
+        <h5 class="text-[11px] font-bold line-clamp-2 leading-tight">${escapeHtml(reel.title || "Quick Tech Review")}</h5>
       </div>
     </div>
   `).join("");
+  if (window.lucide) lucide.createIcons();
 }
+window.renderReelsRail = renderReelsRail;
 
 // ----------------------------------------------------------------------------
 // 12. Jaankar AI Voice Assistant with Flipkart/Amazon Links
@@ -1495,8 +1504,8 @@ function renderReelsRail() {
 function openJaankarAiDrawer() {
   const drawer = document.getElementById("drawer-jaankar-ai");
   if (drawer) {
+    drawer.classList.remove("translate-x-full");
     drawer.classList.remove("hidden");
-    drawer.classList.add("flex");
   }
 }
 window.openJaankarAiDrawer = openJaankarAiDrawer;
@@ -1504,14 +1513,30 @@ window.openJaankarAiDrawer = openJaankarAiDrawer;
 function closeJaankarAiDrawer() {
   const drawer = document.getElementById("drawer-jaankar-ai");
   if (drawer) {
-    drawer.classList.add("hidden");
-    drawer.classList.remove("flex");
+    drawer.classList.add("translate-x-full");
   }
 }
 window.closeJaankarAiDrawer = closeJaankarAiDrawer;
 
+function openJaankarAiWithQuery(query) {
+  openJaankarAiDrawer();
+  const input = document.getElementById("ai-user-query-input") || document.getElementById("ai-chat-input");
+  if (input) input.value = query;
+  if (query) {
+    handleSendAiMessage(query);
+  }
+}
+window.openJaankarAiWithQuery = openJaankarAiWithQuery;
+
+function triggerSearchAiButton() {
+  const searchInput = document.getElementById("global-search-input");
+  const q = searchInput ? searchInput.value.trim() : "";
+  openJaankarAiWithQuery(q || "Latest smartphone, laptop & gadget recommendations");
+}
+window.triggerSearchAiButton = triggerSearchAiButton;
+
 function toggleVoiceMic() {
-  const micBtn = document.getElementById("ai-mic-btn");
+  const micBtn = document.getElementById("btn-ai-voice-talk") || document.getElementById("ai-mic-btn");
   if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
     alert("Speech recognition is not supported in this browser. Please type your query.");
     return;
@@ -1530,7 +1555,7 @@ function toggleVoiceMic() {
 
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
-    const input = document.getElementById("ai-chat-input");
+    const input = document.getElementById("ai-user-query-input") || document.getElementById("ai-chat-input");
     if (input) input.value = transcript;
     handleSendAiMessage(transcript);
   };
@@ -1546,6 +1571,7 @@ function toggleVoiceMic() {
   recognition.start();
 }
 window.toggleVoiceMic = toggleVoiceMic;
+window.toggleAiVoiceTalk = toggleVoiceMic;
 
 function speakAiText(text) {
   if (!("speechSynthesis" in window)) return;
@@ -1557,18 +1583,18 @@ function speakAiText(text) {
 }
 
 function handleSendAiMessage(customPrompt = null) {
-  const input = document.getElementById("ai-chat-input");
-  const msgContainer = document.getElementById("ai-chat-messages-container");
+  const input = document.getElementById("ai-user-query-input") || document.getElementById("ai-chat-input");
+  const msgContainer = document.getElementById("ai-chat-history") || document.getElementById("ai-chat-messages-container");
   if (!msgContainer) return;
 
-  const userQuery = customPrompt || (input ? input.value : "").trim();
+  const userQuery = (typeof customPrompt === "string" ? customPrompt : (input ? input.value : "")).trim();
   if (!userQuery) return;
   if (input) input.value = "";
 
-  // Append user bubble
+  // Append user bubble (White & Orange Theme)
   msgContainer.insertAdjacentHTML("beforeend", `
     <div class="flex items-start justify-end gap-2.5">
-      <div class="p-3 rounded-2xl rounded-tr-none bg-orange-600 text-white text-xs font-medium max-w-[85%] shadow-md">
+      <div class="p-3 rounded-2xl rounded-tr-none bg-orange-600 text-white text-xs font-semibold max-w-[85%] shadow-md">
         <p>${escapeHtml(userQuery)}</p>
       </div>
     </div>
@@ -1579,12 +1605,12 @@ function handleSendAiMessage(customPrompt = null) {
   const typingId = "ai-typing-" + Date.now();
   msgContainer.insertAdjacentHTML("beforeend", `
     <div id="${typingId}" class="flex items-start gap-2.5 max-w-[85%]">
-      <div class="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black shadow-md">AI</div>
-      <div class="p-3 rounded-2xl rounded-tl-none bg-slate-800 text-slate-300 text-xs font-medium space-y-1">
+      <img src="jaankar-logo.png" alt="AI" class="w-7 h-7 object-contain drop-shadow-xs shrink-0 mt-0.5">
+      <div class="p-3 rounded-2xl rounded-tl-none bg-orange-50/80 border border-orange-200 text-slate-700 text-xs font-medium space-y-1">
         <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-orange-400 animate-bounce"></span>
-          <span class="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style="animation-delay: 0.2s"></span>
-          <span class="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style="animation-delay: 0.4s"></span>
+          <span class="w-2 h-2 rounded-full bg-orange-500 animate-bounce"></span>
+          <span class="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style="animation-delay: 0.2s"></span>
+          <span class="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style="animation-delay: 0.4s"></span>
         </div>
       </div>
     </div>
@@ -1599,42 +1625,54 @@ function handleSendAiMessage(customPrompt = null) {
     let reply = "";
     let buyCard = "";
 
-    if (q.includes("phone") || q.includes("mobile") || q.includes("20000") || q.includes("25000") || q.includes("s24")) {
+    if (q.includes("phone") || q.includes("mobile") || q.includes("20000") || q.includes("25000") || q.includes("s24") || q.includes("oneplus")) {
       reply = "📱 **Top Smartphone Recommendations:**\n\n1. **Samsung Galaxy S24 Ultra**: Titanium body, 200MP camera & Snapdragon 8 Gen 3.\n2. **OnePlus Nord CE4 5G**: Best value under ₹25,000 with 100W fast charging & Sony LYT-600 sensor.";
       buyCard = `
-        <div class="mt-2.5 p-3 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-between gap-2">
+        <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-bold text-white">Samsung S24 Ultra 5G</p>
-            <p class="text-[10px] text-orange-400 font-bold">₹1,24,999 (7% Off)</p>
+            <p class="text-xs font-bold text-slate-900">Samsung Galaxy S24 Ultra</p>
+            <p class="text-[10px] text-orange-600 font-bold">₹1,24,999 (7% OFF)</p>
           </div>
           <div class="flex items-center gap-1.5">
-            <a href="https://www.amazon.in/s?k=s24+ultra" target="_blank" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[10px] transition">Amazon</a>
-            <a href="https://www.flipkart.com/search?q=s24+ultra" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] transition">Flipkart</a>
+            <a href="https://www.amazon.in/s?k=s24+ultra" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition">Amazon</a>
+            <a href="https://www.flipkart.com/search?q=s24+ultra" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition">Flipkart</a>
           </div>
         </div>
       `;
-    } else if (q.includes("laptop") || q.includes("macbook") || q.includes("gaming")) {
-      reply = "💻 **Recommended Laptops:**\n\n1. **Apple MacBook Pro 14 (M3 Pro)**: 18 hours battery life, 120Hz ProMotion XDR display.\n2. **Lenovo LOQ 15**: Intel Core i5 + RTX 4050 for heavy coding and 1080p gaming.";
+    } else if (q.includes("laptop") || q.includes("macbook") || q.includes("gaming") || q.includes("pc") || q.includes("computer")) {
+      reply = "💻 **Top Laptop & PC Recommendations:**\n\n1. **Apple MacBook Pro 14 (M3 Pro)**: 18 hours battery life, 120Hz ProMotion XDR display.\n2. **Lenovo LOQ 15 Gaming**: Intel Core i5 + RTX 4050 for heavy coding, rendering & 1080p gaming.\n3. **JAANKAR Stealth Pro Rig**: AMD Ryzen 7 7800X3D + RTX 4070 Ti Super for 4K local AI workflows.";
       buyCard = `
-        <div class="mt-2.5 p-3 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-between gap-2">
+        <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
           <div>
-            <p class="text-xs font-bold text-white">Apple MacBook Pro M3</p>
-            <p class="text-[10px] text-orange-400 font-bold">₹1,89,900</p>
+            <p class="text-xs font-bold text-slate-900">Apple MacBook Pro M3</p>
+            <p class="text-[10px] text-orange-600 font-bold">₹1,89,900</p>
           </div>
           <div class="flex items-center gap-1.5">
-            <a href="https://www.amazon.in/s?k=macbook+pro+m3" target="_blank" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[10px] transition">Amazon</a>
-            <a href="https://www.flipkart.com/search?q=macbook+pro+m3" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] transition">Flipkart</a>
+            <a href="https://www.amazon.in/s?k=macbook+pro+m3" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition">Amazon</a>
+            <a href="https://www.flipkart.com/search?q=macbook+pro+m3" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition">Flipkart</a>
           </div>
         </div>
       `;
     } else {
-      reply = `Namaste! Aapka prashna mila: "${escapeHtml(userQuery)}".\n\nJAANKAR AI ke anusar, kisi bhi tech product ko kharidne se pehle Processor, RAM generation (DDR5) aur warranty terms zaroor verify karein. Categories tab mein sabhi 6 categories ke specs live updated hain!`;
+      reply = `Namaste! Aapka prashna mila: "${escapeHtml(userQuery)}".\n\nJAANKAR AI ke anusar, kisi bhi tech product ko kharidne se pehle Processor, RAM generation (DDR5) aur official warranty terms zaroor check karein. Neeche diye gaye direct links se aap latest prices aur customer reviews compare kar sakte hain:`;
+      buyCard = `
+        <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
+          <div>
+            <p class="text-xs font-bold text-slate-900 truncate max-w-[150px]">${escapeHtml(userQuery)}</p>
+            <p class="text-[10px] text-orange-600 font-bold">Compare Deals</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <a href="https://www.amazon.in/s?k=${encodeURIComponent(userQuery)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition">Amazon</a>
+            <a href="https://www.flipkart.com/search?q=${encodeURIComponent(userQuery)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition">Flipkart</a>
+          </div>
+        </div>
+      `;
     }
 
     msgContainer.insertAdjacentHTML("beforeend", `
       <div class="flex items-start gap-2.5 max-w-[85%]">
-        <div class="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0 text-xs font-black shadow-md">AI</div>
-        <div class="p-3.5 rounded-2xl rounded-tl-none bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium space-y-1.5">
+        <img src="jaankar-logo.png" alt="AI" class="w-7 h-7 object-contain drop-shadow-xs shrink-0 mt-0.5">
+        <div class="p-3.5 rounded-2xl rounded-tl-none bg-orange-50/70 border border-orange-200 text-slate-800 text-xs font-medium space-y-1.5 shadow-xs">
           <p class="whitespace-pre-line leading-relaxed">${reply}</p>
           ${buyCard}
         </div>
@@ -1644,7 +1682,7 @@ function handleSendAiMessage(customPrompt = null) {
 
     // Speak aloud with SpeechSynthesis
     speakAiText(reply.split("\n")[0] || reply);
-  }, 600);
+  }, 500);
 }
 window.handleSendAiMessage = handleSendAiMessage;
 
@@ -1971,9 +2009,15 @@ window.toggleSupportVoiceRecording = toggleSupportVoiceRecording;
 // ----------------------------------------------------------------------------
 // 15. Global Live Search Engine
 // ----------------------------------------------------------------------------
+function hideSearchDropdown() {
+  const dropdown = document.getElementById("search-results-dropdown") || document.getElementById("home-search-results-dropdown");
+  if (dropdown) dropdown.classList.add("hidden");
+}
+window.hideSearchDropdown = hideSearchDropdown;
+
 function handleGlobalSearch(query) {
   const q = (query || "").trim().toLowerCase();
-  const dropdown = document.getElementById("home-search-results-dropdown");
+  const dropdown = document.getElementById("search-results-dropdown") || document.getElementById("home-search-results-dropdown");
   if (!dropdown) return;
 
   if (!q || q.length < 2) {
@@ -1984,55 +2028,136 @@ function handleGlobalSearch(query) {
   const allNews = liveNewsList.length ? liveNewsList : fallbackNews;
   const allProds = liveProductsList.length ? liveProductsList : defaultProductsCatalog;
 
-  const matchedNews = allNews.filter(n => (n.title && n.title.toLowerCase().includes(q))).slice(0, 3);
-  const matchedProds = allProds.filter(p => (p.name && p.name.toLowerCase().includes(q)) || (p.category && p.category.toLowerCase().includes(q))).slice(0, 3);
+  // 1. Matched Products
+  const matchedProds = allProds.filter(p => 
+    (p.name && p.name.toLowerCase().includes(q)) || 
+    (p.category && p.category.toLowerCase().includes(q)) ||
+    (p.description && p.description.toLowerCase().includes(q))
+  ).slice(0, 3);
 
-  if (!matchedNews.length && !matchedProds.length) {
+  // 2. Matched News
+  const matchedNews = allNews.filter(n => 
+    (n.title && n.title.toLowerCase().includes(q)) ||
+    (n.summary && n.summary.toLowerCase().includes(q))
+  ).slice(0, 3);
+
+  // 3. Matched Smart Tools
+  const smartTools = [
+    { id: "pdf-compressor", name: "PDF Compressor", desc: "Reduce PDF MB size client-side", icon: "file-down", color: "text-red-500", bg: "bg-red-50" },
+    { id: "qr-scanner", name: "QR Scanner & Maker", desc: "Scan and generate custom QR codes", icon: "qr-code", color: "text-blue-500", bg: "bg-blue-50" },
+    { id: "img-to-pdf", name: "Image to PDF", desc: "Combine photos into single PDF file", icon: "images", color: "text-emerald-500", bg: "bg-emerald-50" },
+    { id: "smart-alarms", name: "Smart Alarms & Timer", desc: "Sound alerts and stopwatch in browser", icon: "alarm-clock", color: "text-amber-500", bg: "bg-amber-50" }
+  ];
+  const matchedTools = smartTools.filter(t => 
+    t.name.toLowerCase().includes(q) || 
+    t.desc.toLowerCase().includes(q) || 
+    t.id.includes(q)
+  );
+
+  // If completely empty, show AI Fallback
+  if (!matchedProds.length && !matchedNews.length && !matchedTools.length) {
     dropdown.innerHTML = `
-      <div class="p-4 text-center text-xs text-slate-400">
-        No direct results found for "${escapeHtml(q)}". Try searching "iPhone", "MacBook", "RTX", or "AI".
+      <div class="p-4 text-center space-y-3">
+        <div class="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto shadow-xs">
+          <i data-lucide="sparkles" class="w-5 h-5 text-orange-600"></i>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-800">No catalog match for "${escapeHtml(q)}"</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Let JAANKAR AI browse specs, benchmark comparisons & verified stores for you!</p>
+        </div>
+        <button type="button" onclick="openJaankarAiWithQuery('${escapeHtml(q)}'); hideSearchDropdown();" class="btn-primary-orange text-xs py-2 px-4 mx-auto cursor-pointer shadow-md inline-flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>Ask JAANKAR AI</span>
+        </button>
       </div>
     `;
     dropdown.classList.remove("hidden");
+    if (window.lucide) lucide.createIcons();
     return;
   }
 
-  let html = `<div class="p-2 space-y-1">`;
-  if (matchedProds.length) {
-    html += `<div class="px-3 py-1 text-[10px] font-black uppercase text-orange-400">Products & Gadgets</div>`;
-    matchedProds.forEach(p => {
+  let html = `<div class="p-1 space-y-2 text-xs">`;
+
+  // Render Smart Tools
+  if (matchedTools.length) {
+    html += `<div class="px-2.5 pt-1 text-[10px] font-black uppercase tracking-wider text-amber-600 flex items-center gap-1"><i data-lucide="wrench" class="w-3 h-3"></i><span>Smart Tools</span></div>`;
+    matchedTools.forEach(t => {
       html += `
-        <div onclick="openProductDetailModal('${p.id}'); document.getElementById('home-search-results-dropdown').classList.add('hidden')" class="p-2.5 rounded-xl hover:bg-slate-800 flex items-center justify-between cursor-pointer transition">
+        <div onclick="openSpecificTool('${t.id}'); hideSearchDropdown();" class="p-2.5 rounded-xl hover:bg-amber-50/60 border border-transparent hover:border-amber-200 flex items-center justify-between cursor-pointer transition">
           <div class="flex items-center gap-2.5">
-            <img src="${p.featuredImage || p.images[0]}" class="w-8 h-8 rounded-lg object-cover">
+            <div class="w-8 h-8 rounded-lg ${t.bg} ${t.color} flex items-center justify-center shrink-0">
+              <i data-lucide="${t.icon}" class="w-4 h-4"></i>
+            </div>
             <div>
-              <p class="text-xs font-bold text-white truncate max-w-[200px] sm:max-w-xs">${escapeHtml(p.name)}</p>
-              <p class="text-[10px] text-slate-400">${escapeHtml(p.category.toUpperCase())}</p>
+              <p class="text-xs font-bold text-slate-900">${escapeHtml(t.name)}</p>
+              <p class="text-[10px] text-slate-500">${escapeHtml(t.desc)}</p>
             </div>
           </div>
-          <span class="text-xs font-black text-orange-400">${p.price}</span>
+          <span class="text-[10px] font-bold text-orange-600">Open Tool →</span>
         </div>
       `;
     });
   }
 
+  // Render Products
+  if (matchedProds.length) {
+    html += `<div class="px-2.5 pt-1 text-[10px] font-black uppercase tracking-wider text-orange-600 flex items-center gap-1"><i data-lucide="cpu" class="w-3 h-3"></i><span>Electronics & Gadgets</span></div>`;
+    matchedProds.forEach(p => {
+      html += `
+        <div onclick="openProductDetailModal('${p.id}'); hideSearchDropdown();" class="p-2.5 rounded-xl hover:bg-orange-50/60 border border-transparent hover:border-orange-200 flex items-center justify-between cursor-pointer transition">
+          <div class="flex items-center gap-2.5">
+            <img src="${p.featuredImage || p.images[0]}" class="w-9 h-9 rounded-lg object-cover border border-slate-200">
+            <div>
+              <p class="text-xs font-bold text-slate-900 truncate max-w-[180px] sm:max-w-xs">${escapeHtml(p.name)}</p>
+              <p class="text-[10px] text-slate-400 uppercase font-semibold">${escapeHtml(p.category)}</p>
+            </div>
+          </div>
+          <span class="text-xs font-black text-orange-600">${p.price}</span>
+        </div>
+      `;
+    });
+  }
+
+  // Render News
   if (matchedNews.length) {
-    html += `<div class="px-3 py-1 text-[10px] font-black uppercase text-blue-400 mt-2">News Articles</div>`;
+    html += `<div class="px-2.5 pt-1 text-[10px] font-black uppercase tracking-wider text-blue-600 flex items-center gap-1"><i data-lucide="newspaper" class="w-3 h-3"></i><span>Tech Bulletins</span></div>`;
     matchedNews.forEach(n => {
       html += `
-        <div onclick="openArticleReader('${n.id}'); document.getElementById('home-search-results-dropdown').classList.add('hidden')" class="p-2.5 rounded-xl hover:bg-slate-800 flex items-center gap-2.5 cursor-pointer transition">
-          <img src="${n.imageUrl}" class="w-8 h-8 rounded-lg object-cover">
-          <p class="text-xs font-bold text-white truncate">${escapeHtml(n.title)}</p>
+        <div onclick="openArticleReader('${n.id}'); hideSearchDropdown();" class="p-2.5 rounded-xl hover:bg-blue-50/60 border border-transparent hover:border-blue-200 flex items-center gap-2.5 cursor-pointer transition">
+          <img src="${n.imageUrl}" class="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0">
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-slate-900 truncate">${escapeHtml(n.title)}</p>
+            <p class="text-[10px] text-slate-400 font-medium">${escapeHtml(n.date || "Today")}</p>
+          </div>
         </div>
       `;
     });
   }
-  html += `</div>`;
 
+  // Always append direct AI query action at bottom
+  html += `
+    <div class="pt-2 border-t border-slate-100">
+      <button type="button" onclick="openJaankarAiWithQuery('${escapeHtml(q)}'); hideSearchDropdown();" class="w-full p-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-600"></i>
+        <span>Ask JAANKAR AI about "${escapeHtml(q)}"</span>
+      </button>
+    </div>
+  `;
+
+  html += `</div>`;
   dropdown.innerHTML = html;
   dropdown.classList.remove("hidden");
+  if (window.lucide) lucide.createIcons();
 }
 window.handleGlobalSearch = handleGlobalSearch;
+
+// Close search dropdown on click outside
+document.addEventListener("click", (e) => {
+  const searchContainer = document.getElementById("global-search-input")?.parentElement?.parentElement;
+  if (searchContainer && !searchContainer.contains(e.target)) {
+    hideSearchDropdown();
+  }
+});
 
 // ----------------------------------------------------------------------------
 // 16. Article Reader Modal & Bookmarking

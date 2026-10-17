@@ -23,6 +23,13 @@ let currentTab = "home";
 let currentCategory = "computers";
 let liveNewsList = [];
 let liveReelsList = [];
+let liveEducationalVideos = [];
+let activeWatchVideoId = null;
+let currentReelIndex = 0;
+let currentMediaTab = "all";
+let currentVideosSearchQuery = "";
+let likedVideosMap = JSON.parse(localStorage.getItem("jaankar_liked_videos") || "{}");
+let likedReelsMap = JSON.parse(localStorage.getItem("jaankar_liked_reels") || "{}");
 let liveProductsList = [];
 let liveHomeSlides = [];
 let currentPlayingVideoUrl = "";
@@ -287,6 +294,149 @@ const fallbackNews = [
   }
 ];
 
+// Fallback Educational Videos Catalog
+const fallbackEducationalVideos = [
+  {
+    id: "vid_1",
+    title: "Complete PC Building Masterclass (2026 Edition): Step-by-Step Assembly",
+    category: "PC Building",
+    duration: "24:15",
+    views: "185K",
+    date: "2 days ago",
+    likes: 3420,
+    videoUrl: "https://www.youtube.com/watch?v=BL4DCEp7blY",
+    thumbnail: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80",
+    description: "The complete hardware masterclass. We assemble a modern AMD Ryzen 7 7800X3D + RTX 4070 Ti Super rig from unboxing to first boot, covering AM5 mounting, dual-channel DDR5 installation, cable routing, and UEFI BIOS configuration.",
+    learningTakeaways: [
+      "Correct CPU pin orientation and AM5 latching without damaging the socket",
+      "Thermal paste application pattern and 360mm AIO cooler hose orientation",
+      "Enabling EXPO/XMP profiles in BIOS for 6000MHz CL30 stable DDR5 speeds",
+      "Anti-sag bracket mounting for heavy 3-slot graphics cards"
+    ],
+    topics: ["AM5 Socket Installation", "AIO 360mm Radiator Setup", "DDR5 Memory Dual Channel", "Cable Management Behind Tray", "First POST & BIOS Update"],
+    recommendedProducts: [
+      { name: "AMD Ryzen 7 7800X3D", search: "Ryzen 7 7800X3D" },
+      { name: "MSI MAG B650 Tomahawk WiFi", search: "MSI B650 Tomahawk" },
+      { name: "Corsair Vengeance 32GB DDR5 6000MHz", search: "Corsair DDR5 6000MHz" }
+    ]
+  },
+  {
+    id: "vid_2",
+    title: "Smartphone Display Tech Explained: OLED vs AMOLED vs LTPO 1-120Hz",
+    category: "Mobile Tech",
+    duration: "14:30",
+    views: "240K",
+    date: "5 days ago",
+    likes: 5120,
+    videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+    thumbnail: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=80",
+    description: "Deep dive into smartphone screen technologies. How emissive organic LEDs work, dynamic LTPO backplanes saving battery at 1Hz, high-frequency PWM eye protection dimming, and measuring true peak nits vs sustained brightness.",
+    learningTakeaways: [
+      "Why true blacks save up to 30% battery on OLED screens with Dark Mode",
+      "How LTPO 3.0 scales dynamically between 1Hz reading and 120Hz gaming",
+      "Why PWM dimming above 2160Hz prevents eye fatigue in low light",
+      "The physics of burn-in and pixel shift mitigation techniques"
+    ],
+    topics: ["OLED Emissive Diodes", "LTPO Oxide Backplane", "PWM Dimming Frequency", "Peak Nit Measurement", "Burn-in Prevention Logic"],
+    recommendedProducts: [
+      { name: "Samsung Galaxy S24 Ultra", search: "Galaxy S24 Ultra" },
+      { name: "OnePlus 12 5G", search: "OnePlus 12" }
+    ]
+  },
+  {
+    id: "vid_3",
+    title: "NVIDIA RTX 40-Series Architecture Teardown: DLSS 3.5 & VRAM Deep Dive",
+    category: "GPU Deep Dive",
+    duration: "18:45",
+    views: "310K",
+    date: "1 week ago",
+    likes: 6890,
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnail: "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=800&auto=format&fit=crop&q=80",
+    description: "An electrical and silicon analysis of modern graphics architectures. We inspect die sizes, Ada Lovelace 4N TSMC process, Tensor Core Ray Reconstruction, optical flow generation, and 12V-2x6 connector safety standards.",
+    learningTakeaways: [
+      "How Ray Reconstruction uses neural networks instead of hand-tuned denoisers",
+      "The impact of VRAM memory bus widths (128-bit vs 256-bit) at 4K gaming",
+      "Proper seating and bending radius for the 12V-2x6 power cable",
+      "Power draw efficiency curves and undervolting via MSI Afterburner"
+    ],
+    topics: ["Ada Lovelace Architecture", "Tensor Cores & Optical Flow", "GDDR6X Memory Bus Math", "12V-2x6 Cable Safety", "Undervolting Guide"],
+    recommendedProducts: [
+      { name: "RTX 4070 Ti Super 16GB", search: "RTX 4070 Ti Super" },
+      { name: "Corsair RM850e ATX 3.0 PSU", search: "Corsair RM850e ATX 3.0" }
+    ]
+  },
+  {
+    id: "vid_4",
+    title: "Apple Silicon M3 Pro vs Intel Core Ultra: Efficiency & Battery Architecture",
+    category: "Laptops & CPU",
+    duration: "16:20",
+    views: "195K",
+    date: "2 weeks ago",
+    likes: 4210,
+    videoUrl: "https://www.youtube.com/watch?v=BL4DCEp7blY",
+    thumbnail: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80",
+    description: "Comparing ARM Unified Memory with x86 modular tile chiplet design. Real-world battery endurance tests, video encoding hardware acceleration, local AI inference performance, and thermal fan profiles.",
+    learningTakeaways: [
+      "Why unified memory allows CPU and GPU to share 18GB+ VRAM with zero latency",
+      "How Intel Meteor Lake & Lunar Lake 3D Foveros packaging stacks tiles",
+      "Real-world battery difference during 4K video editing vs web browsing",
+      "Thermal throttling differences on lap and desk"
+    ],
+    topics: ["ARM vs x86 Architecture", "Unified Memory Bandwidth", "NPU AI Performance TOPS", "Battery Runtime Real World", "Fan Acoustics"],
+    recommendedProducts: [
+      { name: "Apple MacBook Pro 14 M3", search: "MacBook Pro M3" },
+      { name: "Lenovo ThinkPad X1 Carbon", search: "ThinkPad X1 Carbon" }
+    ]
+  },
+  {
+    id: "vid_5",
+    title: "WiFi 7 vs WiFi 6E: Do You Really Need 320MHz Bandwidth & Multi-Link?",
+    category: "Networking",
+    duration: "11:10",
+    views: "89K",
+    date: "3 weeks ago",
+    likes: 2150,
+    videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+    thumbnail: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80",
+    description: "Breaking down the IEEE 802.11be standard. How Multi-Link Operation (MLO) transmits packets across 5GHz and 6GHz bands simultaneously to eliminate ping spikes in wireless gaming.",
+    learningTakeaways: [
+      "What Multi-Link Operation (MLO) does for ultra-low latency packet delivery",
+      "4096-QAM modulation squeezing 20% more raw data per cycle",
+      "Real-world range limitations of the 6GHz spectrum through concrete walls",
+      "Cost vs benefit analysis of upgrading home routers today"
+    ],
+    topics: ["WiFi 7 Standard (802.11be)", "Multi-Link Operation (MLO)", "4096-QAM Modulation", "6GHz Wall Penetration", "Gaming Ping Benchmark"],
+    recommendedProducts: [
+      { name: "WiFi 7 Tri-Band Router", search: "WiFi 7 Router" },
+      { name: "Cat 6A Gigabit Cable", search: "Cat 6A Ethernet" }
+    ]
+  },
+  {
+    id: "vid_6",
+    title: "Camera Sensor Sizes Decoded: Full-Frame vs APS-C vs Micro Four Thirds",
+    category: "Cameras",
+    duration: "13:50",
+    views: "156K",
+    date: "1 month ago",
+    likes: 3820,
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnail: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80",
+    description: "An optical and sensor science guide for creators. How physical sensor surface area alters focal length equivalence, shallow depth-of-field bokeh, low-light ISO noise SNR, and thermal dissipation.",
+    learningTakeaways: [
+      "The mathematics of Crop Factors (1.5x Sony/Nikon, 1.6x Canon, 2.0x M4/3)",
+      "How pixel pitch affects photon capture and dynamic range latitude in RAW",
+      "Why Full-Frame lenses weigh more due to larger glass element coverage",
+      "Matching the right sensor format to YouTube video vs portrait photography"
+    ],
+    topics: ["Crop Factor Physics", "Photon Well Depth & ISO", "Depth of Field Equivalence", "Lens Mount Diameter", "Videography Recommendations"],
+    recommendedProducts: [
+      { name: "Sony Alpha A7 IV Mirrorless", search: "Sony A7 IV" },
+      { name: "Sigma 24-70mm f/2.8 DG DN", search: "Sigma 24-70 f2.8" }
+    ]
+  }
+];
+
 // Fallback Reels
 const fallbackReels = [
   { id: "r1", title: "Top 5 Hidden Android Settings", views: "142K", videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4", thumbnail: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop&q=80" },
@@ -434,8 +584,23 @@ function listenToLiveFirestore() {
       liveReelsList = [...fallbackReels];
     }
     renderReelsRail();
+    if (currentTab === "videos-shorts") renderVideosAndShortsHub();
   }, (err) => {
     console.warn("Reels note:", err.message);
+    liveReelsList = [...fallbackReels];
+  });
+
+  // 4.1. Live Educational Videos Catalog
+  db.collection("educational_videos").onSnapshot((snapshot) => {
+    if (snapshot && !snapshot.empty) {
+      liveEducationalVideos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } else {
+      liveEducationalVideos = [...fallbackEducationalVideos];
+    }
+    if (currentTab === "videos-shorts") renderVideosAndShortsHub();
+  }, (err) => {
+    console.warn("Educational videos note:", err.message);
+    liveEducationalVideos = [...fallbackEducationalVideos];
   });
 
   // 5. Live Website CMS Master Config (Background Graphic, Maintenance, Contacts, APK)
@@ -833,6 +998,7 @@ function switchTab(tabId) {
   const allViews = [
     "home",
     "videos-shorts",
+    "video-watch",
     "news",
     "tools",
     "categories",
@@ -853,7 +1019,7 @@ function switchTab(tabId) {
     // Sidebar active styling (Signature White & Orange Palette)
     const sideBtn = document.getElementById(`sidebar-tab-${v}`);
     if (sideBtn) {
-      if (v === tabId) {
+      if (v === tabId || (tabId === "video-watch" && v === "videos-shorts")) {
         sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/20 font-bold";
       } else {
         sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600 text-slate-600 font-bold";
@@ -863,6 +1029,7 @@ function switchTab(tabId) {
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 
+  if (tabId === "videos-shorts") renderVideosAndShortsHub();
   if (tabId === "categories") renderCategoryProducts(currentCategory);
   if (tabId === "news") renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
   if (tabId === "tools" && typeof initLiveQrCanvas === "function") initLiveQrCanvas();
@@ -1471,16 +1638,46 @@ function createNewsCardHtml(item) {
 }
 
 // ----------------------------------------------------------------------------
-// 11. Reels & Shorts Rail
+// 11. Videos & Tech Shorts Hub, In-Site Theater Player & Interactive Reels Feed
 // ----------------------------------------------------------------------------
+
+function getYouTubeEmbedUrl(url) {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (trimmed.includes("/embed/")) {
+    return trimmed + (trimmed.includes("?") ? "&" : "?") + "autoplay=1&rel=0&modestbranding=1";
+  }
+
+  // 1. YouTube Shorts: youtube.com/shorts/ID
+  const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
+  if (shortsMatch && shortsMatch[1]) {
+    return `https://www.youtube-nocookie.com/embed/${shortsMatch[1]}?autoplay=1&rel=0&modestbranding=1&loop=1`;
+  }
+
+  // 2. Standard YouTube: youtube.com/watch?v=ID
+  const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (vMatch && vMatch[1]) {
+    return `https://www.youtube-nocookie.com/embed/${vMatch[1]}?autoplay=1&rel=0&modestbranding=1`;
+  }
+
+  // 3. Shortened URL: youtu.be/ID
+  const beMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (beMatch && beMatch[1]) {
+    return `https://www.youtube-nocookie.com/embed/${beMatch[1]}?autoplay=1&rel=0&modestbranding=1`;
+  }
+
+  return trimmed;
+}
+window.getYouTubeEmbedUrl = getYouTubeEmbedUrl;
+
 function renderReelsRail() {
   const container = document.getElementById("home-reels-rail") || document.getElementById("home-reels-container");
   if (!container) return;
 
   const list = (liveReelsList && liveReelsList.length) ? liveReelsList : fallbackReels;
   container.innerHTML = list.map(reel => `
-    <div onclick="playVideoInApp('${escapeHtml(reel.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ")}', '${escapeHtml(reel.title || "Tech Reel")}', true)"
-         class="shrink-0 w-36 sm:w-44 relative rounded-2xl overflow-hidden aspect-[9/16] bg-slate-950 group cursor-pointer border border-slate-200 hover:border-orange-500 shadow-sm hover:shadow-md transition">
+    <div onclick="openReelsFeed('${reel.id}')"
+         class="shrink-0 w-36 sm:w-44 relative rounded-2xl overflow-hidden aspect-[9/16] bg-slate-950 group cursor-pointer border border-slate-200 hover:border-orange-500 shadow-xs hover:shadow-md transition">
       <img src="${reel.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400'}" alt="${escapeHtml(reel.title || 'Tech Reel')}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
       <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
       
@@ -1497,6 +1694,573 @@ function renderReelsRail() {
   if (window.lucide) lucide.createIcons();
 }
 window.renderReelsRail = renderReelsRail;
+
+function filterMediaTab(tabName) {
+  currentMediaTab = tabName;
+  const tabs = ["all", "videos", "shorts"];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`media-tab-${t}`);
+    if (btn) {
+      if (t === tabName) {
+        btn.className = "media-filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20 cursor-pointer";
+      } else {
+        btn.className = "media-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer";
+      }
+    }
+  });
+
+  renderVideosAndShortsHub();
+}
+window.filterMediaTab = filterMediaTab;
+
+function handleVideosSearch(query) {
+  currentVideosSearchQuery = (query || "").trim().toLowerCase();
+  const clearBtn = document.getElementById("btn-clear-videos-search");
+  if (clearBtn) {
+    if (currentVideosSearchQuery.length > 0) {
+      clearBtn.classList.remove("hidden");
+    } else {
+      clearBtn.classList.add("hidden");
+    }
+  }
+  renderVideosAndShortsHub();
+}
+window.handleVideosSearch = handleVideosSearch;
+
+function clearVideosSearch() {
+  currentVideosSearchQuery = "";
+  const input = document.getElementById("videos-search-input");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("btn-clear-videos-search");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderVideosAndShortsHub();
+}
+window.clearVideosSearch = clearVideosSearch;
+
+function renderVideosAndShortsHub() {
+  const allVids = liveEducationalVideos.length ? liveEducationalVideos : fallbackEducationalVideos;
+  const allShorts = liveReelsList.length ? liveReelsList : fallbackReels;
+
+  // Update Counters
+  const countAll = document.getElementById("count-all-media");
+  const countVids = document.getElementById("count-edu-videos");
+  const countShorts = document.getElementById("count-tech-shorts");
+
+  if (countAll) countAll.textContent = allVids.length + allShorts.length;
+  if (countVids) countVids.textContent = allVids.length;
+  if (countShorts) countShorts.textContent = allShorts.length;
+
+  const q = currentVideosSearchQuery;
+  const filteredVids = allVids.filter(v => 
+    !q || 
+    (v.title && v.title.toLowerCase().includes(q)) ||
+    (v.category && v.category.toLowerCase().includes(q)) ||
+    (v.description && v.description.toLowerCase().includes(q)) ||
+    (v.topics && v.topics.some(t => t.toLowerCase().includes(q)))
+  );
+
+  const filteredShorts = allShorts.filter(s =>
+    !q ||
+    (s.title && s.title.toLowerCase().includes(q))
+  );
+
+  const secVids = document.getElementById("section-educational-videos");
+  const secShorts = document.getElementById("section-tech-shorts");
+  const emptyState = document.getElementById("videos-empty-state");
+
+  const showVids = (currentMediaTab === "all" || currentMediaTab === "videos") && filteredVids.length > 0;
+  const showShorts = (currentMediaTab === "all" || currentMediaTab === "shorts") && filteredShorts.length > 0;
+
+  if (secVids) secVids.style.display = (currentMediaTab === "all" || currentMediaTab === "videos") ? "block" : "none";
+  if (secShorts) secShorts.style.display = (currentMediaTab === "all" || currentMediaTab === "shorts") ? "block" : "none";
+
+  if (!showVids && !showShorts) {
+    if (emptyState) emptyState.classList.remove("hidden");
+  } else {
+    if (emptyState) emptyState.classList.add("hidden");
+  }
+
+  renderEducationalVideosGrid(filteredVids);
+  renderTechShortsHubGrid(filteredShorts);
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderVideosAndShortsHub = renderVideosAndShortsHub;
+
+function renderEducationalVideosGrid(videos) {
+  const container = document.getElementById("educational-videos-grid");
+  if (!container) return;
+
+  if (!videos.length) {
+    container.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 py-6 font-medium">No educational videos match this filter.</p>`;
+    return;
+  }
+
+  container.innerHTML = videos.map(v => `
+    <div onclick="openVideoWatchPage('${v.id}')" class="jaankar-card overflow-hidden group cursor-pointer hover:border-orange-500 hover:shadow-lg transition flex flex-col justify-between">
+      <div>
+        <div class="relative w-full aspect-video bg-slate-900 overflow-hidden rounded-2xl mb-3">
+          <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${escapeHtml(v.title)}">
+          <div class="absolute inset-0 bg-slate-950/20 group-hover:bg-slate-950/5 transition-colors"></div>
+          
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-11 h-11 rounded-full bg-orange-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-orange-500 transition-all">
+              <i data-lucide="play" class="w-5 h-5 ml-0.5 fill-white"></i>
+            </div>
+          </div>
+
+          <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-950/80 text-white backdrop-blur-xs">
+            ${v.duration || "12:00"}
+          </span>
+
+          <span class="absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/90 text-slate-900 shadow-xs">
+            ${escapeHtml(v.category || "Tutorial")}
+          </span>
+        </div>
+
+        <div class="space-y-1.5 px-1">
+          <h4 class="font-extrabold text-sm text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2 leading-snug">
+            ${escapeHtml(v.title)}
+          </h4>
+          <p class="text-[11px] text-slate-500 line-clamp-2 font-medium">
+            ${escapeHtml(v.description || "")}
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between px-1 text-xs">
+        <div class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span>${v.views || "120K"} views</span>
+        </div>
+
+        <button type="button" onclick="event.stopPropagation(); explainVideoWithAi('${v.id}')" class="px-2.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer" title="Get AI Summary of this Video">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-orange-600"></i>
+          <span>AI Explain</span>
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderTechShortsHubGrid(shorts) {
+  const container = document.getElementById("tech-reels-grid");
+  if (!container) return;
+
+  if (!shorts.length) {
+    container.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 py-6 font-medium">No tech shorts match this filter.</p>`;
+    return;
+  }
+
+  container.innerHTML = shorts.map(reel => `
+    <div onclick="openReelsFeed('${reel.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-slate-950 group cursor-pointer border border-slate-200 hover:border-orange-500 shadow-xs hover:shadow-md transition">
+      <img src="${reel.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="${escapeHtml(reel.title)}">
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+
+      <div class="absolute inset-0 m-auto w-10 h-10 rounded-full bg-orange-600/90 text-white flex items-center justify-center group-hover:scale-110 transition shadow-lg">
+        <i data-lucide="play" class="w-4 h-4 fill-white ml-0.5"></i>
+      </div>
+
+      <div class="absolute bottom-2.5 left-2.5 right-2.5 text-white space-y-1">
+        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/20 backdrop-blur-xs">${reel.views || "120K"} views</span>
+        <h5 class="text-[11px] font-bold line-clamp-2 leading-tight">${escapeHtml(reel.title || "Tech Reel")}</h5>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ----------------------------------------------------------------------------
+// Dedicated In-Site YouTube-Style Theater Watch View
+// ----------------------------------------------------------------------------
+
+function openVideoWatchPage(videoId) {
+  const allVids = liveEducationalVideos.length ? liveEducationalVideos : fallbackEducationalVideos;
+  const video = allVids.find(v => v.id === videoId) || allVids[0];
+  if (!video) return;
+
+  activeWatchVideoId = video.id;
+
+  const hubView = document.getElementById("view-videos-shorts");
+  const watchView = document.getElementById("view-video-watch");
+  if (hubView) hubView.classList.add("hidden");
+  if (watchView) watchView.classList.remove("hidden");
+
+  const iframe = document.getElementById("watch-main-iframe");
+  const videoEl = document.getElementById("watch-main-video");
+
+  const rawUrl = video.videoUrl || "https://www.youtube.com/watch?v=BL4DCEp7blY";
+  const isDirectVideo = rawUrl.includes(".mp4") || rawUrl.includes(".webm") || rawUrl.includes("cloudinary.com");
+
+  if (isDirectVideo) {
+    if (iframe) { iframe.src = ""; iframe.classList.add("hidden"); }
+    if (videoEl) {
+      videoEl.src = rawUrl;
+      videoEl.classList.remove("hidden");
+      videoEl.play().catch(() => {});
+    }
+  } else {
+    if (videoEl) { videoEl.pause(); videoEl.src = ""; videoEl.classList.add("hidden"); }
+    if (iframe) {
+      iframe.src = getYouTubeEmbedUrl(rawUrl);
+      iframe.classList.remove("hidden");
+    }
+  }
+
+  const catBadge = document.getElementById("watch-video-category-badge");
+  const durBadge = document.getElementById("watch-video-duration-badge");
+  const titleEl = document.getElementById("watch-video-title");
+  const statsEl = document.getElementById("watch-video-stats");
+
+  if (catBadge) catBadge.textContent = video.category || "Educational";
+  if (durBadge) durBadge.textContent = video.duration || "15:00";
+  if (titleEl) titleEl.textContent = video.title;
+  if (statsEl) statsEl.textContent = `${video.views || "120K"} views • ${video.date || "Verified Guide"} • HD In-Site Stream`;
+
+  updateWatchLikeDisplay();
+  renderWatchAiBreakdown(video);
+  renderWatchRelatedVideos(video.id);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (window.lucide) lucide.createIcons();
+}
+window.openVideoWatchPage = openVideoWatchPage;
+
+function closeVideoWatchPage() {
+  const iframe = document.getElementById("watch-main-iframe");
+  const videoEl = document.getElementById("watch-main-video");
+  if (iframe) iframe.src = "";
+  if (videoEl) { videoEl.pause(); videoEl.src = ""; }
+
+  const hubView = document.getElementById("view-videos-shorts");
+  const watchView = document.getElementById("view-video-watch");
+  if (watchView) watchView.classList.add("hidden");
+  if (hubView) hubView.classList.remove("hidden");
+}
+window.closeVideoWatchPage = closeVideoWatchPage;
+
+function playRelatedVideo(videoId) {
+  openVideoWatchPage(videoId);
+}
+window.playRelatedVideo = playRelatedVideo;
+
+function renderWatchAiBreakdown(video) {
+  const container = document.getElementById("watch-ai-breakdown-content");
+  if (!container) return;
+
+  const takeaways = (video.learningTakeaways && video.learningTakeaways.length)
+    ? video.learningTakeaways 
+    : ((video.keyTakeaways && video.keyTakeaways.length)
+      ? video.keyTakeaways
+      : [
+        "In-depth hardware specifications and real-world performance benchmarks",
+        "Key engineering concepts explained simply with practical demonstrations",
+        "Verified buying criteria and comparison with current market alternatives"
+      ]);
+
+  const topics = video.topics && video.topics.length 
+    ? video.topics 
+    : ["Overview & Fundamentals", "Hardware Architecture", "Performance Testing", "Final Recommendation"];
+
+  const prods = (video.recommendedProducts && video.recommendedProducts.length)
+    ? video.recommendedProducts
+    : ((video.gadgets && video.gadgets.length) ? video.gadgets : []);
+
+  let html = `
+    <div class="space-y-3.5">
+      <div>
+        <h4 class="text-xs font-black uppercase text-slate-800 tracking-wider mb-1.5 flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>What You Will Learn In This Video</span>
+        </h4>
+        <ul class="space-y-1.5 text-xs text-slate-600">
+          ${takeaways.map(t => `<li class="flex items-start gap-2"><span class="text-orange-500 font-bold">•</span><span>${escapeHtml(t)}</span></li>`).join("")}
+        </ul>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100">
+        <h4 class="text-xs font-black uppercase text-slate-800 tracking-wider mb-1.5 flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-600"></i>
+          <span>Key Topics & Timestamps Covered</span>
+        </h4>
+        <div class="flex flex-wrap gap-1.5">
+          ${topics.map((tp, idx) => `<span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 shadow-2xs">${idx + 1}. ${escapeHtml(tp)}</span>`).join("")}
+        </div>
+      </div>
+  `;
+
+  if (prods.length) {
+    html += `
+      <div class="pt-2 border-t border-slate-100">
+        <h4 class="text-xs font-black uppercase text-slate-800 tracking-wider mb-1.5 flex items-center gap-1.5">
+          <i data-lucide="shopping-cart" class="w-3.5 h-3.5 text-orange-600"></i>
+          <span>Products & Hardware Mentioned in Video</span>
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          ${prods.map(p => `
+            <div class="p-2.5 rounded-xl bg-white border border-orange-200 shadow-2xs flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-900 truncate">${escapeHtml(p.name)}</span>
+              <div class="flex items-center gap-1 shrink-0">
+                <a href="https://www.amazon.in/s?k=${encodeURIComponent(p.search || p.name)}" target="_blank" class="px-2 py-1 rounded bg-[#FF9900] text-black font-extrabold text-[9.5px]">Amazon</a>
+                <a href="https://www.flipkart.com/search?q=${encodeURIComponent(p.search || p.name)}" target="_blank" class="px-2 py-1 rounded bg-[#2874F0] text-white font-extrabold text-[9.5px]">Flipkart</a>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderWatchRelatedVideos(currentId) {
+  const container = document.getElementById("watch-related-videos-container");
+  if (!container) return;
+
+  const allVids = liveEducationalVideos.length ? liveEducationalVideos : fallbackEducationalVideos;
+  const related = allVids.filter(v => v.id !== currentId);
+
+  const badgeEl = document.getElementById("related-videos-count-badge");
+  if (badgeEl) badgeEl.textContent = `${related.length} Videos`;
+
+  container.innerHTML = related.map(v => `
+    <div onclick="playRelatedVideo('${v.id}')" class="p-2.5 rounded-2xl bg-white border border-slate-200 hover:border-orange-400 hover:shadow-md transition flex gap-3 cursor-pointer group">
+      <div class="relative w-32 aspect-video rounded-xl overflow-hidden bg-slate-900 shrink-0">
+        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="${escapeHtml(v.title)}">
+        <span class="absolute bottom-1 right-1 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-slate-950/80 text-white">${v.duration || "12:00"}</span>
+        <div class="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors"></div>
+      </div>
+      <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+        <div>
+          <span class="text-[9.5px] font-black uppercase text-orange-600">${escapeHtml(v.category || "Tech")}</span>
+          <h4 class="text-xs font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors">${escapeHtml(v.title)}</h4>
+        </div>
+        <p class="text-[10px] text-slate-400 font-medium">${v.views || "120K"} views • ${v.date || "Guide"}</p>
+      </div>
+    </div>
+  `).join("");
+  if (window.lucide) lucide.createIcons();
+}
+
+function toggleCurrentWatchLike() {
+  if (!activeWatchVideoId) return;
+  likedVideosMap[activeWatchVideoId] = !likedVideosMap[activeWatchVideoId];
+  localStorage.setItem("jaankar_liked_videos", JSON.stringify(likedVideosMap));
+  updateWatchLikeDisplay();
+  showAppToast(likedVideosMap[activeWatchVideoId] ? "Added to your Liked Videos!" : "Removed from Liked Videos");
+}
+window.toggleCurrentWatchLike = toggleCurrentWatchLike;
+
+function updateWatchLikeDisplay() {
+  const isLiked = !!likedVideosMap[activeWatchVideoId];
+  const icon = document.getElementById("icon-watch-like");
+  const text = document.getElementById("text-watch-likes-count");
+  const btn = document.getElementById("btn-watch-like");
+
+  if (icon && text && btn) {
+    if (isLiked) {
+      btn.className = "px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer";
+      icon.className = "w-4 h-4 text-rose-600 fill-rose-600";
+      text.textContent = "Liked";
+    } else {
+      btn.className = "px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer";
+      icon.className = "w-4 h-4 text-slate-700";
+      text.textContent = "Like";
+    }
+  }
+}
+
+function shareWatchVideo() {
+  const allVids = liveEducationalVideos.length ? liveEducationalVideos : fallbackEducationalVideos;
+  const vid = allVids.find(v => v.id === activeWatchVideoId);
+  const title = vid ? vid.title : "JAANKAR Educational Video";
+  const url = window.location.href;
+
+  if (navigator.share) {
+    navigator.share({ title: title, text: `Watch "${title}" on JAANKAR!`, url: url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      showAppToast("Video link copied to clipboard!");
+    }).catch(() => {
+      showAppToast("Share link: " + url);
+    });
+  }
+}
+window.shareWatchVideo = shareWatchVideo;
+
+function analyzeCurrentWatchVideoWithAi() {
+  const allVids = liveEducationalVideos.length ? liveEducationalVideos : fallbackEducationalVideos;
+  const vid = allVids.find(v => v.id === activeWatchVideoId);
+  if (!vid) return;
+
+  const prompt = `Please provide a deep-dive learning breakdown and key technical takeaways for this video: "${vid.title}". Category: ${vid.category}. Overview: ${vid.description}`;
+  openJaankarAiWithQuery(prompt);
+}
+window.analyzeCurrentWatchVideoWithAi = analyzeCurrentWatchVideoWithAi;
+
+function explainVideoWithAi(videoId) {
+  const allVids = liveEducationalVideos.length ? liveEducationalVideos : fallbackEducationalVideos;
+  const vid = allVids.find(v => v.id === videoId);
+  if (!vid) return;
+
+  const prompt = `Main "${vid.title}" video dekhna chahta hoon. Is video mein kya-kya sikhaya gaya hai, iske main topics kya hain aur isme kaunse hardware/specs dikhaye gaye hain?`;
+  openJaankarAiWithQuery(prompt);
+}
+window.explainVideoWithAi = explainVideoWithAi;
+
+// ----------------------------------------------------------------------------
+// Full-Screen Interactive Reels Feed Player
+// ----------------------------------------------------------------------------
+
+function openReelsFeed(reelId) {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  let idx = list.findIndex(r => r.id === reelId);
+  if (idx === -1) idx = 0;
+  currentReelIndex = idx;
+
+  const modal = document.getElementById("modal-reels-feed");
+  if (modal) {
+    modal.classList.add("active");
+    document.body.classList.add("overflow-hidden");
+  }
+
+  showReelAtIndex(currentReelIndex);
+  window.addEventListener("keydown", handleReelsKeyNavigation);
+}
+window.openReelsFeed = openReelsFeed;
+
+function closeReelsFeed() {
+  const modal = document.getElementById("modal-reels-feed");
+  if (modal) {
+    modal.classList.remove("active");
+    document.body.classList.remove("overflow-hidden");
+  }
+
+  const iframe = document.getElementById("reels-feed-iframe");
+  const video = document.getElementById("reels-feed-video");
+  if (iframe) iframe.src = "";
+  if (video) { video.pause(); video.src = ""; }
+
+  window.removeEventListener("keydown", handleReelsKeyNavigation);
+}
+window.closeReelsFeed = closeReelsFeed;
+
+function handleReelsKeyNavigation(e) {
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    nextReel();
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    prevReel();
+  } else if (e.key === "Escape") {
+    closeReelsFeed();
+  }
+}
+
+function showReelAtIndex(idx) {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  if (!list.length) return;
+
+  if (idx < 0) idx = list.length - 1;
+  if (idx >= list.length) idx = 0;
+  currentReelIndex = idx;
+
+  const reel = list[currentReelIndex];
+  const iframe = document.getElementById("reels-feed-iframe");
+  const video = document.getElementById("reels-feed-video");
+  const titleEl = document.getElementById("reels-feed-title");
+  const viewsEl = document.getElementById("reels-feed-views");
+
+  if (titleEl) titleEl.textContent = reel.title || "Quick Tech Breakdown";
+  if (viewsEl) viewsEl.textContent = `${reel.views || "120K"} views`;
+
+  updateReelLikeDisplay(reel.id);
+
+  const rawUrl = reel.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  const isDirect = rawUrl.includes(".mp4") || rawUrl.includes(".webm") || rawUrl.includes("cloudinary.com");
+
+  if (isDirect) {
+    if (iframe) { iframe.src = ""; iframe.classList.add("hidden"); }
+    if (video) {
+      video.src = rawUrl;
+      video.classList.remove("hidden");
+      video.play().catch(() => {});
+    }
+  } else {
+    if (video) { video.pause(); video.src = ""; video.classList.add("hidden"); }
+    if (iframe) {
+      iframe.src = getYouTubeEmbedUrl(rawUrl);
+      iframe.classList.remove("hidden");
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function nextReel() {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  showReelAtIndex((currentReelIndex + 1) % list.length);
+}
+window.nextReel = nextReel;
+
+function prevReel() {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  showReelAtIndex((currentReelIndex - 1 + list.length) % list.length);
+}
+window.prevReel = prevReel;
+
+function toggleCurrentReelLike() {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  const reel = list[currentReelIndex];
+  if (!reel) return;
+
+  likedReelsMap[reel.id] = !likedReelsMap[reel.id];
+  localStorage.setItem("jaankar_liked_reels", JSON.stringify(likedReelsMap));
+  updateReelLikeDisplay(reel.id);
+  showAppToast(likedReelsMap[reel.id] ? "❤️ Liked Short!" : "Removed like");
+}
+window.toggleCurrentReelLike = toggleCurrentReelLike;
+
+function updateReelLikeDisplay(reelId) {
+  const isLiked = !!likedReelsMap[reelId];
+  const heartIcon = document.getElementById("reels-feed-heart-icon");
+  if (heartIcon) {
+    if (isLiked) {
+      heartIcon.className = "w-5 h-5 text-rose-500 fill-rose-500";
+    } else {
+      heartIcon.className = "w-5 h-5 text-white";
+    }
+  }
+}
+
+function shareCurrentReel() {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  const reel = list[currentReelIndex];
+  const title = reel ? reel.title : "JAANKAR Tech Short";
+  const url = window.location.href;
+
+  if (navigator.share) {
+    navigator.share({ title: title, text: `Watch this short "${title}" on JAANKAR!`, url: url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      showAppToast("Shorts link copied!");
+    });
+  }
+}
+window.shareCurrentReel = shareCurrentReel;
+
+function explainCurrentReelWithAi() {
+  const list = liveReelsList.length ? liveReelsList : fallbackReels;
+  const reel = list[currentReelIndex];
+  if (!reel) return;
+
+  closeReelsFeed();
+  const prompt = `Please explain the key tech tips and takeaway of this short reel: "${reel.title}". What practical step should the user follow?`;
+  openJaankarAiWithQuery(prompt);
+}
+window.explainCurrentReelWithAi = explainCurrentReelWithAi;
 
 // ----------------------------------------------------------------------------
 // 12. Jaankar AI Voice Assistant with Flipkart/Amazon Links

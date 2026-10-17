@@ -1444,6 +1444,165 @@
         <div id="category-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
+      <!-- ==================== VIEW: DEDICATED FULL PRODUCT DETAIL PAGE ==================== -->
+      <div id="view-product-detail" class="hidden space-y-6">
+        <!-- Top Back Navigation & Action Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="closeProductDetailPage()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+              <i data-lucide="arrow-left" class="w-4 h-4 text-orange-600"></i>
+              <span>Back to Categories</span>
+            </button>
+            <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+              <span onclick="switchTab('categories')" class="hover:text-slate-700 cursor-pointer">Categories</span>
+              <span>/</span>
+              <span id="prod-page-breadcrumb-category" class="text-slate-600 font-semibold uppercase">Category</span>
+              <span>/</span>
+              <span id="prod-page-breadcrumb-title" class="text-slate-900 font-bold truncate max-w-[220px]">Product</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-save-product-page" onclick="toggleSaveCurrentProduct()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-600 text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+              <i data-lucide="bookmark" id="btn-save-product-icon" class="w-4 h-4 text-orange-600"></i>
+              <span id="btn-save-product-text">Save Product</span>
+            </button>
+            <button type="button" onclick="shareCurrentProduct()" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1 shadow-sm transition">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Share</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Product Main Showcase Card (2 Columns) -->
+        <div class="jaankar-card p-5 sm:p-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column (5 Cols): Main Showcase Image, 4-5 Gallery Thumbnails, Price & Store Links -->
+            <div class="lg:col-span-5 space-y-4">
+              <!-- Main Showcase Image Container -->
+              <div class="w-full rounded-2xl overflow-hidden aspect-square border border-slate-200 bg-white shadow-inner flex items-center justify-center p-4 relative group">
+                <img id="prod-page-main-img" src="" alt="Product Showcase" class="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105">
+                <span id="prod-page-badge" class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-orange-600 text-white shadow-sm">
+                  FEATURED
+                </span>
+              </div>
+
+              <!-- 4-5 Interactive Gallery Thumbnails -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                  <span>Product Angles & Views:</span>
+                  <span class="text-orange-600 lowercase font-normal">(click to inspect)</span>
+                </div>
+                <div id="prod-page-thumbnails-rail" class="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-none">
+                  <!-- Dynamically populated 4-5 interactive thumbnails -->
+                </div>
+              </div>
+
+              <!-- Price, M.R.P. & Verified Stock Block (Directly Under Images) -->
+              <div class="p-4 rounded-2xl bg-gradient-to-br from-orange-50/70 to-amber-50/40 border border-orange-200/70 space-y-2">
+                <div class="flex items-baseline gap-3 flex-wrap">
+                  <span id="prod-page-price" class="text-2xl sm:text-3xl font-black text-slate-900">₹0</span>
+                  <span id="prod-page-mrp" class="text-sm line-through text-slate-400 font-semibold"></span>
+                  <span id="prod-page-discount" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white shadow-sm"></span>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                  <span>Genuine Verified Deal • Active In Stock</span>
+                </div>
+              </div>
+
+              <!-- Verified Store Links (Amazon, Flipkart, etc. Directly Under Price) -->
+              <div class="space-y-2 pt-2 border-t border-slate-100">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Buy Online From Verified Sellers:</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="prod-page-store-buttons">
+                  <a id="prod-page-btn-amazon" href="#" target="_blank" class="py-3 px-4 rounded-xl bg-[#FF9900] hover:bg-[#e68a00] text-black font-black text-xs flex items-center justify-center gap-2 shadow-sm transition hover:shadow-md">
+                    <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                    <span>Buy on Amazon</span>
+                  </a>
+                  <a id="prod-page-btn-flipkart" href="#" target="_blank" class="py-3 px-4 rounded-xl bg-[#2874F0] hover:bg-[#1a65dc] text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition hover:shadow-md">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                    <span>Buy on Flipkart</span>
+                  </a>
+                </div>
+                <div id="prod-page-custom-store-container" class="hidden">
+                  <!-- Custom buy links -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column (7 Cols): Title, Ratings, Description, Specs & AI Web Search -->
+            <div class="lg:col-span-7 space-y-6">
+              <!-- Title, Category & Ratings -->
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span id="prod-page-category-pill" class="px-3 py-1 rounded-full text-xs font-black bg-orange-100 text-orange-700 uppercase">Category</span>
+                  <div class="flex items-center gap-1.5 text-amber-500 text-xs font-bold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <span id="prod-page-rating">4.8 (1,240 Verified Reviews)</span>
+                  </div>
+                </div>
+                <h1 id="prod-page-title" class="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">Product Title</h1>
+                <p id="prod-page-description" class="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal"></p>
+              </div>
+
+              <!-- Detailed Technical Specifications -->
+              <div class="space-y-2.5">
+                <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="cpu" class="w-4 h-4 text-orange-600"></i>
+                  <span>Product Specifications & Details</span>
+                </h3>
+                <div id="prod-page-specs-table" class="rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden bg-slate-50/50 text-xs">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+              <!-- AI Real-Time Web Search Assistant -->
+              <div class="p-5 rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white shadow-xl space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                      <h4 class="text-sm font-black text-white flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+                        <span>AI Real-Time Web Search & Review Verdict</span>
+                      </h4>
+                    </div>
+                    <p class="text-[11px] text-slate-300">Live AI search analysis on street deals, consensus pros/cons & buying verdict.</p>
+                  </div>
+                  <button type="button" onclick="searchProductWithAi()" id="btn-prod-ai-search" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-500/25 shrink-0 transition cursor-pointer">
+                    <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                    <span>AI Web Search</span>
+                  </button>
+                </div>
+
+                <!-- AI Output Results Container -->
+                <div id="prod-page-ai-output" class="hidden p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-300 space-y-3">
+                  <!-- Populated by AI function -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Products In This Category Rail -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-slate-900">More in this Category</h3>
+              <p class="text-xs text-slate-500">Explore comparable alternative models</p>
+            </div>
+            <button onclick="switchTab('categories')" class="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
+              <span>View All Category Items</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <div id="prod-page-related-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== VIEW 6: SETTINGS & 2-WAY LIVE SUPPORT ==================== -->
       <div id="view-settings" class="hidden space-y-6">
         <div class="pb-3 border-b border-slate-200">

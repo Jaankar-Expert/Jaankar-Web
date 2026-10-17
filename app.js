@@ -3697,52 +3697,127 @@ function handleSendAiMessage(customPrompt = null) {
     const typingEl = document.getElementById(typingId);
     if (typingEl) typingEl.remove();
 
-    const q = userQuery.toLowerCase();
+    const q = userQuery.toLowerCase().trim();
+    const rawClean = userQuery.trim();
     let reply = "";
     let buyCard = "";
 
-    if (q.includes("phone") || q.includes("mobile") || q.includes("20000") || q.includes("25000") || q.includes("s24") || q.includes("oneplus")) {
-      reply = "📱 **Top Smartphone Recommendations:**\n\n1. **Samsung Galaxy S24 Ultra**: Titanium body, 200MP camera & Snapdragon 8 Gen 3.\n2. **OnePlus Nord CE4 5G**: Best value under ₹25,000 with 100W fast charging & Sony LYT-600 sensor.";
-      buyCard = `
-        <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Samsung Galaxy S24 Ultra</p>
-            <p class="text-[10px] text-orange-600 font-bold">₹1,24,999 (7% OFF)</p>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <a href="https://www.amazon.in/s?k=s24+ultra" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition">Amazon</a>
-            <a href="https://www.flipkart.com/search?q=s24+ultra" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition">Flipkart</a>
-          </div>
+    const makeBuyCard = (title, subtitle, queryTerm, approxPrice = null) => `
+      <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-slate-900 truncate">${escapeHtml(title)}</p>
+          <p class="text-[10px] text-orange-600 font-bold">${approxPrice ? approxPrice + ' • ' : ''}${escapeHtml(subtitle || 'Verified Live Stores')}</p>
         </div>
-      `;
-    } else if (q.includes("laptop") || q.includes("macbook") || q.includes("gaming") || q.includes("pc") || q.includes("computer")) {
-      reply = "💻 **Top Laptop & PC Recommendations:**\n\n1. **Apple MacBook Pro 14 (M3 Pro)**: 18 hours battery life, 120Hz ProMotion XDR display.\n2. **Lenovo LOQ 15 Gaming**: Intel Core i5 + RTX 4050 for heavy coding, rendering & 1080p gaming.\n3. **JAANKAR Stealth Pro Rig**: AMD Ryzen 7 7800X3D + RTX 4070 Ti Super for 4K local AI workflows.";
-      buyCard = `
-        <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Apple MacBook Pro M3</p>
-            <p class="text-[10px] text-orange-600 font-bold">₹1,89,900</p>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <a href="https://www.amazon.in/s?k=macbook+pro+m3" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition">Amazon</a>
-            <a href="https://www.flipkart.com/search?q=macbook+pro+m3" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition">Flipkart</a>
-          </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <a href="https://www.amazon.in/s?k=${encodeURIComponent(queryTerm)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition inline-flex items-center gap-1">
+            <span>Amazon</span>
+          </a>
+          <a href="https://www.flipkart.com/search?q=${encodeURIComponent(queryTerm)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition inline-flex items-center gap-1">
+            <span>Flipkart</span>
+          </a>
         </div>
-      `;
-    } else {
-      reply = `Namaste! Aapka prashna mila: "${escapeHtml(userQuery)}".\n\nJAANKAR AI ke anusar, kisi bhi tech product ko kharidne se pehle Processor, RAM generation (DDR5) aur official warranty terms zaroor check karein. Neeche diye gaye direct links se aap latest prices aur customer reviews compare kar sakte hain:`;
-      buyCard = `
-        <div class="mt-2.5 p-3 rounded-xl bg-white border border-orange-200 shadow-xs flex items-center justify-between gap-2">
-          <div>
-            <p class="text-xs font-bold text-slate-900 truncate max-w-[150px]">${escapeHtml(userQuery)}</p>
-            <p class="text-[10px] text-orange-600 font-bold">Compare Deals</p>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <a href="https://www.amazon.in/s?k=${encodeURIComponent(userQuery)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-black font-extrabold text-[10px] shadow-xs transition">Amazon</a>
-            <a href="https://www.flipkart.com/search?q=${encodeURIComponent(userQuery)}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-[#2874F0] hover:bg-[#1a65dc] text-white font-extrabold text-[10px] shadow-xs transition">Flipkart</a>
-          </div>
-        </div>
-      `;
+      </div>
+    `;
+
+    // 1. Odia Greetings & Small Talk
+    if (
+      q.includes("kana karuchha") || q.includes("kana karucha") || q.includes("kana chalichi") ||
+      q.includes("kemiti achha") || q.includes("kemiti acha") || q.includes("namaskar") ||
+      q === "odia" || q.includes("tume kie") || q.includes("tume kiye")
+    ) {
+      reply = "Namaskar! 🙏 Mu JAANKAR AI — aapankara 24/7 personal tech au gadget assistant.\n\nMu aapanku latest smartphone, laptop, PC build au market ra sabutharu badhia offers khojiba re sahayata kari pare. Aaji aapana kounasi particular device baare re janibaku chahunchhanti ki?";
+      buyCard = "";
+    }
+    // 2. Hindi / Hinglish / English Greetings & Casual Queries
+    else if (
+      q === "hi" || q === "hello" || q === "hey" || q === "namaste" || q === "hii" ||
+      q.includes("kya kar rahe ho") || q.includes("kya kar rhe ho") || q.includes("kya kar raha hai") ||
+      q.includes("kya haal") || q.includes("kaise ho") || q.includes("kaisa hai") || q.includes("kaisi ho") ||
+      q.includes("good morning") || q.includes("good evening") || q.includes("good afternoon") ||
+      q.includes("how are you") || q.includes("whats up") || q.includes("what's up")
+    ) {
+      reply = "Namaste! Main bilkul badiya hoon. 😊\n\nMain **JAANKAR AI** hoon — yahan aapke sabhi technology, gadgets, laptops aur phones ke sawalon ke liye taiyar hoon.\n\nAapko aaj kya assist karun? Jaise ki:\n• Kisi laptop ya phone ka detailed specs analysis\n• Best deals on Amazon & Flipkart\n• Custom PC building ya parts compatibility\n\nBataiye, aap kis product ya budget ke baare mein search kar rahe hain?";
+      buyCard = "";
+    }
+    // 3. Identity / Bot Info
+    else if (
+      q.includes("who are you") || q.includes("tum kaun ho") || q.includes("aap kaun ho") ||
+      q.includes("tera naam") || q.includes("kya ho tum") || q.includes("about you")
+    ) {
+      reply = "Main **JAANKAR AI** hoon — India ka specialized Tech Intelligence Assistant! ⚡\n\nMain tech buyers ko empower karta hoon:\n1. **Unbiased Specs Breakdown**: CPU, GPU, Display, Battery aur Build quality ka real-world analysis.\n2. **Store Comparison**: Amazon aur Flipkart ke verified prices aur discounts live scan karna.\n3. **PC Compatibility**: Processors, Motherboards aur RAM generations ka match.\n\nAap koi bhi gadget model ya budget type karke pooch sakte hain!";
+      buyCard = "";
+    }
+    // 4. Specific Product: ASUS ExpertBook P1 i3 13th Gen (or similar ExpertBook / ThinkPad models)
+    else if (q.includes("expertbook") || (q.includes("asus") && (q.includes("p1") || q.includes("i3") || q.includes("13th")))) {
+      reply = "💻 **ASUS ExpertBook P1 (Intel Core i3 13th Gen) — Full Technical Breakdown:**\n\n" +
+        "• **Target Segment**: Commercial / Business & Student Productivity Laptop\n" +
+        "• **Processor**: Intel Core i3-1315U (13th Gen Raptor Lake, 6 Cores [2 Performance + 4 Efficient], 8 Threads, Turbo up to 4.50 GHz, 10MB Intel Smart Cache)\n" +
+        "• **Graphics**: Integrated Intel UHD Graphics (Great for 4K video playback, YouTube, Office, but not for heavy 3D gaming)\n" +
+        "• **RAM & Storage**: 8GB / 16GB DDR4 RAM (expandable via SO-DIMM slot) + 512GB PCIe 4.0 NVMe SSD\n" +
+        "• **Display**: 14-inch or 15.6-inch Full HD (1920x1080) Anti-Glare Display with 180° lay-flat hinge\n" +
+        "• **Build Quality**: Military-grade MIL-STD-810H certified chassis with spill-resistant keyboard and fingerprint sensor\n" +
+        "• **Battery Life**: Approx. 6 to 8 hours regular office multitasking with 42Wh battery\n\n" +
+        "⭐ **JAANKAR AI Verdict**: Agar aapka primary kaam programming, web browsing, online classes, accounting (Tally/Excel) aur office work hai, toh ye ₹32,000 - ₹38,000 range mein bohot robust aur reliable choice hai. Neeche verified stores se price check karein:";
+      buyCard = makeBuyCard("ASUS ExpertBook P1 (i3 13th Gen)", "Commercial Tough Business Laptop", "asus expertbook p1 i3 13th gen", "₹34,990");
+    }
+    // 5. Generic Laptop Searches
+    else if (q.includes("laptop") || q.includes("macbook") || q.includes("thinkpad") || q.includes("vivobook") || q.includes("ideapad") || q.includes("pavilion") || q.includes("loq") || q.includes("tuf") || q.includes("victus")) {
+      let budgetNote = "";
+      if (q.includes("30000") || q.includes("35000") || q.includes("40000")) {
+        budgetNote = "In ₹30K-₹40K: Look for Core i3 12th/13th Gen or Ryzen 5 5500U with minimum 8GB/512GB SSD.";
+      } else if (q.includes("50000") || q.includes("60000")) {
+        budgetNote = "In ₹50K-₹60K: Best options include Intel Core i5 12th/13th Gen or Ryzen 5 7530U with 16GB RAM.";
+      } else if (q.includes("gaming")) {
+        budgetNote = "For Gaming: Choose minimum 6-Core CPU + dedicated RTX 3050 (6GB) or RTX 4050 GPU for modern games.";
+      }
+      reply = `💻 **Laptop Analysis for "${rawClean}":**\n\n` +
+        `• **Processor Recommendation**: Intel Core i5 (13th/14th Gen) ya AMD Ryzen 5 (7000/8000 series) for long-term smooth performance.\n` +
+        `• **RAM**: Kam se kam 16GB prefer karein (multitasking aur future updates ke liye zaroori hai).\n` +
+        `• **Storage**: PCIe Gen4 NVMe SSD (minimum 512GB) boot speed aur file transfers ko 5x fast banata hai.\n` +
+        `• **Display**: 100% sRGB IPS panel ya OLED 120Hz screen eye-strain kam karti hai.\n` +
+        (budgetNote ? `\n💡 **Tip**: ${budgetNote}\n` : "") +
+        `\nNeeche diye gaye direct store links se verified models aur user reviews check karein:`;
+      buyCard = makeBuyCard(rawClean, "Verified Laptop Deals", rawClean);
+    }
+    // 6. Generic Mobile / Smartphone Searches
+    else if (q.includes("phone") || q.includes("mobile") || q.includes("smartphone") || q.includes("iphone") || q.includes("samsung") || q.includes("oneplus") || q.includes("redmi") || q.includes("realme") || q.includes("iqoo") || q.includes("pixel") || q.includes("moto")) {
+      reply = `📱 **Smartphone Market Insights for "${rawClean}":**\n\n` +
+        `• **Performance**: 4nm Chipset (Snapdragon 7+ Gen 3, 8s Gen 3, ya Dimensity 8300 Ultra) best power efficiency dete hain.\n` +
+        `• **Camera**: Mega-pixels se zyada **OIS (Optical Image Stabilization)** aur Sony LYT/IMX sensor size par dhyan dein.\n` +
+        `• **Display**: 120Hz AMOLED / LTPO panel with 1.5K resolution sunlight visibility mein behtareen hai.\n` +
+        `• **Battery**: 5000mAh minimum with 67W-100W Fast Charging.\n\n` +
+        `Neeche diye gaye link se current live bank discounts aur exchange bonus check karein:`;
+      buyCard = makeBuyCard(rawClean, "Top Smartphone Deals & Offers", rawClean);
+    }
+    // 7. PC Build / Components Searches
+    else if (q.includes("pc build") || q.includes("processor") || q.includes("cpu") || q.includes("gpu") || q.includes("graphics card") || q.includes("rtx") || q.includes("motherboard") || q.includes("ram") || q.includes("ddr5") || q.includes("ssd") || q.includes("smps")) {
+      reply = `🖥️ **PC Hardware Architecture Recommendation for "${rawClean}":**\n\n` +
+        `• **CPU + GPU Balance**: GPU ko hamesha budget ka ~40-45% dein taaki gaming/rendering bottleneck na ho.\n` +
+        `• **Motherboard**: VRM heatsinks aur PCIe 5.0 M.2 slot wali motherboard choose karein (e.g. B650 for AMD AM5, B760 for Intel LGA1700).\n` +
+        `• **RAM**: Dual-channel DDR5 6000MHz CL30 (2x16GB) latency aur frame stability ke liye optimal hai.\n` +
+        `• **Power Supply**: 80-Plus Gold certified PSU with Japanese capacitors (Tier A/B).\n\n` +
+        `Parts availability aur discounted prices neeche compare karein:`;
+      buyCard = makeBuyCard(rawClean, "Hardware Components & Rig Deals", rawClean);
+    }
+    // 8. General Budget Queries (e.g. "under 20000", "under 50k", etc.)
+    else if (q.match(/(?:under|below|budget|mein)\s*(?:₹|rs\.?|inr)?\s*(\d+)(?:k)?/i)) {
+      const budgetMatch = q.match(/(?:under|below|budget|mein)\s*(?:₹|rs\.?|inr)?\s*(\d+)(?:k)?/i);
+      const rawNum = parseInt(budgetMatch[1]);
+      const budgetVal = (q.includes("k") && rawNum < 1000) ? rawNum * 1000 : rawNum;
+      reply = `🎯 **Best Tech Recommendations in your budget (~₹${budgetVal.toLocaleString('en-IN')}):**\n\n` +
+        `• **Market Trends**: Is price bracket mein maximum value lene ke liye festival bank offers aur exchange discounts apply karein.\n` +
+        `• **Key Checkpoints**: Latest generation processor, UFS storage speed aur brand service network zaroor dekhein.\n\n` +
+        `Amazon aur Flipkart par live verified best-sellers list dekhein:`;
+      buyCard = makeBuyCard(`Best Tech Under ₹${budgetVal.toLocaleString('en-IN')}`, "Top Rated Gadgets", `electronics under ${budgetVal}`);
+    }
+    // 9. Intelligent General Tech Fallback
+    else {
+      reply = `🔍 **JAANKAR AI Smart Analysis for "${rawClean}":**\n\n` +
+        `Aapke query ke anusar, humne is device / tech topic ka specs aur market trend analyze kiya hai:\n\n` +
+        `• **Key Advice**: Kharidne se pehle release year, brand warranty terms, customer rating (4.0+ with 500+ reviews), aur processor architecture verify karein.\n` +
+        `• **Smart Saving Tip**: Hamesha credit card instant discounts aur exchange offers apply karein taaki ₹1,500 - ₹5,000 tak ki extra bachat ho sake.\n\n` +
+        `Aap is product ke live prices aur customer reviews direct neeche compare kar sakte hain:`;
+      buyCard = makeBuyCard(rawClean, "Verified Deals & Comparisons", rawClean);
     }
 
     msgContainer.insertAdjacentHTML("beforeend", `
@@ -3758,7 +3833,7 @@ function handleSendAiMessage(customPrompt = null) {
 
     // Speak aloud with SpeechSynthesis
     speakAiText(reply.split("\n")[0] || reply);
-  }, 500);
+  }, 400);
 }
 window.handleSendAiMessage = handleSendAiMessage;
 

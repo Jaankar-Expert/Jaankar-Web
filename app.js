@@ -521,42 +521,58 @@ function showGateAuthAlert(msg, isError = true) {
   const box = document.getElementById("gate-auth-alert-box");
   if (!box) return;
   box.className = isError
-    ? "p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-rose-500/10 text-rose-300 border border-rose-500/20"
-    : "p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20";
-  box.innerHTML = `<i data-lucide="${isError ? 'alert-triangle' : 'check-circle'}" class="w-4 h-4 shrink-0"></i><span>${escapeHtml(msg)}</span>`;
+    ? "p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-rose-50 text-rose-700 border border-rose-200"
+    : "p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200";
+  box.innerHTML = `<i data-lucide="${isError ? 'alert-triangle' : 'check-circle'}" class="w-4 h-4 shrink-0 text-${isError ? 'rose-600' : 'emerald-600'}"></i><span>${escapeHtml(msg)}</span>`;
   box.classList.remove("hidden");
-  if (window.lucide) lucide.createIcons();
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    try { lucide.createIcons(); } catch (_) {}
+  }
 }
+window.showGateAuthAlert = showGateAuthAlert;
 
 function hideGateAuthAlert() {
   const box = document.getElementById("gate-auth-alert-box");
   if (box) box.classList.add("hidden");
 }
+window.hideGateAuthAlert = hideGateAuthAlert;
+
+function switchGateToEmail() {
+  hideGateAuthAlert();
+  const formEmail = document.getElementById("gate-email-form");
+  const formOtp = document.getElementById("gate-otp-form");
+  if (formEmail) formEmail.classList.remove("hidden");
+  if (formOtp) formOtp.classList.add("hidden");
+  const inputEmail = document.getElementById("gate-input-email");
+  if (inputEmail) setTimeout(() => inputEmail.focus(), 100);
+}
+window.switchGateToEmail = switchGateToEmail;
 
 function switchGateAuthStep(step) {
-  hideGateAuthAlert();
-  const stepEmail = document.getElementById("gate-step-email");
-  const stepOtp = document.getElementById("gate-step-otp");
   if (step === "email") {
-    if (stepEmail) stepEmail.classList.remove("hidden");
-    if (stepOtp) stepOtp.classList.add("hidden");
+    switchGateToEmail();
   } else {
-    if (stepEmail) stepEmail.classList.add("hidden");
-    if (stepOtp) stepOtp.classList.remove("hidden");
-    const otpInput = document.getElementById("gate-otp-input");
-    if (otpInput) {
-      otpInput.value = "";
-      setTimeout(() => otpInput.focus(), 150);
+    hideGateAuthAlert();
+    const formEmail = document.getElementById("gate-email-form");
+    const formOtp = document.getElementById("gate-otp-form");
+    if (formEmail) formEmail.classList.add("hidden");
+    if (formOtp) formOtp.classList.remove("hidden");
+    const inputOtp = document.getElementById("gate-input-otp");
+    if (inputOtp) {
+      inputOtp.value = "";
+      setTimeout(() => inputOtp.focus(), 150);
     }
   }
 }
 window.switchGateAuthStep = switchGateAuthStep;
 
-async function requestEmailOtp(isResend = false, isGate = true) {
+async function handleSendGateOtp(e, isResend = false) {
+  if (e && e.preventDefault) e.preventDefault();
   hideGateAuthAlert();
-  const emailInput = document.getElementById(isGate ? "gate-email-input" : "auth-email-input");
-  const sendBtn = document.getElementById(isGate ? "gate-send-otp-btn" : "auth-send-otp-btn");
-  const sendBtnText = document.getElementById(isGate ? "gate-send-btn-text" : "auth-send-btn-text");
+
+  const emailInput = document.getElementById("gate-input-email") || document.getElementById("gate-email-input");
+  const sendBtn = document.getElementById("btn-gate-send-otp") || document.getElementById("gate-send-otp-btn");
+  const sendBtnText = document.getElementById("btn-gate-send-text") || document.getElementById("gate-send-btn-text");
 
   let email = (emailInput ? emailInput.value : "").trim().toLowerCase();
   if (isResend && authTargetEmail) {
@@ -565,8 +581,9 @@ async function requestEmailOtp(isResend = false, isGate = true) {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email)) {
-    showGateAuthAlert("Kripya ek valid email address enter karein.");
-    return;
+    showGateAuthAlert("Kripya ek valid email address enter karein (jaise name@example.com).");
+    if (emailInput) emailInput.focus();
+    return false;
   }
 
   authTargetEmail = email;
@@ -583,31 +600,35 @@ async function requestEmailOtp(isResend = false, isGate = true) {
     const data = await res.json();
     if (res.ok && data.success) {
       authOtpSessionToken = data.token;
-      const targetDisplay = document.getElementById(isGate ? "gate-target-email-display" : "auth-target-email-display");
+      const targetDisplay = document.getElementById("gate-target-email-display");
       if (targetDisplay) targetDisplay.textContent = authTargetEmail;
       switchGateAuthStep("otp");
-      showGateAuthAlert("OTP aapke email par bhej diya gaya hai!", false);
+      showGateAuthAlert("OTP aapke email par bhej diya gaya hai! Kripya apna inbox check karein.", false);
     } else {
       showGateAuthAlert(data.error || "OTP bhejne mein asafal. Kripya punah prayas karein.");
     }
   } catch (err) {
     showGateAuthAlert("Network Error: Netlify Function se connect nahi ho saka. " + err.message);
   } finally {
-    if (sendBtnText) sendBtnText.textContent = "Send 6-Digit OTP";
+    if (sendBtnText) sendBtnText.textContent = "Send Verification OTP";
     if (sendBtn) sendBtn.disabled = false;
   }
+  return false;
 }
-window.requestEmailOtp = requestEmailOtp;
+window.handleSendGateOtp = handleSendGateOtp;
+window.requestEmailOtp = handleSendGateOtp;
 
-async function verifyEmailOtp(isGate = true) {
-  const otpInput = document.getElementById(isGate ? "gate-otp-input" : "auth-otp-input");
-  const verifyBtnText = document.getElementById(isGate ? "gate-verify-btn-text" : "auth-verify-btn-text");
-  const verifyBtn = document.getElementById(isGate ? "gate-verify-btn" : "auth-verify-btn");
+async function handleVerifyGateOtp(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const otpInput = document.getElementById("gate-input-otp") || document.getElementById("gate-otp-input");
+  const verifyBtnText = document.getElementById("btn-gate-verify-text") || document.getElementById("gate-verify-btn-text");
+  const verifyBtn = document.getElementById("btn-gate-verify-otp") || document.getElementById("gate-verify-btn");
 
   const otp = (otpInput ? otpInput.value : "").trim();
   if (!otp || otp.length !== 6 || isNaN(otp)) {
-    showGateAuthAlert("Kripya 6-digit ka sahi code enter karein.");
-    return;
+    showGateAuthAlert("Kripya 6-digit ka sahi numeric OTP enter karein.");
+    if (otpInput) otpInput.focus();
+    return false;
   }
 
   hideGateAuthAlert();
@@ -627,49 +648,58 @@ async function verifyEmailOtp(isGate = true) {
 
     const data = await res.json();
     if (res.ok && data.success) {
-      const user = data.user;
+      const user = data.user || {
+        uid: "user_" + Date.now(),
+        email: authTargetEmail,
+        displayName: authTargetEmail.split("@")[0]
+      };
       localStorage.setItem("jaankar_user", JSON.stringify(user));
-      
+
       // Save / Sync to Firestore users collection for Web Admin visibility
-      if (db && user && user.uid) {
-        db.collection("users").doc(user.uid).set({
-          uid: user.uid,
-          email: user.email || "",
-          displayName: user.displayName || user.email.split("@")[0],
-          device: "Web Browser (OTP)",
-          platform: "Web",
-          status: "Active",
-          source: "user-web",
-          lastActive: Date.now(),
-          createdAt: Date.now()
-        }, { merge: true }).catch(err => console.warn("Firestore sync:", err));
+      if (typeof db !== "undefined" && db && user && user.uid) {
+        try {
+          db.collection("users").doc(user.uid).set({
+            uid: user.uid,
+            email: user.email || authTargetEmail,
+            displayName: user.displayName || authTargetEmail.split("@")[0],
+            device: "Web Browser (OTP)",
+            platform: "Web",
+            status: "Active",
+            source: "user-web",
+            lastActive: Date.now(),
+            createdAt: Date.now()
+          }, { merge: true }).catch(err => console.warn("Firestore sync:", err));
+        } catch (_) {}
       }
 
-      showGateAuthAlert("Login Safal Raha! Swagatam, " + user.displayName, false);
+      showGateAuthAlert("Login Safal Raha! Swagatam, " + (user.displayName || "User"), false);
       setTimeout(() => {
         checkMandatoryAuthGate();
-      }, 800);
+      }, 700);
     } else {
-      showGateAuthAlert(data.error || "Galat OTP! Kripya apna email check karein.");
+      showGateAuthAlert(data.error || "Galat OTP! Kripya apna email check karein ya Resend par click karein.");
     }
   } catch (err) {
     showGateAuthAlert("Verification network error: " + err.message);
   } finally {
-    if (verifyBtnText) verifyBtnText.textContent = "Verify & Enter";
+    if (verifyBtnText) verifyBtnText.textContent = "Verify & Enter JAANKAR";
     if (verifyBtn) verifyBtn.disabled = false;
   }
+  return false;
 }
-window.verifyEmailOtp = verifyEmailOtp;
+window.handleVerifyGateOtp = handleVerifyGateOtp;
+window.verifyEmailOtp = handleVerifyGateOtp;
 
-async function loginWithGoogle() {
+async function handleGoogleSignIn() {
   hideGateAuthAlert();
   try {
     if (typeof firebase === "undefined" || !firebase.auth) {
-      throw new Error("Firebase Auth SDK loading... Kripya 2 second baad punah prayas karein.");
+      throw new Error("Firebase Auth SDK load ho raha hai, kripya 2 second baad punah prayas karein.");
     }
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope("profile");
     provider.addScope("email");
+    provider.setCustomParameters({ prompt: 'select_account' });
 
     const result = await firebase.auth().signInWithPopup(provider);
     const u = result.user;
@@ -684,32 +714,40 @@ async function loginWithGoogle() {
 
     localStorage.setItem("jaankar_user", JSON.stringify(userData));
 
-    // Save to Firestore users collection
-    if (db && userData.uid) {
-      db.collection("users").doc(userData.uid).set({
-        uid: userData.uid,
-        email: userData.email || "",
-        displayName: userData.displayName || "User",
-        photoUrl: userData.photoUrl || null,
-        device: "Web Browser (Google)",
-        platform: "Web",
-        status: "Active",
-        source: "user-web",
-        lastActive: Date.now(),
-        createdAt: Date.now()
-      }, { merge: true }).catch(err => console.warn("Firestore sync:", err));
+    if (typeof db !== "undefined" && db && userData.uid) {
+      try {
+        db.collection("users").doc(userData.uid).set({
+          uid: userData.uid,
+          email: userData.email || "",
+          displayName: userData.displayName || "User",
+          photoUrl: userData.photoUrl || null,
+          device: "Web Browser (Google)",
+          platform: "Web",
+          status: "Active",
+          source: "user-web",
+          lastActive: Date.now(),
+          createdAt: Date.now()
+        }, { merge: true }).catch(err => console.warn("Firestore sync:", err));
+      } catch (_) {}
     }
 
-    showGateAuthAlert("Google Login Successful!", false);
+    showGateAuthAlert("Google Login Successful! Welcome " + userData.displayName, false);
     setTimeout(() => {
       checkMandatoryAuthGate();
-    }, 800);
+    }, 700);
   } catch (err) {
     console.error("Google sign in note:", err);
-    showGateAuthAlert(err.message || "Google Sign-In failed.");
+    if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+      showGateAuthAlert("Google Sign-In popup band kar diya gaya tha. Kripya punah koshish karein ya Email OTP se login karein.");
+    } else if (err.code === "auth/popup-blocked") {
+      showGateAuthAlert("Browser ne popup block kar diya. Kripya browser me popups allow karein ya Email OTP use karein.");
+    } else {
+      showGateAuthAlert(err.message || "Google Sign-In mein samasya aayi.");
+    }
   }
 }
-window.loginWithGoogle = loginWithGoogle;
+window.handleGoogleSignIn = handleGoogleSignIn;
+window.loginWithGoogle = handleGoogleSignIn;
 
 function logoutUser() {
   localStorage.removeItem("jaankar_user");
@@ -1715,6 +1753,13 @@ function saveUserProfile() {
 }
 window.saveUserProfile = saveUserProfile;
 
+function handleSaveUserProfile(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  saveUserProfile();
+  return false;
+}
+window.handleSaveUserProfile = handleSaveUserProfile;
+
 function switchAccountSubTab(subTab) {
   const tabs = ["learning", "saved", "downloads"];
   tabs.forEach(t => {
@@ -1827,6 +1872,14 @@ async function sendSupportTextMessage() {
   }
 }
 window.sendSupportTextMessage = sendSupportTextMessage;
+
+function handleSendSupportChatMessage(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  sendSupportTextMessage();
+  return false;
+}
+window.handleSendSupportChatMessage = handleSendSupportChatMessage;
+window.handleSupportImageAttached = handleSupportImageUpload;
 
 function handleSupportImageUpload(event) {
   const file = event.target.files && event.target.files[0];

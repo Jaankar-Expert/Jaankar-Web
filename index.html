@@ -208,7 +208,7 @@
       </div>
 
       <!-- Step 1: Request OTP -->
-      <form id="gate-email-form" onsubmit="handleSendGateOtp(event)" class="space-y-3">
+      <form id="gate-email-form" onsubmit="handleSendGateOtp(event); return false;" class="space-y-3">
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Enter Your Email Address</label>
           <div class="relative">
@@ -217,18 +217,22 @@
                    class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 outline-none transition font-medium">
           </div>
         </div>
-        <button type="submit" id="btn-gate-send-otp" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold">
+        <button type="submit" id="btn-gate-send-otp" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold cursor-pointer">
           <i data-lucide="send" class="w-3.5 h-3.5"></i>
-          <span>Send Verification OTP</span>
+          <span id="btn-gate-send-text">Send Verification OTP</span>
         </button>
       </form>
 
       <!-- Step 2: Verify OTP -->
-      <form id="gate-otp-form" onsubmit="handleVerifyGateOtp(event)" class="space-y-3 hidden">
+      <form id="gate-otp-form" onsubmit="handleVerifyGateOtp(event); return false;" class="space-y-3 hidden">
+        <div class="p-2.5 rounded-xl bg-orange-50/70 border border-orange-100 flex items-center justify-between text-[11px]">
+          <span class="text-slate-600">Sent to: <b id="gate-target-email-display" class="text-slate-900"></b></span>
+          <button type="button" onclick="switchGateToEmail()" class="text-orange-600 hover:underline font-bold">Change</button>
+        </div>
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="block text-[11px] font-bold text-slate-600">Enter 6-Digit OTP</label>
-            <button type="button" onclick="switchGateToEmail()" class="text-[10px] text-orange-600 hover:underline font-bold">Change Email</button>
+            <button type="button" onclick="handleSendGateOtp(event, true)" id="btn-gate-resend" class="text-[10.5px] text-orange-600 hover:underline font-bold">Resend Code</button>
           </div>
           <div class="relative">
             <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
@@ -236,9 +240,9 @@
                    class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 tracking-widest font-mono text-center outline-none transition font-bold">
           </div>
         </div>
-        <button type="submit" id="btn-gate-verify-otp" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold">
+        <button type="submit" id="btn-gate-verify-otp" class="btn-primary-orange w-full justify-center py-2.5 text-xs font-bold cursor-pointer">
           <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-          <span>Verify & Enter JAANKAR</span>
+          <span id="btn-gate-verify-text">Verify & Enter JAANKAR</span>
         </button>
       </form>
 
@@ -1031,7 +1035,7 @@
             </div>
 
             <!-- Chat Input Controls -->
-            <form onsubmit="handleSendSupportChatMessage(event)" class="space-y-2">
+            <form onsubmit="handleSendSupportChatMessage(event); return false;" class="space-y-2">
               <div class="flex items-center gap-2">
                 <input type="text" id="support-chat-input-text" placeholder="Type a message to admin..."
                        class="flex-1 bg-white border border-slate-200 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none">
@@ -1231,7 +1235,7 @@
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <form onsubmit="handleSaveUserProfile(event)" class="space-y-3.5 text-xs">
+      <form onsubmit="handleSaveUserProfile(event); return false;" class="space-y-3.5 text-xs">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Display Name</label>
           <input type="text" id="edit-profile-input-name" required class="w-full bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-xl px-3 py-2 text-slate-900">
@@ -1276,7 +1280,7 @@
     </div>
 
     <div class="p-4 border-t border-slate-100 space-y-2 bg-slate-50">
-      <form onsubmit="handleSendAiMessage(event)" class="flex items-center gap-2">
+      <form onsubmit="handleSendAiMessage(event); return false;" class="flex items-center gap-2">
         <input type="text" id="ai-user-query-input" placeholder="Ask about laptops, processors, or deals..."
                class="flex-1 bg-white border border-slate-200 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none">
         <button type="button" id="btn-ai-voice-talk" onclick="toggleAiVoiceTalk()" class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 hover:bg-orange-200 flex items-center justify-center transition shrink-0" title="Speak via Microphone">
@@ -1290,6 +1294,6 @@
   </div>
 
   <!-- Master Logic Script -->
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

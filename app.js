@@ -33,6 +33,17 @@ let likedReelsMap = JSON.parse(localStorage.getItem("jaankar_liked_reels") || "{
 let liveProductsList = [];
 let liveHomeSlides = [];
 let currentPlayingVideoUrl = "";
+let currentNewsSubTab = "all";
+let currentNewsSearchQuery = "";
+let currentNewsDateFilter = "";
+let activeArticleId = null;
+let isArticleAudioPlaying = false;
+let articleAudioUtterance = null;
+let currentArticleSpeed = 1.0;
+let savedNewsMap = JSON.parse(localStorage.getItem("jaankar_saved_news") || "{}");
+let topNewsVideoConfig = null;
+let currentWatchSourceTab = "videos-shorts";
+let isTopNewsAudioMuted = true;
 let isSidebarOpen = false;
 let currentSlideIndex = 0;
 let slideIntervalTimer = null;
@@ -241,56 +252,259 @@ const defaultProductsCatalog = [
 // Fallback News Items with date tags & video branches
 const fallbackNews = [
   {
-    id: "news_1",
-    title: "AI Smartphones 2026: On-Device GenAI Feature Guide & Real Battery Tests",
-    category: "smartphones",
+    id: "news_breaking_1",
+    type: "breaking",
+    title: "🚨 Breaking: Next-Gen 3nm Flagship Processors Announced with 50% AI Efficiency Boost",
+    subtitle: "New silicon architecture promises all-day heavy compute with zero thermal throttling and instant on-device LLM reasoning.",
+    category: "Processors",
     author: "JAANKAR Tech Desk",
-    timestamp: Date.now() - 3600000 * 2,
+    authorAvatar: "J",
+    timestamp: Date.now() - 3600000 * 1, // 1 hour ago
     dateTag: new Date().toISOString().split("T")[0],
     readTime: "3 min read",
-    imageUrl: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=1000&auto=format&fit=crop&q=80",
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     isYouTube: true,
-    content: "Latest on-device artificial intelligence processing transforms how smartphones handle photography, voice translation, and battery endurance. In this breakdown, we examine NPU architectures across flagship chipsets."
+    content: "Global semiconductor giants have officially announced the rollout of next-gen 3nm architectural nodes. The new mobile and desktop chips integrate dedicated 45 TOPS neural processing units (NPUs), achieving up to 50% lower power draw during real-time image generation and speech translation.",
+    articleBody: `Global semiconductor foundries have officially unveiled their flagship 3-nanometer compute platform, setting a new benchmark for energy efficiency and on-device artificial intelligence capabilities.
+
+Key Architectural Advancements:
+The new architecture integrates a hybrid 10-core CPU cluster with next-generation NPU silicon capable of delivering over 45 TOPS of integer precision throughput. This allows devices to execute 7-billion parameter language models locally without sending private queries to remote cloud clusters.
+
+Thermal Management & Battery Life:
+Through advanced backside power delivery network (BSPDN) routing, the chipset reduces voltage drop across the silicon matrix. Early benchmark figures reveal a 38% reduction in peak heat generation and an average battery life increase of up to 4.5 hours under continuous heavy workloads.
+
+Commercial Availability:
+Commercial smartphones and thin-and-light laptops powered by this architecture are scheduled to begin retail shipping next month across global and Indian markets.`,
+    takeaways: [
+      "Next-Gen 3nm silicon delivers 45 TOPS NPU throughput",
+      "Backside power delivery cuts peak thermal heat by 38%",
+      "Enables 7B parameter AI models to run completely offline",
+      "Consumer devices shipping across retail channels next month"
+    ]
   },
   {
-    id: "news_2",
-    title: "Laptops with 30-Hour Battery: ARM Silicon Architecture Comparison",
-    category: "laptops",
+    id: "news_headline_1",
+    type: "headline",
+    title: "⚡ Headline: Ultra-Fast 240W GaN Charging Standard Cleared for Global Consumer Laptops",
+    subtitle: "Universal USB-PD 3.1 certification ensures safe 0 to 100% charging in just 19 minutes with dual safety monitoring.",
+    category: "Hardware",
     author: "Hardware Lab",
-    timestamp: Date.now() - 3600000 * 5,
-    dateTag: new Date(Date.now() - 86400000).toISOString().split("T")[0],
-    readTime: "4 min read",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80",
-    videoUrl: "",
-    isYouTube: false,
-    content: "ARM architecture on modern laptops offers unprecedented battery efficiency without compromising thermal limits. Here is how modern instruction sets optimize multithreaded coding workloads."
-  },
-  {
-    id: "news_3",
-    title: "Cyber Security Alert: New Two-Factor Authentication Phishing Bypasses Detected",
-    category: "security",
-    author: "JAANKAR Shield",
-    timestamp: Date.now() - 3600000 * 8,
-    dateTag: new Date(Date.now() - 86400000 * 2).toISOString().split("T")[0],
+    authorAvatar: "H",
+    timestamp: Date.now() - 3600000 * 3, // 3 hours ago
+    dateTag: new Date().toISOString().split("T")[0],
     readTime: "2 min read",
-    imageUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80",
-    videoUrl: "",
-    isYouTube: false,
-    content: "Security researchers have identified automated reverse-proxy attacks designed to intercept session cookies during 2FA logins. Learn how to switch to hardware security keys and Passkeys for foolproof security."
-  },
-  {
-    id: "news_4",
-    title: "How to Build Custom Offline AI Voice Assistants on Android",
-    category: "ai",
-    author: "AI Lab",
-    timestamp: Date.now() - 3600000 * 12,
-    dateTag: new Date(Date.now() - 86400000 * 3).toISOString().split("T")[0],
-    readTime: "5 min read",
-    imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1000&auto=format&fit=crop&q=80",
     videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
     isYouTube: true,
-    content: "Quantized 4-bit local LLMs can now run seamlessly on modern mid-range Android devices. Follow our step-by-step developer guide on configuring MediaPipe and Gemini Nano for edge inference."
+    content: "The universal USB-IF consortium has formally cleared the 240W Gallium Nitride (GaN) rapid power delivery standard for high-performance mobile workstations. The standard integrates dual dynamic thermal telemetry.",
+    articleBody: `The USB Implementers Forum has officially certified the latest revision of the USB Power Delivery 3.1 Extended Power Range (EPR) standard, authorizing 240W high-speed GaN power adapters for consumer laptops and workstations.
+
+GaN Transistor Breakthrough:
+By replacing legacy silicon MOSFETs with wide bandgap Gallium Nitride components, the new power bricks are over 55% smaller in physical footprint than conventional 200W+ laptop power supplies while running significantly cooler.
+
+Dual-Layer Battery Safety:
+To safeguard lithium-ion battery health, the protocol mandates continuous 100Hz real-time communication between the charger microcontroller and battery management system (BMS), modulating voltage in 20mV increments to prevent electrolytic degradation.`,
+    takeaways: [
+      "240W USB-PD 3.1 standard officially certified globally",
+      "GaN semiconductors reduce charger size by 55%",
+      "100Hz real-time BMS communication prevents battery wear",
+      "Full 0 to 100% workstation top-up in under 20 minutes"
+    ]
+  },
+  {
+    id: "news_video_1",
+    type: "video",
+    title: "🎥 In-Depth Review: RTX 5080 vs RTX 4090 Architecture & Real FPS Benchmark Teardown",
+    subtitle: "Complete testing across Cyberpunk 2077, Blender 4.2 rendering, 4K ray tracing and power consumption curves.",
+    category: "Graphics Cards",
+    author: "JAANKAR PC Lab",
+    authorAvatar: "P",
+    timestamp: Date.now() - 3600000 * 7, // 7 hours ago
+    dateTag: new Date().toISOString().split("T")[0],
+    readTime: "18:30 Watch",
+    imageUrl: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1000&auto=format&fit=crop&q=80",
+    videoUrl: "https://www.youtube.com/watch?v=BL4DCEp7blY",
+    isYouTube: true,
+    content: "In our hands-on hardware teardown, we benchmark the RTX 5080 against the RTX 4090 in rasterization, DLSS 4 frame generation, and AI inferencing workloads to help creators and gamers decide their upgrade path.",
+    articleBody: `Today we dive into the comprehensive thermal, power, and architectural breakdown comparing the latest Blackwell RTX 5080 against the venerable RTX 4090 flagship.
+
+Architectural Differences:
+The RTX 5080 utilizes high-bandwidth GDDR7 memory operating at 30 Gbps, providing massive bandwidth headroom even across a 256-bit memory interface. Tensor cores receive dedicated FP4 precision math units that accelerate modern generative video pipelines.
+
+Gaming & Ray Tracing Performance:
+In rasterized 4K gaming, the RTX 5080 matches the RTX 4090 while pulling 120W less peak board power. When ray reconstruction and neural frame generation are engaged, the 5080 pulls ahead by 15-22% in average framerates.`,
+    takeaways: [
+      "RTX 5080 delivers RTX 4090 performance at 120W lower power",
+      "30 Gbps GDDR7 memory provides unprecedented memory bandwidth",
+      "DLSS 4 frame reconstruction boosts 4K gaming by 20%",
+      "Excellent value proposition for both 3D artists and gamers"
+    ]
+  },
+  {
+    id: "news_article_1",
+    type: "article",
+    title: "The Complete Guide to Local On-Device AI Models: Running LLMs Completely Offline in 2026",
+    subtitle: "How to configure quantized open-weights models on consumer laptops and Android smartphones for absolute privacy and zero latency.",
+    category: "Artificial Intelligence",
+    author: "Vikram Sharma, Senior AI Architect",
+    authorAvatar: "V",
+    timestamp: Date.now() - 3600000 * 14, // 14 hours ago
+    dateTag: new Date().toISOString().split("T")[0],
+    readTime: "5 min read",
+    imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1000&auto=format&fit=crop&q=80",
+    videoUrl: "",
+    isYouTube: false,
+    content: "Running AI models locally is no longer just a hobbyist experiment. With 4-bit AWQ quantization and Vulkan/Metal acceleration, any modern laptop with 16GB RAM can execute private, blazing-fast intelligence entirely offline.",
+    articleBody: `The democratization of open-weights foundational models has fundamentally reshaped personal computing. For years, accessing state-of-the-art language comprehension demanded persistent internet connectivity and trusting third-party servers with sensitive data. Today, on-device local execution has become practical for every professional.
+
+1. Why Local On-Device AI Matters
+Privacy and latency are the two defining benefits of local inference. When an AI processes your private medical records, legal contracts, or source code directly in system memory, zero bytes leave your machine. Furthermore, because network hops are eliminated, token generation begins instantaneously with zero queue delays.
+
+2. Understanding Quantization (GGUF & AWQ)
+Raw 16-bit floating point model weights require colossal VRAM. A 7-billion parameter model typically demands over 14GB of video memory. Through modern quantization algorithms such as GGUF (K-quant) and Activation-aware Weight Quantization (AWQ), weight matrices are compressed into 4-bit integers with less than 1% degradation in perplexity. This reduces the memory requirement down to a mere 4.2GB, fitting comfortably into mid-tier laptop memory.
+
+3. Hardware Recommendations & Acceleration
+Modern integrated NPUs and unified memory architectures (such as Apple Silicon and Snapdragon X Elite) excel at local inference due to high memory bandwidth. For Windows PCs with discrete NVIDIA or AMD GPUs, runtime backends like Ollama and llama.cpp automatically offload compute layers to CUDA and ROCm cores.
+
+4. Step-by-Step Setup
+Getting started takes less than five minutes:
+- Download a lightweight local inference runtime such as Ollama or LM Studio.
+- Pull an optimized instruct model (e.g. Llama 3.2 3B or Gemma 2 9B).
+- Connect your local IDE, markdown editor, or command terminal to the local REST endpoint (http://localhost:11434).
+
+Conclusion:
+Local AI represents the true spirit of personal computing—giving users complete sovereignty over their data, their tools, and their compute resources.`,
+    takeaways: [
+      "Local inference offers 100% data sovereignty and zero cloud dependency",
+      "4-bit quantization reduces 7B models from 14GB down to 4.2GB memory",
+      "Instant token generation without network latency or API rate limits",
+      "Compatible across modern Windows, macOS, and Linux systems"
+    ]
+  },
+  {
+    id: "news_breaking_2",
+    type: "breaking",
+    title: "🚨 Breaking: Critical Zero-Day Vulnerability Patched Across Major Web Browsers",
+    subtitle: "Immediate update advisory issued for Chromium and WebKit rendering engines to prevent remote code execution.",
+    category: "Cybersecurity",
+    author: "JAANKAR Shield Team",
+    authorAvatar: "S",
+    timestamp: Date.now() - 3600000 * 26, // 1 day ago
+    dateTag: new Date(Date.now() - 86400000).toISOString().split("T")[0],
+    readTime: "2 min read",
+    imageUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1000&auto=format&fit=crop&q=80",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    isYouTube: true,
+    content: "Security research teams have uncovered an active integer overflow vulnerability inside the V8 JavaScript JIT compiler. All users are strongly advised to apply the latest security updates immediately.",
+    articleBody: `A critical zero-day memory safety flaw designated CVE-2026-1180 has been identified in wild exploitation targeting Chromium-based web browsers.
+
+Vulnerability Analysis:
+The flaw resides in the JIT compiler's escape analysis optimization pass. Under specific conditions, an attacker can craft a malformed WebAssembly payload that forces memory bounds checking to fail, granting arbitrary memory read and write primitives.
+
+Remediation Steps:
+Browser vendors have deployed emergency out-of-band updates. Users should immediately verify that their browser version is on the latest security patch level by checking their browser settings update panel.`,
+    takeaways: [
+      "CVE-2026-1180 patched in emergency browser update",
+      "Affects V8 JavaScript JIT memory optimization pass",
+      "Users urged to restart and update browsers immediately",
+      "No user action beyond updating is required"
+    ]
+  },
+  {
+    id: "news_headline_2",
+    type: "headline",
+    title: "⚡ Headline: Solid-State Battery Tech Reaches 1,000 Km Electric Vehicle Benchmark",
+    subtitle: "Automotive testing laboratories confirm 80% charge in 12 minutes with non-flammable ceramic electrolyte.",
+    category: "EV & Tech",
+    author: "AutoTech Desk",
+    authorAvatar: "A",
+    timestamp: Date.now() - 3600000 * 32, // 1 day ago
+    dateTag: new Date(Date.now() - 86400000).toISOString().split("T")[0],
+    readTime: "3 min read",
+    imageUrl: "https://images.unsplash.com/photo-1558441719-8b489c63f7d1?w=1000&auto=format&fit=crop&q=80",
+    videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+    isYouTube: true,
+    content: "Leading automotive manufacturers have successfully concluded pilot track trials of solid-state lithium-metal cells. The pack achieved 1,050 km on a single charge while operating across severe temperature extremes.",
+    articleBody: `Solid-state battery commercialization crossed a momentous milestone today as production-line pilot prototypes demonstrated over 1,000 kilometers of real-world highway range.
+
+Ceramic Electrolyte Superiority:
+By ditching liquid organic electrolytes in favor of a solid ceramic separator, the risk of thermal runaway and battery fires is virtually eliminated. The cell can withstand operating temperatures exceeding 80°C without risk of combustion.
+
+Extreme Fast Charging:
+Thanks to lithium dendrite prevention from the solid barrier, the cells support continuous 4C charging rates, allowing drivers to recharge from 10% to 80% capacity in approximately 12 minutes at standard ultra-fast charging stations.`,
+    takeaways: [
+      "1,050 km single-charge highway range achieved in pilot trials",
+      "Solid ceramic separator eliminates thermal runaway hazards",
+      "10% to 80% charging completed in under 12 minutes",
+      "Mass production vehicles planned for 2027 rollout"
+    ]
+  },
+  {
+    id: "news_article_2",
+    type: "article",
+    title: "OLED vs Mini-LED vs Micro-LED: Which Display Technology Truly Dominates for Gaming & Work?",
+    subtitle: "A deep-dive engineering analysis into burn-in risks, peak HDR nits, color gamut coverage and long-term panel longevity.",
+    category: "Displays",
+    author: "Rajesh K., Hardware Analyst",
+    authorAvatar: "R",
+    timestamp: Date.now() - 3600000 * 50, // 2 days ago
+    dateTag: new Date(Date.now() - 86400000 * 2).toISOString().split("T")[0],
+    readTime: "6 min read",
+    imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+    videoUrl: "",
+    isYouTube: false,
+    content: "Display technology has splintered into three distinct paradigms. We break down the physics, viewing angles, subpixel layouts, and real-world durability of QD-OLED, WOLED, Mini-LED with local dimming, and Micro-LED.",
+    articleBody: `Selecting the ideal display in 2026 is no longer a simple question of resolution and refresh rate. The underlying emissive or transmissive technology dictates everything from perceived contrast ratio to text clarity and panel lifespan.
+
+1. OLED (QD-OLED and WOLED)
+OLED remains the undisputed king of contrast. Because each individual subpixel emits its own light, an OLED display can produce absolute, true zero black levels (0.000 nits). This gives HDR games and films an unparalleled sense of depth and three-dimensionality. Furthermore, pixel response times are nearly instantaneous (0.03ms), virtually eliminating motion blur in high-refresh esports titles. However, prolonged display of static UI elements (such as spreadsheets and IDE taskbars) carries a theoretical risk of burn-in.
+
+2. Mini-LED (Quantum Dot Backlight)
+Mini-LED displays utilize thousands of miniature LED diodes arranged into hundreds or thousands of independent full-array local dimming (FALD) zones behind a high-speed IPS or VA liquid crystal panel. While Mini-LED cannot match OLED's per-pixel black cutoff (yielding subtle blooming around white text on dark backgrounds), it blows OLED away in peak brightness—easily reaching 1,600 to 2,000 nits of sustained brightness. For sunlit office spaces and HDR mastering without burn-in concerns, Mini-LED is a powerhouse.
+
+3. Micro-LED: The Holy Grail
+Micro-LED combines the best attributes of both worlds: microscopic self-emissive inorganic Gallium Nitride LEDs that produce infinite contrast like OLED, but with the immense 4,000+ nit brightness and infinite lifespan of inorganic semiconductors. While manufacturing yields currently keep Micro-LED prices high, production costs are plummeting rapidly.
+
+Summary & Recommendation:
+- Choose OLED for competitive gaming, dark room media consumption, and cinematic vibrancy.
+- Choose Mini-LED for heavy daytime productivity, spreadsheet work, and bright rooms.
+- Watch Micro-LED as the future standard of all consumer displays over the coming decade.`,
+    takeaways: [
+      "OLED offers true zero black levels (0.000 nits) and instantaneous 0.03ms response",
+      "Mini-LED dominates in sustained brightness (1,600+ nits) with zero burn-in risk",
+      "Micro-LED merges infinite contrast with inorganic durability",
+      "Match your display panel to your primary room ambient lighting"
+    ]
+  },
+  {
+    id: "news_video_2",
+    type: "video",
+    title: "🎥 Step-by-Step Custom Liquid Cooling PC Build: Avoiding Air Bubbles & Thermal Leaks",
+    subtitle: "From bending hard acrylic tubing to leak-testing with pressure pumps and dialing in coolant flow rates.",
+    category: "PC Building",
+    author: "JAANKAR Lab Masterclass",
+    authorAvatar: "M",
+    timestamp: Date.now() - 3600000 * 72, // 3 days ago
+    dateTag: new Date(Date.now() - 86400000 * 3).toISOString().split("T")[0],
+    readTime: "22:15 Watch",
+    imageUrl: "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=1000&auto=format&fit=crop&q=80",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    isYouTube: true,
+    content: "Custom liquid cooling delivers whisper-quiet acoustics and ultra-low CPU/GPU junction temperatures. In this video, we demonstrate tube bending, dual-radiator loop design, and air-pressure leak testing.",
+    articleBody: `Building an open-loop custom liquid cooling PC requires precision, preparation, and the right sequence of assembly.
+
+Radiator Sizing & Loop Order:
+As a golden rule of custom loops, allocate at least 120mm of radiator surface area for every 100W of system heat output. For modern high-end builds featuring a 250W CPU and 450W GPU, dual 360mm or 420mm copper radiators provide ample cooling capacity.
+
+Air-Pressure Leak Testing:
+Never fill a new loop with liquid coolant right away. Always utilize an air-pressure leak tester pressurized to 0.6 bar for 20 minutes. If the pressure gauge stays rock-solid, your fittings and O-rings are 100% leak-proof.`,
+    takeaways: [
+      "Allocate 120mm radiator surface area per 100W of component TDP",
+      "Air-pressure leak testing prevents liquid damage before filling",
+      "Dual D5 pump setups provide redundancy and balanced flow rates",
+      "Maintains whisper-quiet sub-30 dB acoustic profiles under full load"
+    ]
   }
 ];
 
@@ -1000,6 +1214,7 @@ function switchTab(tabId) {
     "videos-shorts",
     "video-watch",
     "news",
+    "article-detail",
     "tools",
     "categories",
     "settings",
@@ -1019,7 +1234,7 @@ function switchTab(tabId) {
     // Sidebar active styling (Signature White & Orange Palette)
     const sideBtn = document.getElementById(`sidebar-tab-${v}`);
     if (sideBtn) {
-      if (v === tabId || (tabId === "video-watch" && v === "videos-shorts")) {
+      if (v === tabId || (tabId === "video-watch" && v === "videos-shorts") || (tabId === "article-detail" && v === "news")) {
         sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/20 font-bold";
       } else {
         sideBtn.className = "w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600 text-slate-600 font-bold";
@@ -1031,7 +1246,15 @@ function switchTab(tabId) {
 
   if (tabId === "videos-shorts") renderVideosAndShortsHub();
   if (tabId === "categories") renderCategoryProducts(currentCategory);
-  if (tabId === "news") renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
+  if (tabId === "news") {
+    renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
+    startTopNewsVideoAutoplay();
+  } else {
+    pauseTopNewsVideo();
+  }
+  if (tabId !== "article-detail") {
+    stopArticleAudio();
+  }
   if (tabId === "tools" && typeof initLiveQrCanvas === "function") initLiveQrCanvas();
   if (tabId === "settings") loadSettingsInfo();
   if (tabId === "account") renderAccountDetails();
@@ -1128,6 +1351,12 @@ function applyWebsiteCmsConfig(cfg) {
   if (copyrightText) {
     const copyEl = document.getElementById("web-copyright-text");
     if (copyEl) copyEl.textContent = copyrightText;
+  }
+
+  // 9. News Desk Top Auto-Playing Video Sync
+  if (cfg.newsTopVideo) {
+    topNewsVideoConfig = cfg.newsTopVideo;
+    renderTopNewsVideo(topNewsVideoConfig);
   }
 }
 
@@ -1523,120 +1752,857 @@ function renderBreakingNewsSlider(newsArray = null) {
   `).join("");
 }
 
-function renderNewsDesk(newsArray = null) {
-  const container = document.getElementById("news-desk-container");
+// ----------------------------------------------------------------------------
+// 10. News Desk Hub, Top Auto-Playing Video, Sub-Tabs, Theater & Article Audio
+// ----------------------------------------------------------------------------
+
+const defaultTopNewsVideo = {
+  id: "top_news_default",
+  title: "Daily Technology Bulletin: Big Leaks & Updates",
+  subtitle: "Watch today's most critical tech news, smartphone releases, AI model breakthroughs and price drops directly inside the website.",
+  videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&auto=format&fit=crop&q=80",
+  channel: "JAANKAR News Desk",
+  badge: "TOP NEWS BULLETIN",
+  isActive: true
+};
+
+function renderBreakingNewsSlider(newsArray = null) {
+  const container = document.getElementById("breaking-news-carousel");
   if (!container) return;
 
   const list = newsArray || (liveNewsList.length ? liveNewsList : fallbackNews);
-  container.innerHTML = list.map(item => createNewsCardHtml(item)).join("");
+  container.innerHTML = list.slice(0, 5).map(item => `
+    <div onclick="${item.type === 'article' ? `openArticleDetailView('${item.id}')` : `playNewsVideoInWatchTheater('${item.id}')`}" class="min-w-[280px] sm:min-w-[340px] p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-orange-500/40 flex items-center gap-3 cursor-pointer group transition">
+      <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400'}" class="w-16 h-16 rounded-xl object-cover shrink-0">
+      <div class="flex-1 min-w-0">
+        <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-orange-600/30 text-orange-400">
+          ${escapeHtml(item.type ? item.type.toUpperCase() : "NEWS")}
+        </span>
+        <h4 class="text-xs font-bold text-white group-hover:text-orange-400 truncate mt-1">${escapeHtml(item.title)}</h4>
+        <p class="text-[10px] text-slate-400 mt-0.5">${item.readTime || "2 min read"}</p>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderTopNewsVideo(cfg = null) {
+  const videoCfg = cfg || topNewsVideoConfig || defaultTopNewsVideo;
+  const iframe = document.getElementById("news-top-video-iframe");
+  const videoPlayer = document.getElementById("news-top-video-player");
+  const titleEl = document.getElementById("news-top-video-title");
+  const subtitleEl = document.getElementById("news-top-video-subtitle");
+  const channelEl = document.getElementById("news-top-video-channel");
+  const badgeEl = document.getElementById("news-top-video-badge");
+
+  if (titleEl && videoCfg.title) titleEl.textContent = videoCfg.title;
+  if (subtitleEl && videoCfg.subtitle) subtitleEl.textContent = videoCfg.subtitle;
+  if (channelEl && videoCfg.channel) channelEl.textContent = videoCfg.channel;
+  if (badgeEl && videoCfg.badge) badgeEl.textContent = videoCfg.badge;
+
+  const rawUrl = videoCfg.videoUrl || defaultTopNewsVideo.videoUrl;
+  const isDirect = rawUrl.includes(".mp4") || rawUrl.includes(".webm") || rawUrl.includes("cloudinary.com");
+
+  if (isDirect) {
+    if (iframe) { iframe.src = ""; iframe.classList.add("hidden"); }
+    if (videoPlayer) {
+      if (videoPlayer.src !== rawUrl) videoPlayer.src = rawUrl;
+      videoPlayer.muted = isTopNewsAudioMuted;
+      videoPlayer.classList.remove("hidden");
+      videoPlayer.play().catch(() => {});
+    }
+  } else {
+    if (videoPlayer) { videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.classList.add("hidden"); }
+    if (iframe) {
+      const ytEmbed = getYouTubeEmbedUrl(rawUrl);
+      const autoPlayYt = ytEmbed + (ytEmbed.includes("?") ? "&" : "?") + "autoplay=1&mute=1&rel=0&enablejsapi=1";
+      if (!iframe.src || !iframe.src.includes(rawUrl.split("v=")[1] || "invalid")) {
+        iframe.src = autoPlayYt;
+      }
+      iframe.classList.remove("hidden");
+    }
+  }
+}
+window.renderTopNewsVideo = renderTopNewsVideo;
+
+function startTopNewsVideoAutoplay() {
+  const iframe = document.getElementById("news-top-video-iframe");
+  const videoPlayer = document.getElementById("news-top-video-player");
+  if (!iframe || !videoPlayer) return;
+
+  if (videoPlayer && !videoPlayer.classList.contains("hidden") && videoPlayer.src) {
+    videoPlayer.play().catch(() => {});
+  } else if (!iframe.src || iframe.src === "about:blank" || iframe.src === "") {
+    renderTopNewsVideo();
+  }
+}
+window.startTopNewsVideoAutoplay = startTopNewsVideoAutoplay;
+
+function pauseTopNewsVideo() {
+  const videoPlayer = document.getElementById("news-top-video-player");
+  if (videoPlayer && !videoPlayer.paused) {
+    videoPlayer.pause();
+  }
+}
+window.pauseTopNewsVideo = pauseTopNewsVideo;
+
+function toggleTopNewsVideoAudio() {
+  const videoPlayer = document.getElementById("news-top-video-player");
+  const iframe = document.getElementById("news-top-video-iframe");
+  const icon = document.getElementById("icon-top-news-audio");
+  const text = document.getElementById("text-top-news-audio");
+
+  isTopNewsAudioMuted = !isTopNewsAudioMuted;
+
+  if (videoPlayer && !videoPlayer.classList.contains("hidden")) {
+    videoPlayer.muted = isTopNewsAudioMuted;
+  }
+  if (iframe && !iframe.classList.contains("hidden") && iframe.contentWindow) {
+    try {
+      const cmd = isTopNewsAudioMuted ? "mute" : "unMute";
+      iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: cmd, args: "" }), "*");
+    } catch (_) {}
+  }
+
+  if (text) text.textContent = isTopNewsAudioMuted ? "Unmute Audio" : "Mute Audio";
+  if (icon) {
+    icon.setAttribute("data-lucide", isTopNewsAudioMuted ? "volume-x" : "volume-2");
+    if (window.lucide) lucide.createIcons();
+  }
+}
+window.toggleTopNewsVideoAudio = toggleTopNewsVideoAudio;
+
+function playNewsTopVideoInTheater() {
+  const cfg = topNewsVideoConfig || defaultTopNewsVideo;
+  playNewsVideoInWatchTheater("top_video");
+}
+window.playNewsTopVideoInTheater = playNewsTopVideoInTheater;
+
+function filterNewsSubTab(tabName) {
+  currentNewsSubTab = tabName;
+  const subtabs = ["all", "breaking", "headline", "video", "articles", "saved"];
+  subtabs.forEach(t => {
+    const btn = document.getElementById(`news-subtab-${t}`);
+    if (btn) {
+      if (t === tabName) {
+        btn.className = "news-filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20 cursor-pointer";
+      } else {
+        btn.className = "news-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer";
+      }
+    }
+  });
+
+  renderNewsDesk();
+}
+window.filterNewsSubTab = filterNewsSubTab;
+
+function handleNewsSearch(query) {
+  currentNewsSearchQuery = (query || "").trim().toLowerCase();
+  const clearBtn = document.getElementById("btn-clear-news-search");
+  if (clearBtn) {
+    if (currentNewsSearchQuery) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
+  renderNewsDesk();
+}
+window.handleNewsSearch = handleNewsSearch;
+
+function clearNewsSearch() {
+  currentNewsSearchQuery = "";
+  const input = document.getElementById("news-search-input");
+  const clearBtn = document.getElementById("btn-clear-news-search");
+  if (input) input.value = "";
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderNewsDesk();
+}
+window.clearNewsSearch = clearNewsSearch;
+
+function filterNewsByDate(dateStr) {
+  currentNewsDateFilter = (dateStr || "").trim();
+  const resetBtn = document.getElementById("news-date-reset-btn");
+  if (resetBtn) {
+    if (currentNewsDateFilter) resetBtn.classList.remove("hidden");
+    else resetBtn.classList.add("hidden");
+  }
+  renderNewsDesk();
+}
+window.filterNewsByDate = filterNewsByDate;
+
+function resetNewsDateFilter() {
+  currentNewsDateFilter = "";
+  const dateInput = document.getElementById("news-calendar-filter");
+  const resetBtn = document.getElementById("news-date-reset-btn");
+  if (dateInput) dateInput.value = "";
+  if (resetBtn) resetBtn.classList.add("hidden");
+  renderNewsDesk();
+}
+window.resetNewsDateFilter = resetNewsDateFilter;
+
+function resetNewsFilters() {
+  currentNewsSubTab = "all";
+  currentNewsSearchQuery = "";
+  currentNewsDateFilter = "";
+  const searchInput = document.getElementById("news-search-input");
+  const clearBtn = document.getElementById("btn-clear-news-search");
+  const dateInput = document.getElementById("news-calendar-filter");
+  const resetBtn = document.getElementById("news-date-reset-btn");
+  if (searchInput) searchInput.value = "";
+  if (clearBtn) clearBtn.classList.add("hidden");
+  if (dateInput) dateInput.value = "";
+  if (resetBtn) resetBtn.classList.add("hidden");
+  filterNewsSubTab("all");
+}
+window.resetNewsFilters = resetNewsFilters;
+
+function renderNewsDesk(newsArray = null) {
+  const container = document.getElementById("news-desk-container");
+  const emptyState = document.getElementById("news-empty-state");
+  if (!container) return;
+
+  const rawList = newsArray || (liveNewsList.length ? liveNewsList : fallbackNews);
+
+  // 1. Sort Date & Time Wise (Newest Timestamp First)
+  const sorted = [...rawList].sort((a, b) => {
+    const timeA = a.timestamp || (a.dateTag ? new Date(a.dateTag).getTime() : 0);
+    const timeB = b.timestamp || (b.dateTag ? new Date(b.dateTag).getTime() : 0);
+    return timeB - timeA;
+  });
+
+  // 2. Calculate Sub-Tab Live Counters
+  const countAll = sorted.length;
+  const countBreaking = sorted.filter(n => n.type === "breaking" || n.isBreaking || n.category?.toLowerCase() === "breaking").length;
+  const countHeadline = sorted.filter(n => n.type === "headline" || n.category?.toLowerCase() === "headline").length;
+  const countVideo = sorted.filter(n => n.type === "video" || !!n.videoUrl).length;
+  const countArticles = sorted.filter(n => n.type === "article" || (!n.videoUrl && n.type !== "breaking")).length;
+  const countSaved = sorted.filter(n => !!savedNewsMap[n.id]).length;
+
+  const setCounter = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val.toString();
+  };
+  setCounter("count-news-all", countAll);
+  setCounter("count-news-breaking", countBreaking);
+  setCounter("count-news-headline", countHeadline);
+  setCounter("count-news-video", countVideo);
+  setCounter("count-news-articles", countArticles);
+  setCounter("count-news-saved", countSaved);
+
+  // 3. Filter by Search Query
+  let filtered = sorted;
+  if (currentNewsSearchQuery) {
+    const q = currentNewsSearchQuery;
+    filtered = filtered.filter(n =>
+      (n.title && n.title.toLowerCase().includes(q)) ||
+      (n.subtitle && n.subtitle.toLowerCase().includes(q)) ||
+      (n.content && n.content.toLowerCase().includes(q)) ||
+      (n.category && n.category.toLowerCase().includes(q)) ||
+      (n.author && n.author.toLowerCase().includes(q))
+    );
+  }
+
+  // 4. Filter by Date Calendar Picker
+  if (currentNewsDateFilter) {
+    const dStr = currentNewsDateFilter;
+    filtered = filtered.filter(n => {
+      if (n.dateTag === dStr || n.dateStr === dStr) return true;
+      if (n.timestamp) {
+        return new Date(n.timestamp).toISOString().split("T")[0] === dStr;
+      }
+      return false;
+    });
+  }
+
+  // 5. Filter by 6 Sub-Tabs
+  if (currentNewsSubTab === "breaking") {
+    filtered = filtered.filter(n => n.type === "breaking" || n.isBreaking || n.category?.toLowerCase() === "breaking");
+  } else if (currentNewsSubTab === "headline") {
+    filtered = filtered.filter(n => n.type === "headline" || n.category?.toLowerCase() === "headline");
+  } else if (currentNewsSubTab === "video") {
+    filtered = filtered.filter(n => n.type === "video" || !!n.videoUrl);
+  } else if (currentNewsSubTab === "articles") {
+    filtered = filtered.filter(n => n.type === "article" || (!n.videoUrl && n.type !== "breaking"));
+  } else if (currentNewsSubTab === "saved") {
+    filtered = filtered.filter(n => !!savedNewsMap[n.id]);
+  }
+
+  // 6. Render Output
+  if (!filtered.length) {
+    container.innerHTML = "";
+    if (emptyState) emptyState.classList.remove("hidden");
+  } else {
+    if (emptyState) emptyState.classList.add("hidden");
+    container.innerHTML = filtered.map(item => createNewsCardHtml(item)).join("");
+  }
+
   if (window.lucide) lucide.createIcons();
 }
+window.renderNewsDesk = renderNewsDesk;
 
 function renderHomeFeed(newsArray = null) {
   const container = document.getElementById("home-news-container");
   if (!container) return;
 
   const list = newsArray || (liveNewsList.length ? liveNewsList : fallbackNews);
-  container.innerHTML = list.slice(0, 6).map(item => createNewsCardHtml(item)).join("");
+  const sorted = [...list].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  container.innerHTML = sorted.slice(0, 6).map(item => createNewsCardHtml(item)).join("");
   if (window.lucide) lucide.createIcons();
 }
 
-function filterNewsByDate(dateStr) {
-  if (!dateStr) {
-    renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
-    return;
+function formatNewsDateTime(item) {
+  if (item.timestamp) {
+    const d = new Date(item.timestamp);
+    const datePart = d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    const timePart = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    return `${datePart} • ${timePart}`;
   }
-  const all = liveNewsList.length ? liveNewsList : fallbackNews;
-  const filtered = all.filter(n => {
-    if (n.dateTag === dateStr || n.dateStr === dateStr) return true;
-    if (n.timestamp) {
-      const d = new Date(n.timestamp).toISOString().split("T")[0];
-      return d === dateStr;
-    }
-    return false;
-  });
-
-  const resetBtn = document.getElementById("news-date-reset-btn");
-  if (resetBtn) resetBtn.classList.remove("hidden");
-  renderNewsDesk(filtered);
+  return item.dateTag || "Today • 02:45 PM";
 }
-window.filterNewsByDate = filterNewsByDate;
-
-function resetNewsDateFilter() {
-  const dateInput = document.getElementById("news-calendar-filter");
-  const resetBtn = document.getElementById("news-date-reset-btn");
-  if (dateInput) dateInput.value = "";
-  if (resetBtn) resetBtn.classList.add("hidden");
-  renderNewsDesk(liveNewsList.length ? liveNewsList : fallbackNews);
-}
-window.resetNewsDateFilter = resetNewsDateFilter;
-
-function handleNewsSearch(query) {
-  const q = (query || "").trim().toLowerCase();
-  const all = liveNewsList.length ? liveNewsList : fallbackNews;
-  if (!q) {
-    renderNewsDesk(all);
-    return;
-  }
-  const filtered = all.filter(n => 
-    (n.title && n.title.toLowerCase().includes(q)) ||
-    (n.content && n.content.toLowerCase().includes(q)) ||
-    (n.category && n.category.toLowerCase().includes(q))
-  );
-  renderNewsDesk(filtered);
-}
-window.handleNewsSearch = handleNewsSearch;
 
 function createNewsCardHtml(item) {
   const hasVideo = !!item.videoUrl;
-  const safeImg = item.imageUrl || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80";
-  const dateStr = item.dateTag || (item.timestamp ? new Date(item.timestamp).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Today");
+  const isArticle = item.type === "article" || (!hasVideo && item.type !== "breaking");
+  const isBreaking = item.type === "breaking" || item.isBreaking;
+  const isHeadline = item.type === "headline";
+  const safeImg = item.imageUrl || item.thumbnailUrl || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80";
+  const dateTimeStr = formatNewsDateTime(item);
+  const isSaved = !!savedNewsMap[item.id];
+
+  // Distinct badge styling for each type
+  let badgeHtml = "";
+  if (isBreaking) {
+    badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>BREAKING NEWS</span>`;
+  } else if (isHeadline) {
+    badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-xs flex items-center gap-1"><i data-lucide="newspaper" class="w-3 h-3"></i>HEADLINE</span>`;
+  } else if (hasVideo) {
+    badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white shadow-xs flex items-center gap-1"><i data-lucide="play" class="w-3 h-3 fill-white"></i>VIDEO NEWS</span>`;
+  } else {
+    badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs flex items-center gap-1"><i data-lucide="book-open" class="w-3 h-3"></i>ARTICLE</span>`;
+  }
+
+  // Click handler: Articles open article page, Videos open in-site watch theater
+  const primaryAction = isArticle
+    ? `openArticleDetailView('${item.id}')`
+    : `playNewsVideoInWatchTheater('${item.id}')`;
 
   return `
-    <div class="jaankar-card overflow-hidden flex flex-col justify-between group transition hover:border-orange-400 hover:shadow-md text-slate-900">
-      <div class="relative h-44 bg-slate-50 overflow-hidden cursor-pointer" onclick="openArticleReader('${item.id}')">
-        <img src="${safeImg}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-600 text-white shadow-sm">
-          ${escapeHtml(item.category || "TECH")}
-        </span>
+    <div class="jaankar-card overflow-hidden flex flex-col justify-between group transition hover:border-orange-400 hover:shadow-lg text-slate-900 border border-slate-200">
+      
+      <!-- Top Cover Image & Badges -->
+      <div class="relative h-48 bg-slate-950 overflow-hidden cursor-pointer" onclick="${primaryAction}">
+        <img src="${safeImg}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+        
+        <div class="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+          ${badgeHtml}
+          <span class="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-black/60 text-white backdrop-blur-xs">
+            ${escapeHtml(item.category || "TECH")}
+          </span>
+        </div>
 
         ${hasVideo ? `
-          <div onclick="event.stopPropagation(); playVideoInApp('${escapeHtml(item.videoUrl)}', '${escapeHtml(item.title)}')"
-               class="absolute inset-0 m-auto w-12 h-12 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer"
-               title="Play In-App">
-            <i data-lucide="play" class="w-6 h-6 fill-white ml-0.5"></i>
+          <div onclick="event.stopPropagation(); playNewsVideoInWatchTheater('${item.id}')"
+               class="absolute inset-0 m-auto w-12 h-12 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-xl hover:scale-110 transition-transform cursor-pointer"
+               title="Watch In-Site Player">
+            <i data-lucide="play" class="w-5 h-5 fill-white ml-0.5"></i>
           </div>
-        ` : ""}
+        ` : `
+          <div class="absolute bottom-3 right-3 px-2 py-0.5 rounded text-[10px] font-bold bg-black/70 text-white backdrop-blur-xs flex items-center gap-1">
+            <i data-lucide="clock" class="w-3 h-3"></i>
+            <span>${item.readTime || "4 min read"}</span>
+          </div>
+        `}
       </div>
 
-      <div class="p-4 flex-1 flex flex-col justify-between space-y-2">
-        <div class="space-y-1.5 cursor-pointer" onclick="openArticleReader('${item.id}')">
+      <!-- Card Content Body -->
+      <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+        <div class="space-y-2 cursor-pointer" onclick="${primaryAction}">
+          
+          <!-- Date and Time Label -->
           <div class="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-            <span>📅 ${dateStr}</span>
-            <span>•</span>
-            <span>${item.readTime || "3 min read"}</span>
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-500"></i>
+            <span>${dateTimeStr}</span>
           </div>
-          <h4 class="font-bold text-sm text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+
+          <!-- Title -->
+          <h4 class="font-extrabold text-sm sm:text-base text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2 leading-snug">
             ${escapeHtml(item.title)}
           </h4>
-          <p class="text-xs text-slate-500 line-clamp-2 font-normal">
-            ${escapeHtml(item.content || "")}
+
+          <!-- Subtitle / Excerpt -->
+          <p class="text-xs text-slate-500 line-clamp-2 font-normal leading-relaxed">
+            ${escapeHtml(item.subtitle || item.content || "")}
           </p>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-          <button type="button" onclick="openArticleReader('${item.id}')" class="font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
-            <span>Read Article</span>
-            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-          </button>
-          <button type="button" onclick="shareArticle('${escapeHtml(item.title)}')" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:text-orange-600 transition">
-            <i data-lucide="share-2" class="w-4 h-4"></i>
-          </button>
+        <!-- Author & Action Footer -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+          
+          <!-- Author Info -->
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+              ${escapeHtml(item.authorAvatar || (item.author ? item.author[0] : "J"))}
+            </div>
+            <span class="text-[11px] font-bold text-slate-700 truncate">${escapeHtml(item.author || "JAANKAR")}</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${isArticle ? `
+              <button type="button" onclick="${primaryAction}" class="px-2.5 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold flex items-center gap-1 transition">
+                <span>Read</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            ` : `
+              <button type="button" onclick="${primaryAction}" class="px-2.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center gap-1 transition shadow-xs">
+                <i data-lucide="play" class="w-3 h-3 fill-white"></i>
+                <span>Watch</span>
+              </button>
+            `}
+            
+            <!-- Bookmark Button -->
+            <button type="button" onclick="event.stopPropagation(); toggleSaveNewsItem('${item.id}')"
+                    class="p-1.5 rounded-lg border border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-slate-600 transition ${isSaved ? 'text-amber-500 bg-amber-50 border-amber-300' : ''}"
+                    title="${isSaved ? 'Remove from Saved' : 'Save Article'}">
+              <i data-lucide="bookmark" class="w-3.5 h-3.5 ${isSaved ? 'fill-amber-500' : ''}"></i>
+            </button>
+
+            <!-- Share Button -->
+            <button type="button" onclick="event.stopPropagation(); shareNewsItem('${item.id}')"
+                    class="p-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:text-blue-600 text-slate-500 transition"
+                    title="Share">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
         </div>
+
       </div>
+
     </div>
   `;
 }
+
+function toggleSaveNewsItem(id) {
+  if (savedNewsMap[id]) {
+    delete savedNewsMap[id];
+    showAppToast("Removed from Saved Items");
+  } else {
+    savedNewsMap[id] = true;
+    showAppToast("✓ Saved to your Reading List!");
+  }
+  localStorage.setItem("jaankar_saved_news", JSON.stringify(savedNewsMap));
+  renderNewsDesk();
+}
+window.toggleSaveNewsItem = toggleSaveNewsItem;
+
+function isNewsItemSaved(id) {
+  return !!savedNewsMap[id];
+}
+window.isNewsItemSaved = isNewsItemSaved;
+
+function shareNewsItem(id) {
+  const all = liveNewsList.length ? liveNewsList : fallbackNews;
+  const item = all.find(n => n.id === id);
+  if (!item) return;
+
+  if (navigator.share) {
+    navigator.share({
+      title: item.title,
+      text: item.subtitle || item.content || "",
+      url: window.location.href
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(`${item.title}\n\nRead more on JAANKAR: ${window.location.href}`).then(() => {
+      showAppToast("✓ Link copied to clipboard!");
+    }).catch(() => {
+      showAppToast("Article: " + item.title);
+    });
+  }
+}
+window.shareNewsItem = shareNewsItem;
+
+// ----------------------------------------------------------------------------
+// Dedicated In-Site Watch Theater for News Videos, Breaking News & Headlines
+// ----------------------------------------------------------------------------
+
+function playNewsVideoInWatchTheater(newsId) {
+  currentWatchSourceTab = "news";
+  const allNews = liveNewsList.length ? liveNewsList : fallbackNews;
+  let item = null;
+
+  if (newsId === "top_video") {
+    item = topNewsVideoConfig || defaultTopNewsVideo;
+  } else {
+    item = allNews.find(n => n.id === newsId) || allNews[0];
+  }
+  if (!item) return;
+
+  activeWatchVideoId = item.id;
+
+  // 1. Hide other views, show Theater
+  const newsView = document.getElementById("view-news");
+  const watchView = document.getElementById("view-video-watch");
+  const articleView = document.getElementById("view-article-detail");
+  if (newsView) newsView.classList.add("hidden");
+  if (articleView) articleView.classList.add("hidden");
+  if (watchView) watchView.classList.remove("hidden");
+
+  // 2. Load Video Stream (In-Site Player, Never Leaves Website)
+  const iframe = document.getElementById("watch-main-iframe");
+  const videoEl = document.getElementById("watch-main-video");
+  const rawUrl = item.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  const isDirect = rawUrl.includes(".mp4") || rawUrl.includes(".webm") || rawUrl.includes("cloudinary.com");
+
+  if (isDirect) {
+    if (iframe) { iframe.src = ""; iframe.classList.add("hidden"); }
+    if (videoEl) {
+      videoEl.src = rawUrl;
+      videoEl.classList.remove("hidden");
+      videoEl.play().catch(() => {});
+    }
+  } else {
+    if (videoEl) { videoEl.pause(); videoEl.src = ""; videoEl.classList.add("hidden"); }
+    if (iframe) {
+      iframe.src = getYouTubeEmbedUrl(rawUrl);
+      iframe.classList.remove("hidden");
+    }
+  }
+
+  // 3. Update Title, Category & Stats
+  const catBadge = document.getElementById("watch-video-category-badge");
+  const durBadge = document.getElementById("watch-video-duration-badge");
+  const titleEl = document.getElementById("watch-video-title");
+  const statsEl = document.getElementById("watch-video-stats");
+
+  if (catBadge) catBadge.textContent = item.category || "News Desk";
+  if (durBadge) durBadge.textContent = item.readTime || "HD Stream";
+  if (titleEl) titleEl.textContent = item.title;
+  if (statsEl) statsEl.textContent = `${item.author || "JAANKAR News Desk"} • ${formatNewsDateTime(item)} • In-Site HD Player`;
+
+  // 4. Render AI Breakdown Notes
+  renderWatchAiBreakdown({
+    title: item.title,
+    keyTakeaways: item.takeaways || [
+      "Real-time tech update verified by JAANKAR Editorial",
+      "Comprehensive breakdown of hardware and software architecture",
+      "Analysis of consumer pricing and global availability"
+    ],
+    topics: [item.category || "Tech", "News Desk", "Verified Coverage"]
+  });
+
+  // 5. Populate Up Next & Side Playlist with other uploaded News Videos, Breaking News & Headlines (Like YouTube!)
+  renderWatchRelatedNewsVideos(item.id);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (window.lucide) lucide.createIcons();
+}
+window.playNewsVideoInWatchTheater = playNewsVideoInWatchTheater;
+
+function renderWatchRelatedNewsVideos(currentId) {
+  const container = document.getElementById("watch-related-videos-container");
+  if (!container) return;
+
+  const allNews = liveNewsList.length ? liveNewsList : fallbackNews;
+  // Pick other news items that have video or are breaking news or headlines
+  const related = allNews.filter(n => n.id !== currentId && (n.videoUrl || n.type === "breaking" || n.type === "headline" || n.type === "video"));
+
+  const badgeEl = document.getElementById("related-videos-count-badge");
+  if (badgeEl) badgeEl.textContent = `${related.length} News Streams`;
+
+  if (!related.length) {
+    container.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">No other news video streams uploaded yet.</p>`;
+    return;
+  }
+
+  container.innerHTML = related.map(v => {
+    const isBreaking = v.type === "breaking" || v.isBreaking;
+    const isHeadline = v.type === "headline";
+    let typeBadge = `<span class="text-[9px] font-black uppercase text-orange-600">${escapeHtml(v.category || "NEWS")}</span>`;
+    if (isBreaking) {
+      typeBadge = `<span class="px-1.5 py-0.2 rounded text-[8.5px] font-black uppercase bg-rose-600 text-white">BREAKING</span>`;
+    } else if (isHeadline) {
+      typeBadge = `<span class="px-1.5 py-0.2 rounded text-[8.5px] font-black uppercase bg-blue-600 text-white">HEADLINE</span>`;
+    }
+
+    return `
+      <div onclick="playNewsVideoInWatchTheater('${v.id}')" class="p-2.5 rounded-2xl bg-white border border-slate-200 hover:border-orange-400 hover:shadow-md transition flex gap-3 cursor-pointer group">
+        <div class="relative w-32 aspect-video rounded-xl overflow-hidden bg-slate-900 shrink-0">
+          <img src="${v.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="${escapeHtml(v.title)}">
+          <div class="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors"></div>
+          <div class="absolute inset-0 m-auto w-7 h-7 rounded-full bg-orange-600/90 text-white flex items-center justify-center shadow-xs">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-white ml-0.5"></i>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <div>
+            ${typeBadge}
+            <h4 class="text-xs font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors mt-0.5">${escapeHtml(v.title)}</h4>
+          </div>
+          <p class="text-[10px] text-slate-400 font-medium">${formatNewsDateTime(v)}</p>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// ----------------------------------------------------------------------------
+// Dedicated Editorial Article Detail View & Web Speech API Audio Engine
+// ----------------------------------------------------------------------------
+
+function openArticleDetailView(articleId) {
+  const all = liveNewsList.length ? liveNewsList : fallbackNews;
+  const article = all.find(a => a.id === articleId) || all[0];
+  if (!article) return;
+
+  activeArticleId = article.id;
+  stopArticleAudio();
+
+  // 1. Switch to article detail view
+  switchTab("article-detail");
+
+  // 2. Set Meta Headers
+  const catEl = document.getElementById("article-detail-category");
+  const readEl = document.getElementById("article-detail-readtime");
+  const dateEl = document.getElementById("article-detail-datetime");
+  const titleEl = document.getElementById("article-detail-title");
+  const subEl = document.getElementById("article-detail-subtitle");
+  const authorEl = document.getElementById("article-detail-author");
+  const avatarEl = document.getElementById("article-detail-author-avatar");
+  const imgEl = document.getElementById("article-detail-image");
+
+  if (catEl) catEl.textContent = (article.category || "TECHNOLOGY").toUpperCase();
+  if (readEl) readEl.textContent = article.readTime || "4 min read";
+  if (dateEl) dateEl.textContent = formatNewsDateTime(article);
+  if (titleEl) titleEl.textContent = article.title;
+  if (subEl) subEl.textContent = article.subtitle || article.content || "";
+  if (authorEl) authorEl.textContent = article.author || "JAANKAR Editorial";
+  if (avatarEl) avatarEl.textContent = article.authorAvatar || (article.author ? article.author[0] : "J");
+  if (imgEl) imgEl.src = article.imageUrl || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1000";
+
+  // 3. Format and Render Article Body Paragraphs
+  const bodyContainer = document.getElementById("article-detail-body");
+  if (bodyContainer) {
+    const rawBody = article.articleBody || article.content || "Full article coverage being compiled.";
+    const paragraphs = rawBody.split(/\n\n+/).filter(Boolean);
+    bodyContainer.innerHTML = paragraphs.map((para, idx) => {
+      if (para.startsWith("### ") || para.startsWith("## ")) {
+        return `<h3 class="text-lg font-black text-slate-900 mt-4 mb-2">${escapeHtml(para.replace(/^#+\s*/, ""))}</h3>`;
+      }
+      if (idx === 0) {
+        return `<p class="text-base sm:text-lg text-slate-800 leading-relaxed font-medium first-letter:text-3xl first-letter:font-black first-letter:text-orange-600 first-letter:float-left first-letter:mr-2">${escapeHtml(para)}</p>`;
+      }
+      return `<p class="text-slate-700 leading-relaxed">${escapeHtml(para)}</p>`;
+    }).join("");
+  }
+
+  // 4. Render Takeaways
+  const takeawaysContainer = document.getElementById("article-detail-takeaways");
+  if (takeawaysContainer) {
+    const takeaways = article.takeaways || [
+      "Verified reporting from JAANKAR Technology Desk",
+      "Cross-referenced with manufacturer technical sheets",
+      "Regular updates published as new developments emerge"
+    ];
+    takeawaysContainer.innerHTML = takeaways.map(t => `
+      <li class="flex items-start gap-2">
+        <span class="text-orange-500 font-bold">•</span>
+        <span>${escapeHtml(t)}</span>
+      </li>
+    `).join("");
+  }
+
+  // 5. Populate Related Articles Sidebar
+  const relatedContainer = document.getElementById("article-detail-related-list");
+  if (relatedContainer) {
+    const otherArticles = all.filter(a => a.id !== article.id && (a.type === "article" || !a.videoUrl)).slice(0, 4);
+    if (!otherArticles.length) {
+      relatedContainer.innerHTML = `<p class="text-xs text-slate-400">No other articles available.</p>`;
+    } else {
+      relatedContainer.innerHTML = otherArticles.map(oa => `
+        <div onclick="openArticleDetailView('${oa.id}')" class="p-2.5 rounded-xl bg-slate-50 hover:bg-orange-50 border border-slate-200 hover:border-orange-300 transition flex gap-2.5 cursor-pointer group">
+          <img src="${oa.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200'}" class="w-14 h-14 rounded-lg object-cover shrink-0">
+          <div class="flex-1 min-w-0">
+            <span class="text-[9.5px] font-bold text-orange-600 uppercase">${escapeHtml(oa.category || "TECH")}</span>
+            <h5 class="text-xs font-bold text-slate-900 group-hover:text-orange-600 line-clamp-2 leading-tight">${escapeHtml(oa.title)}</h5>
+            <p class="text-[10px] text-slate-400 mt-0.5">${oa.readTime || "3 min read"}</p>
+          </div>
+        </div>
+      `).join("");
+    }
+  }
+
+  // 6. Update Save Button State
+  updateArticleDetailSaveBtn(article.id);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (window.lucide) lucide.createIcons();
+}
+window.openArticleDetailView = openArticleDetailView;
+window.openArticleReader = openArticleDetailView; // Backward compatibility route
+
+function closeArticleDetailView() {
+  stopArticleAudio();
+  switchTab("news");
+}
+window.closeArticleDetailView = closeArticleDetailView;
+
+function updateArticleDetailSaveBtn(id) {
+  const isSaved = !!savedNewsMap[id];
+  const btn = document.getElementById("btn-article-save");
+  const icon = document.getElementById("icon-article-save");
+  const text = document.getElementById("text-article-save");
+
+  if (text) text.textContent = isSaved ? "Saved in List" : "Save Article";
+  if (icon) {
+    if (isSaved) icon.classList.add("fill-amber-500", "text-amber-500");
+    else icon.classList.remove("fill-amber-500", "text-amber-500");
+  }
+}
+
+function toggleSaveCurrentArticle() {
+  if (!activeArticleId) return;
+  toggleSaveNewsItem(activeArticleId);
+  updateArticleDetailSaveBtn(activeArticleId);
+}
+window.toggleSaveCurrentArticle = toggleSaveCurrentArticle;
+
+function shareCurrentArticle() {
+  if (!activeArticleId) return;
+  shareNewsItem(activeArticleId);
+}
+window.shareCurrentArticle = shareCurrentArticle;
+
+// ----------------------------------------------------------------------------
+// Web Speech API: Native Text-to-Speech Article Audio Player
+// ----------------------------------------------------------------------------
+
+function toggleArticleAudio() {
+  if (!("speechSynthesis" in window)) {
+    alert("Speech audio is not supported in this browser. Please use Chrome, Edge, or Firefox.");
+    return;
+  }
+
+  const statusEl = document.getElementById("article-audio-status");
+  const btnText = document.getElementById("text-article-audio-play");
+  const btnIcon = document.getElementById("icon-article-audio-play");
+
+  if (isArticleAudioPlaying) {
+    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      window.speechSynthesis.pause();
+      if (statusEl) statusEl.textContent = "Paused";
+      if (btnText) btnText.textContent = "Resume Audio / जारी रखें";
+      if (btnIcon) btnIcon.setAttribute("data-lucide", "play");
+    } else if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      if (statusEl) statusEl.textContent = "Playing...";
+      if (btnText) btnText.textContent = "Pause Audio / रोकें";
+      if (btnIcon) btnIcon.setAttribute("data-lucide", "pause");
+    } else {
+      startArticleAudioPlayback();
+    }
+  } else {
+    startArticleAudioPlayback();
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+window.toggleArticleAudio = toggleArticleAudio;
+
+function startArticleAudioPlayback() {
+  const all = liveNewsList.length ? liveNewsList : fallbackNews;
+  const article = all.find(a => a.id === activeArticleId);
+  if (!article) return;
+
+  window.speechSynthesis.cancel();
+
+  // Combine title, subtitle, and body text
+  const cleanBody = (article.articleBody || article.content || "")
+    .replace(/^#+\s*/gm, "")
+    .replace(/[*_~`]/g, "")
+    .trim();
+
+  const fullTextToSpeak = `${article.title}. ${article.subtitle || ""}. ${cleanBody}`;
+
+  const utterance = new SpeechSynthesisUtterance(fullTextToSpeak);
+  utterance.rate = currentArticleSpeed;
+  utterance.pitch = 1.0;
+
+  // Prefer Indian English / Hindi voice if available
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(v => v.lang.includes("hi") || v.lang.includes("en-IN") || v.lang.includes("en-GB"));
+  if (preferredVoice) utterance.voice = preferredVoice;
+
+  const statusEl = document.getElementById("article-audio-status");
+  const btnText = document.getElementById("text-article-audio-play");
+  const btnIcon = document.getElementById("icon-article-audio-play");
+
+  utterance.onstart = () => {
+    isArticleAudioPlaying = true;
+    if (statusEl) {
+      statusEl.textContent = "Playing...";
+      statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 animate-pulse";
+    }
+    if (btnText) btnText.textContent = "Pause Audio / रोकें";
+    if (btnIcon) btnIcon.setAttribute("data-lucide", "pause");
+    if (window.lucide) lucide.createIcons();
+  };
+
+  utterance.onend = () => {
+    stopArticleAudio();
+  };
+
+  utterance.onerror = (e) => {
+    console.warn("Audio speech error:", e);
+    stopArticleAudio();
+  };
+
+  articleAudioUtterance = utterance;
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopArticleAudio() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+  isArticleAudioPlaying = false;
+  articleAudioUtterance = null;
+
+  const statusEl = document.getElementById("article-audio-status");
+  const btnText = document.getElementById("text-article-audio-play");
+  const btnIcon = document.getElementById("icon-article-audio-play");
+
+  if (statusEl) {
+    statusEl.textContent = "Ready";
+    statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600";
+  }
+  if (btnText) btnText.textContent = "Play Audio / सुनें";
+  if (btnIcon) btnIcon.setAttribute("data-lucide", "play");
+  if (window.lucide) lucide.createIcons();
+}
+window.stopArticleAudio = stopArticleAudio;
+
+function setArticleAudioSpeed(rate) {
+  currentArticleSpeed = rate;
+  const speeds = [1.0, 1.25, 1.5];
+  speeds.forEach(s => {
+    const idKey = s === 1.0 ? "1" : (s === 1.25 ? "125" : "15");
+    const btn = document.getElementById(`speed-btn-${idKey}`);
+    if (btn) {
+      if (s === rate) {
+        btn.className = "px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-orange-100 text-orange-700";
+      } else {
+        btn.className = "px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200";
+      }
+    }
+  });
+
+  if (isArticleAudioPlaying && window.speechSynthesis.speaking) {
+    startArticleAudioPlayback();
+  }
+}
+window.setArticleAudioSpeed = setArticleAudioSpeed;
 
 // ----------------------------------------------------------------------------
 // 11. Videos & Tech Shorts Hub, In-Site Theater Player & Interactive Reels Feed
@@ -1932,10 +2898,11 @@ function closeVideoWatchPage() {
   if (iframe) iframe.src = "";
   if (videoEl) { videoEl.pause(); videoEl.src = ""; }
 
-  const hubView = document.getElementById("view-videos-shorts");
-  const watchView = document.getElementById("view-video-watch");
-  if (watchView) watchView.classList.add("hidden");
-  if (hubView) hubView.classList.remove("hidden");
+  if (currentWatchSourceTab === "news") {
+    switchTab("news");
+  } else {
+    switchTab("videos-shorts");
+  }
 }
 window.closeVideoWatchPage = closeVideoWatchPage;
 

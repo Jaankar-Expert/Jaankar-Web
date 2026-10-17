@@ -1167,21 +1167,262 @@
 
       <!-- ==================== VIEW 4: NEWS DESK HUB ==================== -->
       <div id="view-news" class="hidden space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
+        
+        <!-- 1. Top News Header & Search Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>
-            <h2 class="text-xl font-black text-slate-900">JAANKAR News Desk</h2>
-            <p class="text-xs text-slate-500">Verified technology updates, industry leaks, and bulletin archives</p>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
+              <span>JAANKAR News Desk</span>
+            </h2>
+            <p class="text-xs text-slate-500">Verified technology updates, industry leaks, breaking news & in-depth editorial articles</p>
           </div>
+
           <!-- Calendar Date Picker Filter -->
           <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-sm text-xs text-slate-700">
-              <i data-lucide="calendar" class="w-4 h-4 text-orange-600"></i>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs text-xs text-slate-700">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-orange-600"></i>
               <input type="date" id="news-calendar-filter" onchange="filterNewsByDate(this.value)" class="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer">
             </div>
-            <button type="button" id="news-date-reset-btn" onclick="resetNewsDateFilter()" class="hidden px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">Reset</button>
+            <button type="button" id="news-date-reset-btn" onclick="resetNewsDateFilter()" class="hidden px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 cursor-pointer">Reset</button>
           </div>
         </div>
-        <div id="news-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
+        <!-- Top Dedicated Search Bar -->
+        <div class="relative max-w-2xl">
+          <input type="text" id="news-search-input" oninput="handleNewsSearch(this.value)"
+                 placeholder="Search breaking news, headlines, articles, leaks, AI, gadgets..."
+                 class="w-full bg-white border border-slate-200 focus:border-orange-500 rounded-2xl pl-11 pr-10 py-3 text-xs sm:text-sm text-slate-900 shadow-2xs outline-none transition">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-4 top-3.5"></i>
+          <button type="button" id="btn-clear-news-search" onclick="clearNewsSearch()" class="hidden absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 cursor-pointer">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- 2. Auto-Playing Top Featured News Video Screen -->
+        <div id="news-top-video-section" class="relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-xl">
+          <div class="grid grid-cols-1 lg:grid-cols-12 items-center">
+            
+            <!-- Video Player (7 cols) -->
+            <div class="lg:col-span-7 relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+              <iframe id="news-top-video-iframe" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              <video id="news-top-video-player" class="w-full h-full object-cover hidden" autoplay muted playsinline loop controls></video>
+              
+              <!-- Live Video Badge Overlay -->
+              <div class="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
+                <span id="news-top-video-badge" class="px-2.5 py-1 rounded-full bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 animate-pulse">
+                  <span class="w-2 h-2 rounded-full bg-white"></span>
+                  <span>TOP NEWS BULLETIN</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Video Details & Actions (5 cols) -->
+            <div class="lg:col-span-5 p-5 sm:p-6 text-white space-y-3 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-xs text-orange-400 font-bold">
+                  <i data-lucide="tv" class="w-4 h-4"></i>
+                  <span id="news-top-video-channel">JAANKAR News Desk</span>
+                  <span>•</span>
+                  <span id="news-top-video-time" class="text-slate-400">Live Auto-Play</span>
+                </div>
+                <h3 id="news-top-video-title" class="text-base sm:text-lg font-black leading-snug line-clamp-2">
+                  Daily Technology Bulletin: Big Leaks & Updates
+                </h3>
+                <p id="news-top-video-subtitle" class="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                  Watch today's most critical tech news, smartphone releases, AI model breakthroughs and price drops directly inside the website.
+                </p>
+              </div>
+
+              <div class="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
+                <button type="button" onclick="playNewsTopVideoInTheater()" class="btn-primary-orange text-xs py-2 px-3.5 flex items-center gap-1.5 cursor-pointer shadow-md">
+                  <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+                  <span>Watch Theater View</span>
+                </button>
+                <button type="button" id="btn-toggle-top-news-audio" onclick="toggleTopNewsVideoAudio()" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer">
+                  <i data-lucide="volume-2" id="icon-top-news-audio" class="w-3.5 h-3.5"></i>
+                  <span id="text-top-news-audio">Unmute Audio</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3. The 6 Sub-Tabs / Options -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button type="button" onclick="filterNewsSubTab('all')" id="news-subtab-all" class="news-filter-btn active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20 cursor-pointer">
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+            <span>All (<span id="count-news-all">0</span>)</span>
+          </button>
+          <button type="button" onclick="filterNewsSubTab('breaking')" id="news-subtab-breaking" class="news-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer">
+            <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-600"></i>
+            <span>Breaking News (<span id="count-news-breaking">0</span>)</span>
+          </button>
+          <button type="button" onclick="filterNewsSubTab('headline')" id="news-subtab-headline" class="news-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer">
+            <i data-lucide="newspaper" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Headlines (<span id="count-news-headline">0</span>)</span>
+          </button>
+          <button type="button" onclick="filterNewsSubTab('video')" id="news-subtab-video" class="news-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer">
+            <i data-lucide="video" class="w-3.5 h-3.5 text-orange-600"></i>
+            <span>Videos (<span id="count-news-video">0</span>)</span>
+          </button>
+          <button type="button" onclick="filterNewsSubTab('articles')" id="news-subtab-articles" class="news-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer">
+            <i data-lucide="book-open" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>Articles (<span id="count-news-articles">0</span>)</span>
+          </button>
+          <button type="button" onclick="filterNewsSubTab('saved')" id="news-subtab-saved" class="news-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50 cursor-pointer">
+            <i data-lucide="bookmark" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span>Saved (<span id="count-news-saved">0</span>)</span>
+          </button>
+        </div>
+
+        <!-- 4. Date & Time Wise Feed Grid -->
+        <div id="news-desk-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Dynamically populated via renderNewsDesk() -->
+        </div>
+
+        <!-- Empty Results Message -->
+        <div id="news-empty-state" class="hidden p-12 text-center space-y-3 bg-white rounded-3xl border border-slate-200">
+          <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto">
+            <i data-lucide="newspaper" class="w-6 h-6"></i>
+          </div>
+          <h4 class="text-sm font-bold text-slate-800">No matching news items found</h4>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto">Try resetting filters or adjusting search keywords to find bulletins and articles.</p>
+          <button type="button" onclick="resetNewsFilters()" class="btn-primary-orange text-xs py-2 px-4 mx-auto cursor-pointer">View All News</button>
+        </div>
+
+      </div>
+
+      <!-- ==================== VIEW 4.1: DEDICATED ARTICLE READING PAGE ==================== -->
+      <div id="view-article-detail" class="hidden space-y-6">
+        
+        <!-- Top Back Navigation & Action Bar -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+          <button type="button" onclick="closeArticleDetailView()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-orange-50 border border-slate-200 text-slate-700 hover:text-orange-600 text-xs font-bold transition shadow-2xs cursor-pointer">
+            <i data-lucide="arrow-left" class="w-4 h-4 text-orange-500"></i>
+            <span>Back to News Desk</span>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-article-save" onclick="toggleSaveCurrentArticle()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 border border-slate-200 text-slate-700 hover:text-amber-600 text-xs font-bold transition shadow-2xs flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="bookmark" id="icon-article-save" class="w-4 h-4"></i>
+              <span id="text-article-save">Save Article</span>
+            </button>
+            <button type="button" onclick="shareCurrentArticle()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 text-slate-700 hover:text-blue-600 text-xs font-bold transition shadow-2xs flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="share-2" class="w-4 h-4 text-blue-600"></i>
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2-Column Editorial Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- LEFT / MAIN COLUMN (8 cols): Article Header, Cover & Rich Content -->
+          <article class="lg:col-span-8 space-y-6">
+            
+            <!-- Meta Header -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span id="article-detail-category" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-orange-100 text-orange-700">Technology</span>
+                <span id="article-detail-readtime" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">4 min read</span>
+                <span id="article-detail-datetime" class="text-xs font-semibold text-slate-500">Today • 02:45 PM</span>
+              </div>
+
+              <h1 id="article-detail-title" class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-tight"></h1>
+              <p id="article-detail-subtitle" class="text-sm sm:text-base text-slate-600 leading-relaxed font-medium"></p>
+
+              <!-- Author / Reporter Card -->
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white font-black text-sm flex items-center justify-center shadow-xs">
+                    <span id="article-detail-author-avatar">J</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span id="article-detail-author" class="text-xs sm:text-sm font-black text-slate-900">JAANKAR Editorial</span>
+                      <i data-lucide="check-circle" class="w-3.5 h-3.5 text-orange-500 fill-orange-100"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Verified Tech Analyst & Journalist</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hero Cover Image -->
+            <div class="relative w-full rounded-3xl overflow-hidden aspect-video bg-slate-900 shadow-xl border border-slate-200">
+              <img id="article-detail-image" src="" alt="Article Cover" class="w-full h-full object-cover">
+            </div>
+
+            <!-- Rich Article Content Body -->
+            <div id="article-detail-body" class="jaankar-card p-6 sm:p-8 space-y-4 text-sm sm:text-base text-slate-800 leading-relaxed font-normal">
+              <!-- Formatted text rendered here -->
+            </div>
+
+          </article>
+
+          <!-- RIGHT COLUMN (4 cols): Sticky Audio Reader & Related Feed -->
+          <aside class="lg:col-span-4 space-y-5 sticky top-20">
+            
+            <!-- Listen to Article Audio Player Card -->
+            <div class="jaankar-card p-5 space-y-4 bg-gradient-to-br from-white via-orange-50/30 to-amber-50/40 border border-orange-200 shadow-sm">
+              <div class="flex items-center justify-between border-b border-orange-100 pb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shadow-xs">
+                    <i data-lucide="headphones" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-black text-xs text-slate-900">Listen to Article</h4>
+                    <p class="text-[10px] text-orange-600 font-bold uppercase tracking-wider">AI Speech Read-Aloud</p>
+                  </div>
+                </div>
+                <span id="article-audio-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">Ready</span>
+              </div>
+
+              <!-- Audio Action Button -->
+              <button type="button" id="btn-toggle-article-audio" onclick="toggleArticleAudio()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                <i data-lucide="play" id="icon-article-audio-play" class="w-4 h-4 fill-white"></i>
+                <span id="text-article-audio-play">Play Audio / सुनें</span>
+              </button>
+
+              <!-- Speech Speed Control -->
+              <div class="flex items-center justify-between text-xs pt-1">
+                <span class="text-[11px] font-semibold text-slate-500">Audio Speed:</span>
+                <div class="flex items-center gap-1">
+                  <button type="button" onclick="setArticleAudioSpeed(1.0)" id="speed-btn-1" class="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-orange-100 text-orange-700">1x</button>
+                  <button type="button" onclick="setArticleAudioSpeed(1.25)" id="speed-btn-125" class="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">1.25x</button>
+                  <button type="button" onclick="setArticleAudioSpeed(1.5)" id="speed-btn-15" class="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">1.5x</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Summary Points Box -->
+            <div class="jaankar-card p-5 space-y-3 bg-white border border-slate-200">
+              <h4 class="font-black text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+                <span>Quick Takeaways</span>
+              </h4>
+              <ul id="article-detail-takeaways" class="space-y-2 text-xs text-slate-600 font-medium">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+
+            <!-- Related Articles & Headlines -->
+            <div class="jaankar-card p-5 space-y-3 bg-white border border-slate-200">
+              <h4 class="font-black text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <i data-lucide="newspaper" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span>More from News Desk</span>
+              </h4>
+              <div id="article-detail-related-list" class="space-y-2.5">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+          </aside>
+
+        </div>
+
       </div>
 
       <!-- ==================== VIEW 5: 6 ELECTRONICS CATEGORIES ==================== -->

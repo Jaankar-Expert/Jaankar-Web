@@ -39,6 +39,9 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Razorpay Payment Gateway SDK for Secure UPI & Card Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
   <!-- QRious & jsPDF for 4 Smart Tools -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1438,22 +1441,242 @@
 
       </div>
 
-      <!-- ==================== VIEW 5: 6 ELECTRONICS CATEGORIES ==================== -->
+      <!-- ==================== VIEW 5: 6 ELECTRONICS CATEGORIES (WITH FLIPKART MEGA MENU) ==================== -->
       <div id="view-categories" class="hidden space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
-          <div>
-            <h2 class="text-xl font-black text-slate-900" id="category-page-title">Electronics Catalog</h2>
-            <p class="text-xs text-slate-500">Explore specs, benchmarks, and compare verified buying links</p>
+        
+        <!-- Flipkart-Style Category Navigation Strip with Floating Multi-Column Mega Menu -->
+        <div class="relative z-30 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          
+          <!-- Horizontal Category Navigation Bar with Down Arrows (Hover to Expand) -->
+          <div class="px-4 py-2.5 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none border-b border-slate-100" id="flipkart-nav-strip">
+            
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+              <!-- Electronics / All Tech -->
+              <button type="button" onmouseenter="showMegaMenu('electronics')" onclick="toggleMegaMenu('electronics')" id="flipkart-cat-electronics" class="flipkart-nav-btn group flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-orange-600 hover:bg-orange-50/70 transition cursor-pointer">
+                <span>Electronics</span>
+                <i data-lucide="chevron-down" id="arrow-cat-electronics" class="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 transition-transform duration-200"></i>
+              </button>
+
+              <!-- Mobiles & Accessories -->
+              <button type="button" onmouseenter="showMegaMenu('mobiles')" onclick="toggleMegaMenu('mobiles')" id="flipkart-cat-mobiles" class="flipkart-nav-btn group flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-orange-600 hover:bg-orange-50/70 transition cursor-pointer">
+                <span>Mobiles & Tablets</span>
+                <i data-lucide="chevron-down" id="arrow-cat-mobiles" class="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 transition-transform duration-200"></i>
+              </button>
+
+              <!-- Computers & Laptops -->
+              <button type="button" onmouseenter="showMegaMenu('laptops')" onclick="toggleMegaMenu('laptops')" id="flipkart-cat-laptops" class="flipkart-nav-btn group flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-orange-600 hover:bg-orange-50/70 transition cursor-pointer">
+                <span>Computers & Laptops</span>
+                <i data-lucide="chevron-down" id="arrow-cat-laptops" class="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 transition-transform duration-200"></i>
+              </button>
+
+              <!-- TVs & Displays -->
+              <button type="button" onmouseenter="showMegaMenu('tv')" onclick="toggleMegaMenu('tv')" id="flipkart-cat-tv" class="flipkart-nav-btn group flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-orange-600 hover:bg-orange-50/70 transition cursor-pointer">
+                <span>TVs & Appliances</span>
+                <i data-lucide="chevron-down" id="arrow-cat-tv" class="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 transition-transform duration-200"></i>
+              </button>
+
+              <!-- Audio & Cameras -->
+              <button type="button" onmouseenter="showMegaMenu('audio')" onclick="toggleMegaMenu('audio')" id="flipkart-cat-audio" class="flipkart-nav-btn group flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-orange-600 hover:bg-orange-50/70 transition cursor-pointer">
+                <span>Cameras & Audio</span>
+                <i data-lucide="chevron-down" id="arrow-cat-audio" class="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 transition-transform duration-200"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <!-- Super Deals Button -->
+              <button type="button" onclick="filterBySpecialDeals()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs shadow-sm hover:from-amber-600 hover:to-orange-600 transition cursor-pointer">
+                <i data-lucide="flame" class="w-3.5 h-3.5 fill-white"></i>
+                <span>Top Deals</span>
+              </button>
+              <!-- All Catalog Button -->
+              <button type="button" onclick="showAllCatalogProducts()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs transition cursor-pointer">
+                <i data-lucide="grid" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>All Catalog</span>
+              </button>
+            </div>
+
           </div>
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            <button onclick="openCategoryTab('computers')" id="cat-pill-computers" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">🖥️ Computers</button>
-            <button onclick="openCategoryTab('laptops')" id="cat-pill-laptops" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">💻 Laptops</button>
-            <button onclick="openCategoryTab('mobiles')" id="cat-pill-mobiles" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">📱 Mobiles</button>
-            <button onclick="openCategoryTab('tv')" id="cat-pill-tv" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">📺 TV & Display</button>
-            <button onclick="openCategoryTab('cameras')" id="cat-pill-cameras" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">📷 Cameras</button>
-            <button onclick="openCategoryTab('audio')" id="cat-pill-audio" class="cat-filter-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition border border-slate-200 bg-white text-slate-700 shadow-sm">🎧 Audio</button>
+
+          <!-- The Floating Multi-Column Mega Menu Panel (Flipkart Exact Replica) -->
+          <div id="flipkart-mega-menu-flyout" onmouseleave="scheduleCloseMegaMenu()" onmouseenter="cancelCloseMegaMenu()" class="hidden absolute top-full left-0 right-0 z-50 bg-white border border-slate-200 rounded-b-2xl shadow-2xl p-6 animate-in fade-in slide-in-from-top-2 duration-200">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 text-xs text-slate-700 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+              
+              <!-- Column 1: Mobiles & Major Smartphone Brands -->
+              <div class="space-y-3 pt-2 sm:pt-0 sm:pr-4">
+                <div onclick="applySubcategoryFilter('mobiles', '')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                  <span>Mobiles</span>
+                  <span class="text-slate-400">▸</span>
+                </div>
+                <ul class="space-y-1.5 text-slate-600 font-medium">
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Apple')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Apple</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Samsung')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Samsung</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'vivo')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">vivo</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Motorola')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Motorola</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'realme')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">realme</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'OPPO')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">OPPO</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'POCO')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">POCO</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Nothing')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Nothing</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Google')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Google Pixel</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Redmi')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Redmi</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Infinix')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Infinix</button></li>
+                  <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Tecno')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Tecno</button></li>
+                </ul>
+              </div>
+
+              <!-- Column 2: Mobile Accessories, Wearable Tech & Health -->
+              <div class="space-y-4 pt-3 sm:pt-0 sm:px-4">
+                <div>
+                  <div onclick="applySubcategoryFilter('mobiles', 'Accessories')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                    <span>Mobile Accessories</span>
+                    <span class="text-slate-400">▸</span>
+                  </div>
+                  <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Case')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Mobile Cases & Covers</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('audio', 'Headphones')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Headphones & Headsets</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Power Bank')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Power Banks</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Screenguard')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Screenguards & Glass</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Memory')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Memory Cards</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Cable')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Fast Mobile Cables</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Charger')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Fast Mobile Chargers</button></li>
+                  </ul>
+                </div>
+                <div>
+                  <div onclick="applySubcategoryFilter('mobiles', 'Watch')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                    <span>Smart Wearable Tech</span>
+                    <span class="text-slate-400">▸</span>
+                  </div>
+                  <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Watch')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Smart Watches</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'VR')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Smart Glasses (VR)</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('mobiles', 'Band')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Fitness Bands</button></li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Column 3: Laptops, Desktops, Storage & Peripherals -->
+              <div class="space-y-4 pt-3 sm:pt-0 sm:px-4">
+                <div>
+                  <div onclick="applySubcategoryFilter('laptops', '')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                    <span>Laptops & Computers</span>
+                    <span class="text-slate-400">▸</span>
+                  </div>
+                  <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+                    <li><button type="button" onclick="applySubcategoryFilter('laptops', 'Gaming')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Gaming Laptops</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('laptops', 'MacBook')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Apple MacBooks</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Desktop')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Custom Gaming Desktop PCs</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'SSD')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">External SSDs & Hard Disks</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Pendrive')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">USB Pendrives</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Mouse')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Keyboards & Mice</button></li>
+                  </ul>
+                </div>
+                <div>
+                  <div onclick="applySubcategoryFilter('computers', 'Monitor')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                    <span>Displays & Peripherals</span>
+                    <span class="text-slate-400">▸</span>
+                  </div>
+                  <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Monitor')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Gaming Monitors</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Printer')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Printers & Cartridges</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('laptops', 'iPad')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Apple iPads & Tablets</button></li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Column 4: TVs, Audio, Cameras & Networking -->
+              <div class="space-y-4 pt-3 sm:pt-0 sm:px-4">
+                <div>
+                  <div onclick="applySubcategoryFilter('tv', '')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                    <span>TVs & Audio</span>
+                    <span class="text-slate-400">▸</span>
+                  </div>
+                  <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+                    <li><button type="button" onclick="applySubcategoryFilter('tv', 'OLED')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">4K OLED & QLED TVs</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('audio', 'Soundbar')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Dolby Soundbars</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('audio', 'Bluetooth')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Bluetooth Party Speakers</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('audio', 'Theatre')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Home Theatres</button></li>
+                  </ul>
+                </div>
+                <div>
+                  <div onclick="applySubcategoryFilter('cameras', '')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100">
+                    <span>Cameras & Smart Home</span>
+                    <span class="text-slate-400">▸</span>
+                  </div>
+                  <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+                    <li><button type="button" onclick="applySubcategoryFilter('cameras', 'Mirrorless')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">DSLR & Mirrorless</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('cameras', 'Action')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Action & 4K Vlogging</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('cameras', 'Tripod')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Lenses & Tripods</button></li>
+                    <li><button type="button" onclick="applySubcategoryFilter('computers', 'Router')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5">Wi-Fi 6 Routers</button></li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Column 5: Featured Deals, Store Guarantee & Delivery -->
+              <div class="space-y-3 pt-3 sm:pt-0 sm:pl-4 bg-orange-50/50 -my-6 py-6 px-4 rounded-r-2xl border-l border-orange-100">
+                <div class="font-black text-orange-600 uppercase tracking-wider text-[11px] pb-1 border-b border-orange-200">
+                  <span>Featured Highlights</span>
+                </div>
+                <ul class="space-y-2 text-slate-700 font-medium text-[11.5px]">
+                  <li class="flex items-center gap-1.5 text-slate-900 font-bold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                    <button type="button" onclick="filterBySpecialDeals()" class="hover:text-orange-600 text-left">Top Selling Gadgets</button>
+                  </li>
+                  <li class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <button type="button" onclick="applySubcategoryFilter('laptops', 'Discount')" class="hover:text-orange-600 text-left">Laptops on Special Deal</button>
+                  </li>
+                  <li class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <button type="button" onclick="applySubcategoryFilter('audio', 'JBL')" class="hover:text-orange-600 text-left">JBL & Sony Audio Store</button>
+                  </li>
+                  <li class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <button type="button" onclick="applySubcategoryFilter('mobiles', 'Apple')" class="hover:text-orange-600 text-left">Apple Certified Gear</button>
+                  </li>
+                </ul>
+
+                <div class="mt-4 pt-3 border-t border-orange-200/80 space-y-2">
+                  <div class="p-2.5 rounded-xl bg-white border border-orange-200/60 shadow-xs space-y-1">
+                    <p class="font-black text-[11px] text-orange-950 flex items-center gap-1">
+                      <i data-lucide="truck" class="w-3.5 h-3.5 text-orange-600"></i>
+                      <span>Free Delivery on ₹350+</span>
+                    </p>
+                    <p class="text-[10px] text-slate-500">Fast doorstep express delivery across India with live order tracking.</p>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-white border border-emerald-200/60 shadow-xs space-y-1">
+                    <p class="font-black text-[11px] text-emerald-950 flex items-center gap-1">
+                      <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>Razorpay Verified</span>
+                    </p>
+                    <p class="text-[10px] text-slate-500">100% secure encrypted payment via UPI, Credit/Debit cards & Net Banking.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Catalog Header, Breadcrumbs & Active Filter Indicator -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-black text-slate-900" id="category-page-title">Electronics Catalog</h2>
+              <span id="category-page-count-badge" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">0 Products</span>
+            </div>
+            <p class="text-xs text-slate-500" id="category-page-desc">Explore specs, benchmarks, verified store links and direct orders</p>
+          </div>
+
+          <!-- Active Filter Pill Bar (Shown when a sub-item or keyword is clicked) -->
+          <div id="category-active-filter-bar" class="hidden items-center gap-2 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl text-xs">
+            <span class="text-slate-600 font-semibold">Filtering by:</span>
+            <span id="category-active-filter-name" class="font-black text-orange-700">Apple</span>
+            <button type="button" onclick="clearMegaMenuFilter()" class="w-5 h-5 rounded-full bg-orange-200 hover:bg-orange-300 text-orange-900 flex items-center justify-center font-bold text-xs transition cursor-pointer" title="Clear Filter">✕</button>
           </div>
         </div>
+
         <div id="category-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
@@ -1524,14 +1747,14 @@
                 </div>
               </div>
 
-              <!-- Direct Jaankar Store Order (COD & Fast Shipping) -->
-              <div class="p-4 rounded-2xl bg-white border-2 border-orange-500 shadow-md space-y-3">
+              <!-- Direct Jaankar Store Order (Shown ONLY if sold by Jaankar) -->
+              <div id="prod-page-direct-order-box" class="p-4 rounded-2xl bg-white border-2 border-orange-500 shadow-md space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span class="text-xs font-black text-slate-900 uppercase tracking-wide">Jaankar Direct Order</span>
                   </div>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span id="prod-page-cod-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
                     COD Available
                   </span>
                 </div>
@@ -1542,17 +1765,31 @@
                   <span><strong>FREE Delivery</strong> on orders ₹350+ (₹40 for orders under ₹350)</span>
                 </div>
 
-                <!-- Action Buttons: Add to Cart & Buy Now (COD) -->
+                <!-- Action Buttons: Add to Cart & Buy Now -->
                 <div class="grid grid-cols-2 gap-2.5">
-                  <button type="button" onclick="addToCartCurrentProduct()" class="py-3 px-3 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 font-black text-xs flex items-center justify-center gap-2 border border-orange-300 transition shadow-sm cursor-pointer">
+                  <button type="button" id="prod-page-btn-cart" onclick="addToCartCurrentProduct()" class="py-3 px-3 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 font-black text-xs flex items-center justify-center gap-2 border border-orange-300 transition shadow-sm cursor-pointer">
                     <i data-lucide="shopping-cart" class="w-4 h-4"></i>
                     <span>Add to Cart</span>
                   </button>
-                  <button type="button" onclick="buyNowCurrentProduct()" class="py-3 px-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition cursor-pointer">
+                  <button type="button" id="prod-page-btn-buynow" onclick="buyNowCurrentProduct()" class="py-3 px-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition cursor-pointer">
                     <i data-lucide="zap" class="w-4 h-4"></i>
-                    <span>Buy Now (COD)</span>
+                    <span id="prod-page-btn-buynow-text">Buy Now (Pay Online)</span>
                   </button>
                 </div>
+              </div>
+
+              <!-- Affiliate / Review Only Notice (Shown when product is NOT sold by Jaankar) -->
+              <div id="prod-page-affiliate-notice" class="hidden p-4 rounded-2xl bg-blue-50 border-2 border-blue-400 text-slate-800 space-y-2.5 shadow-sm">
+                <div class="flex items-center gap-2 text-blue-900 font-bold text-xs">
+                  <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                  <span class="uppercase tracking-wider">Affiliate / Partner Recommendation</span>
+                </div>
+                <p class="text-[11.5px] text-slate-600 leading-relaxed font-normal">
+                  This product is curated by <strong>JAANKAR Tech Lab</strong> for technical specifications and benchmark reviews. We do not dispatch this product from our warehouse, so direct checkout and cart buttons are disabled.
+                </p>
+                <p class="text-[11px] font-bold text-blue-800 flex items-center gap-1">
+                  <span>👉 Use verified official partner buttons below to buy on Amazon or Flipkart:</span>
+                </p>
               </div>
 
               <!-- Verified Store Links (Amazon, Flipkart, etc. Directly Under Price) -->
@@ -2298,29 +2535,39 @@
         <div class="pt-2 space-y-2">
           <label class="block font-black text-slate-800 uppercase tracking-wider text-[11px]">Choose Payment Mode *</label>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <!-- COD (Cash on Delivery) - Selected by Default -->
-            <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-orange-500 bg-orange-50/50 cursor-pointer transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/60" id="label-pay-cod">
-              <input type="radio" name="checkout_payment_mode" value="COD" checked class="text-orange-600 focus:ring-orange-500">
+            <!-- Online Payment (Prepaid) - ACTIVE & DEFAULT -->
+            <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 cursor-pointer transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/60" id="label-pay-prepaid">
+              <input type="radio" name="checkout_payment_mode" value="PREPAID" checked onchange="updateCheckoutPaymentUi()" class="text-emerald-600 focus:ring-emerald-500">
               <div>
-                <p class="font-black text-slate-900 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                  <span>Cash on Delivery</span>
+                <p class="font-black text-slate-900 flex items-center gap-1.5 text-xs">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Pay Online (Razorpay)</span>
+                  <span class="px-1.5 py-0.2 bg-emerald-200 text-emerald-900 text-[9px] rounded font-bold">Fastest</span>
                 </p>
-                <p class="text-[10.5px] text-slate-500">Pay cash or UPI at delivery</p>
+                <p class="text-[10px] text-slate-500">UPI (GPay/PhonePe), Cards, NetBanking</p>
               </div>
             </label>
 
-            <!-- Online Payment (Prepaid) -->
-            <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/40" id="label-pay-prepaid">
-              <input type="radio" name="checkout_payment_mode" value="PREPAID" class="text-emerald-600 focus:ring-emerald-500">
-              <div>
-                <p class="font-black text-slate-900 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span>Pay Online (UPI/Card)</span>
-                </p>
-                <p class="text-[10.5px] text-slate-500">Instant digital confirmation</p>
-              </div>
-            </label>
+            <!-- COD (Cash on Delivery) - Disabled by default until admin enables -->
+            <div id="checkout-cod-option-wrapper" class="relative">
+              <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer transition has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/60" id="label-pay-cod">
+                <input type="radio" name="checkout_payment_mode" id="checkout-radio-cod" value="COD" onchange="updateCheckoutPaymentUi()" class="text-orange-600 focus:ring-orange-500">
+                <div>
+                  <p class="font-black text-slate-900 flex items-center gap-1.5 text-xs">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span>Cash on Delivery</span>
+                    <span id="checkout-cod-badge" class="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] rounded font-bold">Available</span>
+                  </p>
+                  <p class="text-[10px] text-slate-500">Pay cash or UPI upon delivery</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Notice when COD is Disabled -->
+          <div id="checkout-cod-disabled-msg" class="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 shrink-0"></i>
+            <span>Cash on Delivery is currently disabled by store admin. Please pay online via UPI, Cards, or NetBanking to confirm order.</span>
           </div>
         </div>
 
@@ -2342,8 +2589,8 @@
 
         <!-- Submit Button -->
         <button type="submit" id="btn-submit-order" class="btn-primary-orange w-full justify-center py-3 text-xs font-black shadow-lg shadow-orange-500/25 cursor-pointer">
-          <i data-lucide="check-circle" class="w-4 h-4"></i>
-          <span id="checkout-btn-text">Confirm Order (Cash on Delivery)</span>
+          <i data-lucide="lock" class="w-4 h-4"></i>
+          <span id="checkout-btn-text">Proceed to Pay Online (Razorpay)</span>
         </button>
       </form>
     </div>

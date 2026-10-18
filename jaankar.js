@@ -705,6 +705,8 @@ function bootJaankarApp() {
   try { renderReelsRail(); } catch (e) { console.error("renderReelsRail err:", e); }
   try { renderAccountDetails(); } catch (e) { console.error("renderAccountDetails err:", e); }
   try { applyTranslations(); } catch (e) { console.error("applyTranslations err:", e); }
+  try { if (typeof initCartSystem === "function") initCartSystem(); } catch (e) { console.error("initCartSystem err:", e); }
+  try { if (typeof syncMyOrdersBadge === "function") syncMyOrdersBadge(); } catch (e) { console.error("syncMyOrdersBadge err:", e); }
   
   if (window.lucide && typeof lucide.createIcons === "function") {
     try { lucide.createIcons(); } catch (e) { console.error("lucide err:", e); }
@@ -1219,7 +1221,8 @@ function switchTab(tabId) {
     "categories",
     "product-detail",
     "settings",
-    "account"
+    "account",
+    "orders"
   ];
 
   allViews.forEach((v) => {
@@ -1259,6 +1262,7 @@ function switchTab(tabId) {
   if (tabId === "tools" && typeof initLiveQrCanvas === "function") initLiveQrCanvas();
   if (tabId === "settings") loadSettingsInfo();
   if (tabId === "account") renderAccountDetails();
+  if (tabId === "orders") renderMyOrdersList();
 
   if (window.lucide && typeof lucide.createIcons === "function") {
     lucide.createIcons();
@@ -1586,6 +1590,7 @@ function openProductDetailPage(productId) {
 
   currentActiveProductId = p.id;
   window.currentActiveProductId = p.id;
+  window.currentActiveProduct = p;
 
   // 1. Activate Dedicated View
   switchTab("product-detail");
@@ -4927,4 +4932,983 @@ function playToneSynthesizer() {
 document.addEventListener("DOMContentLoaded", () => {
   initLiveClock();
   renderAlarmsList();
+  if (typeof initCartSystem === "function") initCartSystem();
 });
+
+// ============================================================================
+// JAANKAR DIRECT E-COMMERCE, CART & FLIPKART-STYLE LIVE STEPPER TRACKING SYSTEM
+// ============================================================================
+
+function parseCurrencyNumber(val) {
+  if (typeof val === "number") return isNaN(val) ? 0 : val;
+  if (!val) return 0;
+  const cleaned = String(val).replace(/[^0-9.]/g, "");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+}
+window.parseCurrencyNumber = parseCurrencyNumber;
+
+function formatInr(num) {
+  return "₹" + Math.round(num || 0).toLocaleString("en-IN");
+}
+window.formatInr = formatInr;
+
+window.jaankarCart = JSON.parse(localStorage.getItem("jaankar_cart") || "[]");
+
+function saveCartToStorage() {
+  localStorage.setItem("jaankar_cart", JSON.stringify(window.jaankarCart));
+  renderCartUi();
+}
+
+function initCartSystem() {
+  try {
+    window.jaankarCart = JSON.parse(localStorage.getItem("jaankar_cart") || "[]");
+  } catch (_) {
+    window.jaankarCart = [];
+  }
+  renderCartUi();
+  syncMyOrdersBadge();
+}
+window.initCartSystem = initCartSystem;
+
+function openCartDrawer() {
+  const drawer = document.getElementById("drawer-cart");
+  const backdrop = document.getElementById("cart-drawer-backdrop");
+  if (drawer) drawer.classList.remove("translate-x-full");
+  if (backdrop) backdrop.classList.remove("hidden");
+  renderCartUi();
+  if (window.lucide) lucide.createIcons();
+}
+window.openCartDrawer = openCartDrawer;
+
+function closeCartDrawer() {
+  const drawer = document.getElementById("drawer-cart");
+  const backdrop = document.getElementById("cart-drawer-backdrop");
+  if (drawer) drawer.classList.add("translate-x-full");
+  if (backdrop) backdrop.classList.add("hidden");
+}
+window.closeCartDrawer = closeCartDrawer;
+
+function addToCart(product, qty = 1) {
+  if (!product) return;
+  const pId = String(product.id || "prod_" + Date.now());
+  const existing = window.jaankarCart.find(item => item.id === pId);
+  const priceNum = parseCurrencyNumber(product.price);
+  const img = product.featuredImage || (product.images && product.images[0]) || (typeof defaultProductsCatalog !== "undefined" && defaultProductsCatalog[0] && defaultProductsCatalog[0].images[0]) || "";
+
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    window.jaankarCart.push({
+      id: pId,
+      name: product.name || "Jaankar Verified Gadget",
+      price: product.price || formatInr(priceNum),
+      priceNum: priceNum,
+      image: img,
+      category: product.category || "Gadget",
+      qty: qty
+    });
+  }
+  saveCartToStorage();
+  openCartDrawer();
+}
+window.addToCart = addToCart;
+
+function addToCartCurrentProduct() {
+  const p = window.currentActiveProduct || (typeof liveProductsList !== "undefined" && liveProductsList[0]) || (typeof defaultProductsCatalog !== "undefined" && defaultProductsCatalog[0]);
+  if (!p) {
+    alert("Please select a product first.");
+    return;
+  }
+  addToCart(p, 1);
+}
+window.addToCartCurrentProduct = addToCartCurrentProduct;
+
+function buyNowCurrentProduct() {
+  const p = window.currentActiveProduct || (typeof liveProductsList !== "undefined" && liveProductsList[0]) || (typeof defaultProductsCatalog !== "undefined" && defaultProductsCatalog[0]);
+  if (!p) {
+    alert("Please select a product first.");
+    return;
+  }
+  const pId = String(p.id);
+  const inCart = window.jaankarCart.find(item => item.id === pId);
+  if (!inCart) {
+    const priceNum = parseCurrencyNumber(p.price);
+    const img = p.featuredImage || (p.images && p.images[0]) || "";
+    window.jaankarCart.push({
+      id: pId,
+      name: p.name || "Jaankar Verified Gadget",
+      price: p.price || formatInr(priceNum),
+      priceNum: priceNum,
+      image: img,
+      category: p.category || "Gadget",
+      qty: 1
+    });
+    saveCartToStorage();
+  }
+  closeCartDrawer();
+  openCheckoutModal();
+}
+window.buyNowCurrentProduct = buyNowCurrentProduct;
+
+function updateCartItemQty(productId, delta) {
+  const item = window.jaankarCart.find(i => i.id === String(productId));
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) {
+    window.jaankarCart = window.jaankarCart.filter(i => i.id !== String(productId));
+  }
+  saveCartToStorage();
+}
+window.updateCartItemQty = updateCartItemQty;
+
+function removeFromCart(productId) {
+  window.jaankarCart = window.jaankarCart.filter(i => i.id !== String(productId));
+  saveCartToStorage();
+}
+window.removeFromCart = removeFromCart;
+
+function calculateCartSubtotal() {
+  return window.jaankarCart.reduce((sum, item) => {
+    const pNum = item.priceNum || parseCurrencyNumber(item.price);
+    return sum + (pNum * item.qty);
+  }, 0);
+}
+window.calculateCartSubtotal = calculateCartSubtotal;
+
+function renderCartUi() {
+  const countEl = document.getElementById("header-cart-count");
+  const countTextEl = document.getElementById("cart-drawer-item-count-text");
+  const listEl = document.getElementById("cart-drawer-items-list");
+  const subtotalEl = document.getElementById("cart-bill-subtotal");
+  const deliveryEl = document.getElementById("cart-bill-delivery");
+  const grandTotalEl = document.getElementById("cart-bill-grand-total");
+  const freeBannerMsg = document.getElementById("cart-free-delivery-msg");
+  const proceedBtn = document.getElementById("btn-cart-proceed-checkout");
+
+  const totalItemsCount = window.jaankarCart.reduce((sum, item) => sum + item.qty, 0);
+
+  if (countEl) {
+    if (totalItemsCount > 0) {
+      countEl.textContent = totalItemsCount;
+      countEl.classList.remove("hidden");
+    } else {
+      countEl.classList.add("hidden");
+    }
+  }
+
+  if (countTextEl) {
+    countTextEl.textContent = `${totalItemsCount} ${totalItemsCount === 1 ? 'item' : 'items'} in cart`;
+  }
+
+  const subtotal = calculateCartSubtotal();
+  // FREE Delivery threshold rule: Orders >= 350 get ₹0 delivery fee, orders below ₹350 incur ₹40
+  const deliveryFee = totalItemsCount > 0 ? (subtotal >= 350 ? 0 : 40) : 0;
+  const grandTotal = subtotal + deliveryFee;
+
+  if (subtotalEl) subtotalEl.textContent = formatInr(subtotal);
+  if (deliveryEl) {
+    if (deliveryFee === 0 && totalItemsCount > 0) {
+      deliveryEl.innerHTML = '<span class="text-emerald-600 font-black">FREE (₹0)</span>';
+    } else {
+      deliveryEl.textContent = formatInr(deliveryFee);
+    }
+  }
+  if (grandTotalEl) grandTotalEl.textContent = formatInr(grandTotal);
+
+  if (freeBannerMsg) {
+    if (totalItemsCount === 0) {
+      freeBannerMsg.innerHTML = 'Add items worth ₹350 or more for <strong>FREE Delivery</strong>';
+    } else if (subtotal >= 350) {
+      freeBannerMsg.innerHTML = '<span class="text-emerald-700 font-bold">🎉 Congratulations! You have unlocked <strong>FREE Delivery</strong>!</span>';
+    } else {
+      const remaining = 350 - subtotal;
+      freeBannerMsg.innerHTML = `Add <strong>${formatInr(remaining)}</strong> more to get <strong>FREE Delivery</strong>! (Current delivery fee: ₹40)`;
+    }
+  }
+
+  if (proceedBtn) {
+    proceedBtn.disabled = totalItemsCount === 0;
+    if (totalItemsCount === 0) {
+      proceedBtn.classList.add("opacity-50", "cursor-not-allowed");
+    } else {
+      proceedBtn.classList.remove("opacity-50", "cursor-not-allowed");
+    }
+  }
+
+  if (listEl) {
+    if (window.jaankarCart.length === 0) {
+      listEl.innerHTML = `
+        <div class="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3">
+          <div class="w-16 h-16 rounded-2xl bg-orange-50 text-orange-400 flex items-center justify-center">
+            <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+          </div>
+          <h4 class="font-bold text-slate-800 text-sm">Your Cart is Empty</h4>
+          <p class="text-xs text-slate-500 max-w-xs">Explore computers, laptops, mobiles and gadgets with free delivery on orders ₹350+.</p>
+          <button type="button" onclick="closeCartDrawer(); switchTab('categories');" class="btn-primary-orange text-xs py-2 px-4 cursor-pointer">
+            <span>Explore Electronics</span>
+          </button>
+        </div>
+      `;
+    } else {
+      listEl.innerHTML = window.jaankarCart.map(item => `
+        <div class="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/80 flex gap-3 items-center">
+          <img src="${item.image || 'jaankar-logo.png'}" class="w-16 h-16 rounded-xl object-contain bg-white p-1 border border-slate-200 shrink-0">
+          <div class="flex-1 min-w-0 space-y-1">
+            <h5 class="text-xs font-bold text-slate-900 truncate">${escapeHtml(item.name)}</h5>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black text-orange-600">${formatInr(item.priceNum || parseCurrencyNumber(item.price))}</span>
+              <span class="text-[10px] text-slate-400 uppercase font-semibold">${escapeHtml(item.category)}</span>
+            </div>
+            <div class="flex items-center gap-2 pt-0.5">
+              <div class="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden shadow-xs">
+                <button type="button" onclick="updateCartItemQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xs cursor-pointer">-</button>
+                <span class="w-7 text-center text-xs font-black text-slate-800">${item.qty}</span>
+                <button type="button" onclick="updateCartItemQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 font-bold text-xs cursor-pointer">+</button>
+              </div>
+              <button type="button" onclick="removeFromCart('${item.id}')" class="text-[11px] text-rose-500 hover:text-rose-700 font-bold ml-auto flex items-center gap-1 cursor-pointer">
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                <span>Remove</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderCartUi = renderCartUi;
+
+function openCheckoutModal() {
+  if (window.jaankarCart.length === 0) {
+    alert("Your cart is empty. Please add a product first!");
+    return;
+  }
+  closeCartDrawer();
+  const modal = document.getElementById("modal-checkout");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+
+  // Load saved address
+  try {
+    const saved = JSON.parse(localStorage.getItem("jaankar_saved_shipping_address") || "null");
+    if (saved) {
+      if (document.getElementById("checkout-input-name")) document.getElementById("checkout-input-name").value = saved.name || "";
+      if (document.getElementById("checkout-input-phone")) document.getElementById("checkout-input-phone").value = saved.phone || "";
+      if (document.getElementById("checkout-input-address")) document.getElementById("checkout-input-address").value = saved.street || "";
+      if (document.getElementById("checkout-input-pincode")) document.getElementById("checkout-input-pincode").value = saved.pincode || "";
+      if (document.getElementById("checkout-input-city")) document.getElementById("checkout-input-city").value = saved.city || "";
+      if (document.getElementById("checkout-input-state")) document.getElementById("checkout-input-state").value = saved.state || "";
+    } else {
+      const nameEl = document.getElementById("account-name-heading");
+      if (nameEl && document.getElementById("checkout-input-name")) {
+        document.getElementById("checkout-input-name").value = nameEl.textContent.trim();
+      }
+    }
+  } catch (e) {
+    console.warn("Saved address note:", e);
+  }
+
+  // Render items preview in checkout
+  const preview = document.getElementById("checkout-items-preview");
+  if (preview) {
+    preview.innerHTML = window.jaankarCart.map(item => `
+      <div class="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
+        <div class="flex items-center gap-2 truncate max-w-[240px]">
+          <span class="w-5 h-5 rounded bg-orange-100 text-orange-700 font-black text-[10px] flex items-center justify-center shrink-0">${item.qty}x</span>
+          <span class="font-bold text-slate-800 truncate">${escapeHtml(item.name)}</span>
+        </div>
+        <span class="font-black text-slate-900">${formatInr((item.priceNum || parseCurrencyNumber(item.price)) * item.qty)}</span>
+      </div>
+    `).join("");
+  }
+
+  // Update checkout totals
+  const subtotal = calculateCartSubtotal();
+  const deliveryFee = subtotal >= 350 ? 0 : 40;
+  const grandTotal = subtotal + deliveryFee;
+
+  const sumSub = document.getElementById("checkout-sum-subtotal");
+  const sumDel = document.getElementById("checkout-sum-delivery");
+  const sumTot = document.getElementById("checkout-sum-total");
+
+  if (sumSub) sumSub.textContent = formatInr(subtotal);
+  if (sumDel) {
+    sumDel.innerHTML = deliveryFee === 0 ? '<span class="text-emerald-600 font-black">FREE (₹0)</span>' : formatInr(deliveryFee);
+  }
+  if (sumTot) sumTot.textContent = formatInr(grandTotal);
+
+  // Set COD selected by default
+  const codRadio = document.querySelector('input[name="checkout_payment_mode"][value="COD"]');
+  if (codRadio) codRadio.checked = true;
+  updateCheckoutButtonText();
+
+  document.querySelectorAll('input[name="checkout_payment_mode"]').forEach(r => {
+    r.onchange = updateCheckoutButtonText;
+  });
+
+  if (window.lucide) lucide.createIcons();
+}
+window.openCheckoutModal = openCheckoutModal;
+
+function closeCheckoutModal() {
+  const modal = document.getElementById("modal-checkout");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+}
+window.closeCheckoutModal = closeCheckoutModal;
+
+function updateCheckoutButtonText() {
+  const selected = document.querySelector('input[name="checkout_payment_mode"]:checked');
+  const btnText = document.getElementById("checkout-btn-text");
+  if (!btnText) return;
+  if (selected && selected.value === "PREPAID") {
+    btnText.textContent = "Proceed to Online Payment & Confirm";
+  } else {
+    btnText.textContent = "Confirm Order (Cash on Delivery)";
+  }
+}
+
+function handlePincodeLookup(val) {
+  const pin = String(val).trim();
+  if (pin.length !== 6) return;
+  const cityInput = document.getElementById("checkout-input-city");
+  const stateInput = document.getElementById("checkout-input-state");
+
+  const prefix2 = pin.substring(0, 2);
+  let city = "";
+  let state = "";
+
+  if (prefix2 === "11") { city = "New Delhi"; state = "Delhi"; }
+  else if (prefix2 >= "12" && prefix2 <= "13") { city = "Gurugram"; state = "Haryana"; }
+  else if (prefix2 >= "14" && prefix2 <= "16") { city = "Chandigarh"; state = "Punjab"; }
+  else if (prefix2 >= "18" && prefix2 <= "19") { city = "Jammu"; state = "Jammu & Kashmir"; }
+  else if (prefix2 >= "20" && prefix2 <= "28") { city = "Lucknow"; state = "Uttar Pradesh"; }
+  else if (prefix2 >= "30" && prefix2 <= "34") { city = "Jaipur"; state = "Rajasthan"; }
+  else if (prefix2 >= "36" && prefix2 <= "39") { city = "Ahmedabad"; state = "Gujarat"; }
+  else if (prefix2 >= "40" && prefix2 <= "44") { city = "Mumbai"; state = "Maharashtra"; }
+  else if (prefix2 >= "45" && prefix2 <= "48") { city = "Bhopal"; state = "Madhya Pradesh"; }
+  else if (prefix2 >= "49") { city = "Raipur"; state = "Chhattisgarh"; }
+  else if (prefix2 >= "50" && prefix2 <= "53") { city = "Hyderabad"; state = "Telangana"; }
+  else if (prefix2 >= "56" && prefix2 <= "59") { city = "Bengaluru"; state = "Karnataka"; }
+  else if (prefix2 >= "60" && prefix2 <= "64") { city = "Chennai"; state = "Tamil Nadu"; }
+  else if (prefix2 >= "67" && prefix2 <= "69") { city = "Kochi"; state = "Kerala"; }
+  else if (prefix2 >= "70" && prefix2 <= "74") { city = "Kolkata"; state = "West Bengal"; }
+  else if (prefix2 >= "75" && prefix2 <= "77") { city = "Bhubaneswar"; state = "Odisha"; }
+  else if (prefix2 >= "80" && prefix2 <= "85") { city = "Patna"; state = "Bihar"; }
+
+  if (city && cityInput && (!cityInput.value || cityInput.value === "New Delhi")) {
+    cityInput.value = city;
+  }
+  if (state && stateInput && (!stateInput.value || stateInput.value === "Delhi")) {
+    stateInput.value = state;
+  }
+}
+window.handlePincodeLookup = handlePincodeLookup;
+
+async function handlePlaceOrder(event) {
+  if (event) event.preventDefault();
+  if (window.jaankarCart.length === 0) {
+    alert("Cart is empty.");
+    return;
+  }
+
+  const name = document.getElementById("checkout-input-name").value.trim();
+  const phone = document.getElementById("checkout-input-phone").value.trim();
+  const address = document.getElementById("checkout-input-address").value.trim();
+  const pincode = document.getElementById("checkout-input-pincode").value.trim();
+  const city = document.getElementById("checkout-input-city").value.trim();
+  const state = document.getElementById("checkout-input-state").value.trim();
+
+  if (!name || !phone || !address || !pincode || !city || !state) {
+    alert("Please fill in all shipping address fields.");
+    return;
+  }
+
+  if (phone.length < 10) {
+    alert("Please enter a valid 10-digit mobile number.");
+    return;
+  }
+
+  const selectedPayment = document.querySelector('input[name="checkout_payment_mode"]:checked');
+  const paymentMode = selectedPayment ? selectedPayment.value : "COD";
+
+  const addressObj = { name, phone, street: address, pincode, city, state };
+  localStorage.setItem("jaankar_saved_shipping_address", JSON.stringify(addressObj));
+
+  const subtotal = calculateCartSubtotal();
+  const deliveryFee = subtotal >= 350 ? 0 : 40;
+  const grandTotal = subtotal + deliveryFee;
+
+  const orderId = `JK-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  const orderDoc = {
+    id: orderId,
+    orderId: orderId,
+    customerName: name,
+    customerPhone: phone,
+    customerEmail: localStorage.getItem("jaankar_user_email") || "expertshiba@gmail.com",
+    shippingAddress: addressObj,
+    items: window.jaankarCart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      priceNum: item.priceNum || parseCurrencyNumber(item.price),
+      image: item.image,
+      category: item.category || "Gadget",
+      qty: item.qty
+    })),
+    pricing: {
+      subtotal: subtotal,
+      deliveryFee: deliveryFee,
+      grandTotal: grandTotal,
+      freeDeliveryQualified: subtotal >= 350
+    },
+    payment: {
+      mode: paymentMode, // "COD" or "PREPAID"
+      status: paymentMode === "COD" ? "PENDING" : "PAID",
+      amount: grandTotal,
+      label: paymentMode === "COD" ? "Cash on Delivery" : "Paid Online (Prepaid)"
+    },
+    orderStatus: "ORDER_PLACED", // ORDER_PLACED, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+    courier: {
+      carrierName: "",
+      trackingNumber: "",
+      trackingUrl: "",
+      estimatedDelivery: "3-5 Business Days"
+    },
+    timeline: [
+      {
+        status: "ORDER_PLACED",
+        title: "Order Placed Successfully",
+        description: `Order ${orderId} received via ${paymentMode === "COD" ? "Cash on Delivery (Pay " + formatInr(grandTotal) + " upon delivery)" : "Prepaid Online Payment"}.`,
+        time: new Date().toISOString()
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    source: "USER_WEB"
+  };
+
+  const btn = document.getElementById("btn-submit-order");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="animate-spin inline-block mr-2">⌛</span> <span>Placing Order...</span>`;
+  }
+
+  // 1. Save to Firestore
+  try {
+    if (db) {
+      await db.collection("orders").doc(orderId).set(orderDoc);
+      console.log("Order saved to Firestore:", orderId);
+    }
+  } catch (err) {
+    console.warn("Firestore order sync note (local fallback active):", err);
+  }
+
+  // 2. Save locally for instant access
+  try {
+    const localOrders = JSON.parse(localStorage.getItem("jaankar_my_orders") || "[]");
+    localOrders.unshift(orderDoc);
+    localStorage.setItem("jaankar_my_orders", JSON.stringify(localOrders));
+  } catch (err) {
+    console.error("Local order storage error:", err);
+  }
+
+  // 3. Clear cart
+  window.jaankarCart = [];
+  localStorage.removeItem("jaankar_cart");
+  renderCartUi();
+  syncMyOrdersBadge();
+
+  // 4. Close checkout modal and open Flipkart Stepper Live Tracking!
+  closeCheckoutModal();
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i><span>Confirm Order</span>`;
+  }
+
+  openOrderTrackingModal(orderId);
+  renderMyOrdersList();
+}
+window.handlePlaceOrder = handlePlaceOrder;
+
+let currentTrackingOrder = null;
+
+async function fetchOrderDetails(orderId) {
+  const localOrders = JSON.parse(localStorage.getItem("jaankar_my_orders") || "[]");
+  let found = localOrders.find(o => o.orderId === orderId || o.id === orderId);
+
+  if (db) {
+    try {
+      const snap = await db.collection("orders").doc(orderId).get();
+      if (snap && snap.exists) {
+        found = { id: snap.id, ...snap.data() };
+      }
+    } catch (e) {
+      console.warn("Firestore fetchOrderDetails note:", e);
+    }
+  }
+  return found;
+}
+window.fetchOrderDetails = fetchOrderDetails;
+
+async function openOrderTrackingModal(orderId) {
+  const modal = document.getElementById("modal-order-tracking");
+  if (!modal) return;
+
+  const order = await fetchOrderDetails(orderId);
+  if (!order) {
+    alert("Order not found: " + orderId);
+    return;
+  }
+  currentTrackingOrder = order;
+
+  const idBadge = document.getElementById("track-order-id-badge");
+  const dateEl = document.getElementById("track-order-date");
+  if (idBadge) idBadge.textContent = order.orderId;
+  if (dateEl) {
+    const d = new Date(order.createdAt || Date.now());
+    dateEl.textContent = "Placed on " + d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  const addr = order.shippingAddress || {};
+  const addrName = document.getElementById("track-address-name");
+  const addrText = document.getElementById("track-address-text");
+  const addrPhone = document.getElementById("track-address-phone");
+
+  if (addrName) addrName.textContent = addr.name || order.customerName || "Customer";
+  if (addrText) addrText.textContent = `${addr.street || ""}, ${addr.city || ""} - ${addr.pincode || ""}, ${addr.state || ""}`;
+  if (addrPhone) addrPhone.textContent = "Mobile: " + (addr.phone || order.customerPhone || "N/A");
+
+  const payBadge = document.getElementById("track-payment-badge");
+  const totAmount = document.getElementById("track-total-amount");
+  const delFeeBadge = document.getElementById("track-delivery-fee-badge");
+
+  const grandTotal = (order.pricing && order.pricing.grandTotal) || (order.payment && order.payment.amount) || 0;
+  const isCod = !order.payment || order.payment.mode === "COD";
+
+  if (payBadge) {
+    payBadge.innerHTML = isCod
+      ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">🟡 Cash on Delivery (Pay at Doorstep)</span>'
+      : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Paid Online (Prepaid)</span>';
+  }
+  if (totAmount) totAmount.textContent = formatInr(grandTotal);
+  if (delFeeBadge) {
+    const fee = order.pricing ? order.pricing.deliveryFee : 0;
+    delFeeBadge.textContent = fee === 0 ? "FREE Delivery Included (Orders ₹350+)" : "Standard Delivery (₹40)";
+  }
+
+  renderTrackingStepper(order);
+
+  const courierCard = document.getElementById("track-courier-card");
+  const courierNameEl = document.getElementById("track-courier-name");
+  const courierAwbEl = document.getElementById("track-courier-awb");
+  const courierLinkEl = document.getElementById("track-courier-link");
+
+  const courier = order.courier || {};
+  const isShipped = ["SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order.orderStatus);
+
+  if (courierCard) {
+    if (isShipped && (courier.carrierName || courier.trackingNumber)) {
+      courierCard.classList.remove("hidden");
+      if (courierNameEl) courierNameEl.textContent = "Courier Partner: " + (courier.carrierName || "Fast Dispatch Logistics");
+      if (courierAwbEl) courierAwbEl.textContent = courier.trackingNumber || "AWB Generating...";
+      if (courierLinkEl) {
+        courierLinkEl.href = courier.trackingUrl || `https://www.google.com/search?q=${encodeURIComponent((courier.carrierName || '') + ' tracking ' + (courier.trackingNumber || ''))}`;
+      }
+    } else {
+      courierCard.classList.add("hidden");
+    }
+  }
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  if (window.lucide) lucide.createIcons();
+}
+window.openOrderTrackingModal = openOrderTrackingModal;
+
+function closeOrderTrackingModal() {
+  const modal = document.getElementById("modal-order-tracking");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+}
+window.closeOrderTrackingModal = closeOrderTrackingModal;
+
+function renderTrackingStepper(order) {
+  const container = document.getElementById("tracking-stepper-nodes");
+  if (!container) return;
+
+  const stages = [
+    { key: "ORDER_PLACED", label: "Order Placed", desc: "Your order has been placed and received by seller." },
+    { key: "PROCESSING", label: "Packed & Verified", desc: "Item checked by JAANKAR quality team and packed." },
+    { key: "SHIPPED", label: "Shipped / In Transit", desc: order.courier && order.courier.carrierName ? `Handed over to ${order.courier.carrierName} (AWB: ${order.courier.trackingNumber || 'Assigned'})` : "Package in transit to nearest delivery hub." },
+    { key: "OUT_FOR_DELIVERY", label: "Out for Delivery", desc: "Courier executive is out for delivery to your address." },
+    { key: "DELIVERED", label: "Delivered", desc: "Package handed over safely." }
+  ];
+
+  const statusHierarchy = {
+    "ORDER_PLACED": 1,
+    "PROCESSING": 2,
+    "SHIPPED": 3,
+    "OUT_FOR_DELIVERY": 4,
+    "DELIVERED": 5,
+    "CANCELLED": 0
+  };
+
+  const currentLevel = statusHierarchy[order.orderStatus] || 1;
+  const isCancelled = order.orderStatus === "CANCELLED";
+
+  if (isCancelled) {
+    container.innerHTML = `
+      <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-3">
+        <i data-lucide="alert-circle" class="w-6 h-6 text-rose-600 shrink-0"></i>
+        <div>
+          <p class="font-bold text-sm">Order Cancelled</p>
+          <p class="text-[11px] text-rose-700">This order was cancelled. Any prepaid payments are refunded within 2-4 business days.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = stages.map((stage, idx) => {
+    const stageLevel = idx + 1;
+    const isCompleted = currentLevel >= stageLevel;
+    const isCurrent = currentLevel === stageLevel;
+
+    const circleColor = isCompleted
+      ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20"
+      : "bg-white text-slate-300 border-slate-300";
+
+    const lineColor = currentLevel > stageLevel ? "bg-emerald-500" : "bg-slate-200";
+
+    return `
+      <div class="relative flex items-start gap-4">
+        ${idx < stages.length - 1 ? `<div class="absolute left-3.5 top-7 w-0.5 h-12 -ml-[1px] ${lineColor} transition-colors"></div>` : ""}
+        <div class="w-7 h-7 rounded-full border-2 ${circleColor} flex items-center justify-center text-xs font-black shrink-0 z-10">
+          ${isCompleted ? '✓' : (idx + 1)}
+        </div>
+        <div class="flex-1 pb-4">
+          <div class="flex items-center justify-between">
+            <h5 class="text-xs font-black ${isCompleted ? 'text-slate-900' : 'text-slate-400'} flex items-center gap-2">
+              <span>${stage.label}</span>
+              ${isCurrent ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 animate-pulse">Live Status</span>' : ''}
+            </h5>
+          </div>
+          <p class="text-[11px] ${isCompleted ? 'text-slate-600' : 'text-slate-400'} mt-0.5 leading-relaxed">${stage.desc}</p>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function printOrderInvoiceFromModal() {
+  if (currentTrackingOrder) {
+    printOrderInvoice(currentTrackingOrder.orderId);
+  }
+}
+window.printOrderInvoiceFromModal = printOrderInvoiceFromModal;
+
+function contactSupportForOrder() {
+  if (!currentTrackingOrder) return;
+  const oid = currentTrackingOrder.orderId;
+  const text = encodeURIComponent(`Hello JAANKAR Support team, I have a query regarding my Order #${oid}. Please assist me with delivery updates.`);
+  window.open(`https://wa.me/919876543210?text=${text}`, "_blank");
+}
+window.contactSupportForOrder = contactSupportForOrder;
+
+async function printOrderInvoice(orderId) {
+  const order = await fetchOrderDetails(orderId);
+  if (!order) {
+    alert("Unable to generate invoice: Order not found.");
+    return;
+  }
+
+  const itemsHtml = (order.items || []).map((it, idx) => `
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${idx + 1}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">
+        <strong>${escapeHtml(it.name)}</strong><br>
+        <span style="font-size: 11px; color: #666;">Category: ${escapeHtml(it.category || 'Gadget')}</span>
+      </td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${it.qty}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatInr(it.priceNum || parseCurrencyNumber(it.price))}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${formatInr((it.priceNum || parseCurrencyNumber(it.price)) * it.qty)}</td>
+    </tr>
+  `).join("");
+
+  const pricing = order.pricing || {};
+  const subtotal = pricing.subtotal || 0;
+  const delivery = pricing.deliveryFee || 0;
+  const grandTotal = pricing.grandTotal || (order.payment ? order.payment.amount : 0);
+  const isCod = !order.payment || order.payment.mode === "COD";
+
+  const invoiceWindow = window.open("", "_blank");
+  if (!invoiceWindow) {
+    alert("Please allow popups to print tax invoice.");
+    return;
+  }
+  invoiceWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Tax Invoice - ${order.orderId}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; color: #1e293b; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f97316; padding-bottom: 15px; margin-bottom: 20px; }
+        .brand { font-size: 24px; font-weight: 900; color: #ea580c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f8fafc; padding: 10px; text-align: left; font-size: 12px; border-bottom: 2px solid #cbd5e1; }
+        .totals { margin-top: 20px; float: right; width: 300px; }
+        .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+        .grand-total { font-size: 16px; font-weight: 900; color: #ea580c; border-top: 2px solid #ea580c; padding-top: 8px; }
+        .footer { clear: both; margin-top: 60px; font-size: 11px; text-align: center; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        @media print { body { margin: 0; } .invoice-box { border: none; padding: 0; } }
+      </style>
+    </head>
+    <body>
+      <div class="invoice-box">
+        <div class="header">
+          <div>
+            <div class="brand">JAANKAR</div>
+            <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Official Tax Invoice</div>
+          </div>
+          <div style="text-align: right; font-size: 12px;">
+            <strong>Order ID: ${order.orderId}</strong><br>
+            Date: ${new Date(order.createdAt || Date.now()).toLocaleDateString("en-IN")}<br>
+            Status: ${order.orderStatus}
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 20px;">
+          <div>
+            <strong style="color: #64748b; font-size: 11px; text-transform: uppercase;">Sold By:</strong><br>
+            <strong>JAANKAR Digital Electronics Pvt Ltd</strong><br>
+            Technology Innovation Park, Cyber Hub<br>
+            GSTIN: 07AAACJ8921B1Z4<br>
+            Support: support@jaankar.in
+          </div>
+          <div style="text-align: right;">
+            <strong style="color: #64748b; font-size: 11px; text-transform: uppercase;">Billed & Shipped To:</strong><br>
+            <strong>${escapeHtml(order.shippingAddress?.name || order.customerName || 'Customer')}</strong><br>
+            ${escapeHtml(order.shippingAddress?.street || '')}<br>
+            ${escapeHtml(order.shippingAddress?.city || '')} - ${escapeHtml(order.shippingAddress?.pincode || '')}, ${escapeHtml(order.shippingAddress?.state || '')}<br>
+            Phone: ${escapeHtml(order.shippingAddress?.phone || order.customerPhone || 'N/A')}
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>Description</th>
+              <th style="text-align: center; width: 60px;">Qty</th>
+              <th style="text-align: right; width: 100px;">Price</th>
+              <th style="text-align: right; width: 110px;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div class="total-row"><span>Items Subtotal:</span><span>${formatInr(subtotal)}</span></div>
+          <div class="total-row"><span>Delivery Fee:</span><span>${delivery === 0 ? "FREE (₹0)" : formatInr(delivery)}</span></div>
+          <div class="total-row"><span>Payment Mode:</span><span><strong>${isCod ? 'Cash on Delivery (COD)' : 'Paid Online'}</strong></span></div>
+          <div class="total-row grand-total"><span>Total Amount:</span><span>${formatInr(grandTotal)}</span></div>
+        </div>
+
+        <div class="footer">
+          This is a computer-generated tax invoice and does not require a physical signature.<br>
+          For warranty claims or support, quote your Order ID: <strong>${order.orderId}</strong>
+        </div>
+      </div>
+      <script>
+        window.onload = function() { window.print(); };
+      </script>
+    </body>
+    </html>
+  `);
+  invoiceWindow.document.close();
+}
+window.printOrderInvoice = printOrderInvoice;
+
+let currentOrdersFilter = "ALL";
+let currentOrdersSearchQuery = "";
+
+async function renderMyOrdersList() {
+  const container = document.getElementById("my-orders-list-container");
+  if (!container) return;
+
+  let orders = JSON.parse(localStorage.getItem("jaankar_my_orders") || "[]");
+
+  if (db) {
+    try {
+      const snap = await db.collection("orders").orderBy("createdAt", "desc").limit(30).get();
+      if (snap && !snap.empty) {
+        const firestoreOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const map = new Map();
+        orders.forEach(o => map.set(o.orderId || o.id, o));
+        firestoreOrders.forEach(o => map.set(o.orderId || o.id, o));
+        orders = Array.from(map.values());
+        orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        localStorage.setItem("jaankar_my_orders", JSON.stringify(orders));
+      }
+    } catch (e) {
+      console.warn("Firestore fetch orders note:", e);
+    }
+  }
+
+  syncMyOrdersBadge(orders.length);
+
+  let filtered = orders;
+  if (currentOrdersFilter === "ACTIVE") {
+    filtered = filtered.filter(o => ["ORDER_PLACED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.orderStatus));
+  } else if (currentOrdersFilter === "DELIVERED") {
+    filtered = filtered.filter(o => o.orderStatus === "DELIVERED");
+  }
+
+  if (currentOrdersSearchQuery) {
+    const q = currentOrdersSearchQuery.toLowerCase();
+    filtered = filtered.filter(o => (o.orderId && o.orderId.toLowerCase().includes(q)) || (o.customerName && o.customerName.toLowerCase().includes(q)));
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="jaankar-card p-12 text-center space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto">
+          <i data-lucide="package" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-base font-black text-slate-900">No Orders Found</h3>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto">
+          ${currentOrdersFilter !== "ALL" || currentOrdersSearchQuery ? "No orders matched your active filter or search." : "You haven't placed any orders yet. Discover our latest electronics with free delivery on orders ₹350+!"}
+        </p>
+        <button type="button" onclick="switchTab('categories')" class="btn-primary-orange text-xs py-2.5 px-5 cursor-pointer">
+          <span>Start Shopping</span>
+        </button>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = filtered.map(order => {
+    const grandTotal = (order.pricing && order.pricing.grandTotal) || (order.payment && order.payment.amount) || 0;
+    const isCod = !order.payment || order.payment.mode === "COD";
+    const d = new Date(order.createdAt || Date.now());
+    const dateFormatted = d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+
+    const statusBadges = {
+      "ORDER_PLACED": '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">🟡 Order Placed</span>',
+      "PROCESSING": '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">🔵 Processing & Packed</span>',
+      "SHIPPED": '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">🟣 Shipped</span>',
+      "OUT_FOR_DELIVERY": '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-teal-100 text-teal-800 border border-teal-200">🚚 Out for Delivery</span>',
+      "DELIVERED": '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Delivered</span>',
+      "CANCELLED": '<span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">🔴 Cancelled</span>'
+    };
+    const statusPill = statusBadges[order.orderStatus] || statusBadges["ORDER_PLACED"];
+
+    const itemsPreviewHtml = (order.items || []).map(it => `
+      <div class="flex items-center gap-3 py-1.5 border-b border-slate-100 last:border-0">
+        <img src="${it.image || 'jaankar-logo.png'}" class="w-12 h-12 rounded-lg object-contain bg-slate-50 p-1 border border-slate-200 shrink-0">
+        <div class="flex-1 min-w-0">
+          <h6 class="text-xs font-bold text-slate-900 truncate">${escapeHtml(it.name)}</h6>
+          <p class="text-[11px] text-slate-500 font-semibold">Qty: ${it.qty} • Price: ${formatInr(it.priceNum || parseCurrencyNumber(it.price))}</p>
+        </div>
+      </div>
+    `).join("");
+
+    return `
+      <div class="jaankar-card p-5 space-y-4 hover:border-orange-300 transition-all">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-orange-100 text-orange-700 font-mono">${order.orderId}</span>
+            <span class="text-xs text-slate-400 font-semibold">• ${dateFormatted}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            ${isCod
+              ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">🟡 Cash on Delivery</span>'
+              : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">🟢 Prepaid Online</span>'
+            }
+            ${statusPill}
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          ${itemsPreviewHtml}
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div>
+            <span class="text-slate-500">Deliver to: </span>
+            <strong class="text-slate-900">${escapeHtml(order.shippingAddress?.name || order.customerName || 'Customer')}</strong>
+            <span class="text-slate-400"> (${escapeHtml(order.shippingAddress?.city || '')} - ${escapeHtml(order.shippingAddress?.pincode || '')})</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div>
+              <span class="text-slate-500">Total: </span>
+              <strong class="text-base font-black text-orange-600">${formatInr(grandTotal)}</strong>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="printOrderInvoice('${order.orderId}')" class="btn-secondary-clean text-xs py-1.5 px-3 cursor-pointer">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Invoice</span>
+              </button>
+              <button type="button" onclick="openOrderTrackingModal('${order.orderId}')" class="btn-primary-orange text-xs py-1.5 px-3.5 font-bold shadow-sm cursor-pointer">
+                <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                <span>Track Order</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderMyOrdersList = renderMyOrdersList;
+
+function filterMyOrders(filter) {
+  currentOrdersFilter = filter;
+  ["ALL", "ACTIVE", "DELIVERED"].forEach(f => {
+    const btn = document.getElementById(`order-filter-btn-${f}`);
+    if (btn) {
+      if (f === filter) {
+        btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-600 text-white shadow-sm transition";
+      } else {
+        btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition";
+      }
+    }
+  });
+  renderMyOrdersList();
+}
+window.filterMyOrders = filterMyOrders;
+
+function handleMyOrdersSearch(val) {
+  currentOrdersSearchQuery = String(val || "").trim();
+  renderMyOrdersList();
+}
+window.handleMyOrdersSearch = handleMyOrdersSearch;
+
+function syncMyOrdersBadge(explicitCount) {
+  const badge = document.getElementById("sidebar-orders-badge");
+  if (!badge) return;
+  const count = explicitCount !== undefined ? explicitCount : (JSON.parse(localStorage.getItem("jaankar_my_orders") || "[]")).length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+}
+window.syncMyOrdersBadge = syncMyOrdersBadge;

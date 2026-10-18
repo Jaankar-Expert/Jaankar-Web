@@ -1472,34 +1472,788 @@ function updateSliderTrackPosition() {
 }
 
 // ----------------------------------------------------------------------------
-// 8. Categories Hub & Flipkart Multi-Column Mega Menu Navigation
+// 8. Categories Hub & Flipkart Multi-Column Mega Menu Navigation (7 Exact Categories)
 // ----------------------------------------------------------------------------
 let currentMegaCategory = "all";
 let activeSubcategoryFilter = "";
 let megaMenuCloseTimer = null;
 
+const JAANKAR_MEGA_MENUS = {
+  electronics: {
+    title: "Electronics",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Mobiles",
+            hasArrow: true,
+            items: ["Mi", "Realme", "Samsung", "Infinix", "OPPO", "Apple", "Vivo", "Honor", "Asus", "Poco X2", "realme Narzo 10", "Infinix Hot 9", "IQOO 3"]
+          },
+          {
+            title: "Mobile Accessories",
+            hasArrow: true,
+            items: ["Mobile Cases", "Headphones & Headsets", "Power Banks", "Screenguards", "Memory Cards", "Smart Headphones", "Mobile Cables", "Mobile Chargers", "Mobile Holders"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Smart Wearable Tech",
+            hasArrow: true,
+            items: ["Smart Watches", "Smart Glasses (VR)", "Smart Bands"]
+          },
+          {
+            title: "Health Care Appliances",
+            hasArrow: true,
+            items: ["Bp Monitors", "Weighing Scale"]
+          },
+          {
+            title: "Laptops",
+            hasArrow: true,
+            items: ["Gaming Laptops", "Thin and Light Laptops", "Business Laptops", "Budget Laptops"]
+          },
+          {
+            title: "Desktop PCs",
+            hasArrow: true,
+            items: ["All In One PCs", "Gaming Desktops", "Tower PCs"]
+          },
+          {
+            title: "Gaming & Accessories",
+            hasArrow: true,
+            items: ["Gaming Consoles", "Gaming Mice", "Gaming Keyboards", "Gaming Headsets"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Computer Accessories",
+            hasArrow: true,
+            items: ["External Hard Disks", "Pendrives", "Laptop Skins & Decals", "Laptop Bags", "Mouse", "Keyboards"]
+          },
+          {
+            title: "Computer Peripherals",
+            hasArrow: true,
+            items: ["Printers & Ink Cartridges", "Monitors", "Projectors", "UPS", "Routers"]
+          },
+          {
+            title: "Tablets",
+            hasArrow: true,
+            items: ["Apple iPads", "Android Tablets", "Calling Tablets"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Audio",
+            hasArrow: true,
+            items: ["Bluetooth Speakers", "Soundbars", "Home Theatres", "TV Streaming Devices", "Remote Control"]
+          },
+          {
+            title: "Cameras & Accessories",
+            hasArrow: true,
+            items: ["DSLR & Mirrorless", "Action Cameras", "Point & Shoot", "Camera Lenses", "Tripods", "Camera Bags"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Featured Tech Brands",
+            items: ["Apple", "Samsung", "Sony", "Dell", "HP", "Lenovo", "Asus", "Boat", "JBL", "Noise", "OnePlus"]
+          },
+          {
+            title: "Special Tech Offers",
+            items: ["Top Selling Deals", "Best Exchange Offers", "No Cost EMI Gadgets", "Jaankar Certified Tech"]
+          }
+        ]
+      }
+    ]
+  },
+  tv_appliances: {
+    title: "TVs & Appliances",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Televisions",
+            hasArrow: true,
+            items: ["Smart TVs", "4K Ultra HD TVs", "OLED TVs", "QLED TVs", "Budget TVs 32 Inch", "Big Screen 55+ Inch"]
+          },
+          {
+            title: "Streaming Devices",
+            hasArrow: true,
+            items: ["Google TV Streamer", "Amazon Fire Stick", "Apple TV 4K"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Washing Machines",
+            hasArrow: true,
+            items: ["Fully Automatic Front Load", "Fully Automatic Top Load", "Semi Automatic Top Load", "Washer Dryers"]
+          },
+          {
+            title: "Air Conditioners",
+            hasArrow: true,
+            items: ["Inverter Split ACs", "1.5 Ton ACs", "Window ACs", "5 Star ACs", "Air Coolers"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Refrigerators",
+            hasArrow: true,
+            items: ["Single Door", "Double Door", "Side by Side", "Triple Door", "Mini Refrigerators", "Convertible Refrigerators"]
+          },
+          {
+            title: "Kitchen Appliances",
+            hasArrow: true,
+            items: ["Microwave Ovens", "Chimneys", "Dishwashers", "Induction Cooktops", "Electric Kettles"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Small Home Appliances",
+            hasArrow: true,
+            items: ["Irons", "Water Purifiers", "Geysers & Heaters", "Vacuum Cleaners", "Air Purifiers", "Sewing Machines"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Top Brands",
+            items: ["LG", "Samsung", "Sony", "Whirlpool", "IFB", "Voltas", "Daikin", "Bajaj", "Philips", "Havells"]
+          },
+          {
+            title: "Appliance Highlights",
+            items: ["Energy Saver 5-Star", "Comprehensive Brand Warranty", "Fast Delivery & Free Installation"]
+          }
+        ]
+      }
+    ]
+  },
+  men: {
+    title: "Men",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Footwear",
+            hasArrow: true,
+            items: ["Sports Shoes", "Casual Shoes", "Formal Shoes", "Sandals & Floaters", "Flip- Flops", "Loafers", "Boots", "Running Shoes", "Sneakers"]
+          },
+          {
+            title: "Men's Grooming",
+            hasArrow: true,
+            items: ["Deodorants", "Perfumes", "Beard Care & Grooming", "Shaving & Aftershave", "Sexual Wellness"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Clothing",
+            hasArrow: true,
+            subHeaders: [
+              {
+                title: "Top wear",
+                hasArrow: true,
+                items: ["T-Shirts", "Formal Shirts", "Casual Shirts"]
+              },
+              {
+                title: "Bottom wear",
+                hasArrow: true,
+                items: ["Jeans", "Casual Trousers", "Formal Trousers", "Track pants", "Shorts", "Cargos", "Three Fourths"]
+              }
+            ]
+          },
+          {
+            title: "Suits, Blazers & Waistcoats",
+            hasArrow: true,
+            items: []
+          },
+          {
+            title: "Ties, Socks, Caps & More",
+            hasArrow: true,
+            items: []
+          },
+          {
+            title: "Fabrics",
+            hasArrow: true,
+            items: []
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Winter Wear",
+            hasArrow: true,
+            items: ["Sweatshirts", "Jackets", "Sweater", "Tracksuits"]
+          },
+          {
+            title: "Ethnic wear",
+            hasArrow: true,
+            items: ["Kurta", "Ethnic Sets", "Sherwanis", "Ethnic Pyjama", "Dhoti", "Lungi"]
+          },
+          {
+            title: "Innerwear & Loungewear",
+            hasArrow: true,
+            items: ["Briefs & Trunks", "Vests", "Boxers", "Pyjamas and Lounge Pants", "Thermals", "Night Suits"]
+          },
+          {
+            title: "Raincoats & Windcheaters",
+            hasArrow: true,
+            items: []
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Watches",
+            hasArrow: true,
+            items: ["Fastrack", "Casio", "Titan", "Fossil", "Sonata"]
+          },
+          {
+            title: "Accessories",
+            hasArrow: true,
+            items: ["Backpacks", "Wallets", "Belts", "Sunglasses", "Luggage & Travel", "Frames", "Jewellery"]
+          },
+          {
+            title: "Sports & Fitness Store",
+            hasArrow: true,
+            items: []
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Smart Watches",
+            hasArrow: true,
+            items: []
+          },
+          {
+            title: "Smart Bands",
+            hasArrow: true,
+            items: []
+          },
+          {
+            title: "Personal Care Appliances",
+            hasArrow: true,
+            items: ["Trimmers", "Shavers", "Grooming Kits"]
+          },
+          {
+            title: "Featured",
+            items: ["Watches Store", "Footwear Club", "Bags & Wallet", "T-Shirt Store", "Adidas", "Beardo", "Reebok", "Skechers", "Nike"]
+          }
+        ]
+      }
+    ]
+  },
+  women: {
+    title: "Women",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Clothing",
+            hasArrow: true,
+            subHeaders: [
+              {
+                title: "Women Western & Maternity Wear",
+                items: ["Topwear", "Dresses", "Jeans", "Shorts", "Skirts", "Jeggings & Tights", "Trousers & Capris"]
+              },
+              {
+                title: "Lingerie & Sleepwear",
+                hasArrow: true,
+                items: ["Bras", "Panties", "Lingerie Sets", "Night Dresses & Nighties", "Shapewear", "Camisoles & Slips"]
+              }
+            ]
+          },
+          { title: "Swim & Beachwear", hasArrow: true, items: [] },
+          { title: "Party Dresses", hasArrow: true, items: [] },
+          { title: "Sports Wear", hasArrow: true, items: [] }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Ethnic Wear",
+            items: ["Sarees", "Kurtas & Kurtis", "Dress Material", "Lehenga Choli", "Blouse", "Kurta Sets & Salwar Suits", "Gowns", "Dupattas"]
+          },
+          {
+            title: "Ethnic Bottoms",
+            items: ["Leggings & Churidars", "Palazzos", "Shararas", "Salwars & Patiala", "Dhoti Pants", "Ethnic Trousers", "Saree Shapewear & Petticoats"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Footwear",
+            hasArrow: true,
+            subHeaders: [
+              {
+                title: "Sandals",
+                hasArrow: true,
+                items: ["Flats", "Heels", "Wedges"]
+              },
+              {
+                title: "Shoes",
+                hasArrow: true,
+                items: ["Sports Shoes", "Casual Shoes", "Boots"]
+              }
+            ]
+          },
+          { title: "Ballerinas", hasArrow: true, items: [] },
+          { title: "Slippers & Flip- Flop's", hasArrow: true, items: [] },
+          { title: "Watches", hasArrow: true, items: [] },
+          { title: "Smart Watches", hasArrow: true, items: [] },
+          {
+            title: "Personal Care Appliances",
+            hasArrow: true,
+            items: ["Hair Straightners", "Hair Dryers", "Epilators"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Beauty & Grooming",
+            hasArrow: true,
+            items: ["Make Up", "Skin Care", "Hair Care", "Bath & Spa", "Deodorants & Perfumes"]
+          },
+          {
+            title: "Jewellery",
+            hasArrow: true,
+            items: ["Artificial Jewellery", "Silver Jewellery", "Precious Jewellery", "Coins and Bars"]
+          },
+          {
+            title: "Accessories",
+            hasArrow: true,
+            items: ["Handbags", "Shoulder Bags", "Totes", "Sling bags", "Clutches", "Wallets & Belts", "Luggage & Travel", "Sunglasses"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Featured",
+            items: ["Forever 21", "Accessorize", "W", "Pantaloons", "Chemistry", "Lakme", "Nivea", "Catwalk", "Titan-Raga", "Fastrack", "Divastri", "Rare Roots", "Anmi", "Coins & Bars", "Crocs"]
+          },
+          {
+            title: "Trending today!",
+            items: ["Ruffle Dress", "Pastel Kurtas & Kurtis", "Designer Net Sarees"]
+          }
+        ]
+      }
+    ]
+  },
+  kids: {
+    title: "Baby & Kids",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Kids Clothing",
+            hasArrow: true,
+            subHeaders: [
+              {
+                title: "Boys' Clothing",
+                hasArrow: true,
+                items: ["T-Shirts", "Ethnic Wear", "Shorts", "Shirts", "Innerwear"]
+              },
+              {
+                title: "Girls' Clothing",
+                hasArrow: true,
+                items: ["Dresses & Skirts", "Ethnic Wear", "T-shirts & Tops", "Innerwear"]
+              },
+              {
+                title: "Baby Boys' Clothing",
+                hasArrow: true,
+                items: ["Combos Sets", "T-Shirts", "Innerwear"]
+              },
+              {
+                title: "Baby Girls' Clothing",
+                hasArrow: true,
+                items: ["Combos Sets", "Dresses & Gowns", "Innerwear"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Kids' Footwear",
+            hasArrow: true,
+            subHeaders: [
+              {
+                title: "Boys' Footwear",
+                hasArrow: true,
+                items: ["Sandals", "Sport Shoes"]
+              },
+              {
+                title: "Girls' Footwear",
+                hasArrow: true,
+                items: ["Flats & Bellies", "Sport Shoes"]
+              }
+            ]
+          },
+          { title: "Infant Footwear", hasArrow: true, items: [] },
+          { title: "Character Shoes", hasArrow: true, items: [] },
+          { title: "Kids' Watches", items: [] },
+          { title: "Kids' Sunglasses", items: [] },
+          {
+            title: "Kids' Winter Wear",
+            hasArrow: true,
+            subHeaders: [
+              {
+                title: "Boys' Winter Wear",
+                hasArrow: true,
+                items: ["Boys' Sweatshirts", "Boys' Jacket"]
+              },
+              {
+                title: "Girls' Winter Wear",
+                hasArrow: true,
+                items: ["Girls' Sweatshirts", "Girls' Jackets", "Infant Winter Wear"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Toys",
+            hasArrow: true,
+            items: ["Remote Control Toys", "Educational Toys", "Soft Toys", "Cars & Die-cast Vehicles", "Outdoor Toys", "Action Figures", "Board Games", "Musical Toys", "Dolls & Doll Houses", "Puzzles", "S.T.E.M Toys", "Helicopter & Drones", "Toy Guns", "Party Supplies"]
+          },
+          {
+            title: "School Supplies",
+            hasArrow: true,
+            items: ["School Bags", "School Combo Sets", "Lunch Box"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Baby Care",
+            hasArrow: true,
+            items: ["Diapers", "Wipes", "Diapering & Potty Training", "Baby Bath, Hair & Skin Care", "Baby Grooming", "Baby Bathing Accessories", "Baby Gift Sets & Combo", "Baby Oral Care", "Nursing & Breast Feeding", "Baby Food", "Baby Feeding Bottle & Accessories", "Baby Feeding Utensils & Accessories", "Baby Bedding", "Baby Gear", "Baby Medical & Health Care", "Baby Proofing & Safety", "Baby Cleaners & Detergents"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Featured brands",
+            items: ["Miss & Chief", "Barbie", "Disney", "United Colors of Benetton", "The Children's Place", "US Polo", "Flying Machine", "Crocs", "Puma", "Funskool", "Lego", "Luvlap", "Mamy Poko", "Mee Mee"]
+          }
+        ]
+      }
+    ]
+  },
+  home: {
+    title: "Home & Furniture",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Kitchen, Cookware & Serveware",
+            hasArrow: true,
+            items: ["Pans", "Tawas", "Pressure Cookers", "Kitchen tools", "Gas Stoves"]
+          },
+          {
+            title: "Tableware & Dinnerware",
+            hasArrow: true,
+            items: ["Coffee Mugs", "Dinner Set", "Barware"]
+          },
+          {
+            title: "Kitchen Storage",
+            hasArrow: true,
+            items: ["Water Bottles", "Lunch Boxes", "Flasks", "Casseroles", "Kitchen Containers"]
+          },
+          {
+            title: "Cleaning Supplies",
+            hasArrow: true,
+            items: []
+          }
+        ]
+      },
+      {
+        groups: [
+          { title: "Furniture Top Offers", hasArrow: true, items: [] },
+          {
+            title: "Bed Room Furniture",
+            hasArrow: true,
+            items: ["Beds", "Mattresses", "Wardrobes"]
+          },
+          {
+            title: "Living Room Furniture",
+            hasArrow: true,
+            items: ["Sofa", "Sofa Beds", "TV Units", "Dining Tables & Chairs", "Coffee Tables", "Shoe Racks"]
+          },
+          {
+            title: "Office & Study Furniture",
+            hasArrow: true,
+            items: ["Kids Room Furniture"]
+          },
+          {
+            title: "DIY Furniture",
+            items: ["Bean Bags", "Collapsible Wardrobes"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Furnishing",
+            hasArrow: true,
+            items: ["Bedsheets", "Curtains", "Cushions & Pillows", "Blankets", "Bath Towels", "Kitchen & Table Linen", "Floor Coverings"]
+          },
+          {
+            title: "Smart Home Automation",
+            hasArrow: true,
+            items: ["Smart Security System", "Smart Door Locks"]
+          },
+          {
+            title: "Home Improvement",
+            hasArrow: true,
+            items: ["Tools & Measuring Equipments", "Home Utilities & Organizers", "Lawn & Gardening", "Bathroom & Kitchen Fittings"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Home Decor",
+            hasArrow: true,
+            items: ["Paintings", "Clocks", "Wall Shelves", "Stickers", "Showpieces & Figurines"]
+          },
+          {
+            title: "Home Lighting",
+            hasArrow: true,
+            items: ["Bulbs", "Wall Lamp", "Table Lamp", "Ceiling Lamp", "Emergency Lights"]
+          },
+          { title: "Festive Decor & Gifts", hasArrow: true, items: [] },
+          {
+            title: "Pet Supplies",
+            hasArrow: true,
+            items: ["Dogs", "Cats", "Fish & Aquatics"]
+          }
+        ]
+      },
+      {
+        groups: [
+          { title: "Durability Certified Furniture", hasArrow: true, items: [] },
+          {
+            title: "Featured",
+            subHeaders: [
+              {
+                title: "Christmas Store",
+                hasArrow: true,
+                items: ["Mugs Store"]
+              },
+              {
+                title: "Gardening Store",
+                hasArrow: true,
+                items: ["Stainless Steel Store", "Milton", "Bombay Dyeing", "@home", "HomeTown", "Ajanta", "Spaces by Welspun", "Prestige"]
+              }
+            ]
+          },
+          { title: "Perfect Home Store", hasArrow: true, items: [] }
+        ]
+      }
+    ]
+  },
+  sports: {
+    title: "Sports, Books & More",
+    columns: [
+      {
+        groups: [
+          {
+            title: "Sports",
+            hasArrow: true,
+            items: ["Cricket", "Badminton", "Cycling", "Football", "Skating", "Camping & Hiking", "Swimming"]
+          },
+          {
+            title: "Exercise Fitness",
+            hasArrow: true,
+            items: ["Cardio Equipment", "Home Gyms", "Support", "Dumbbells", "Ab Exercisers", "Shakers & Sippers", "Yoga Mat", "Gym Gloves"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Food Essentials",
+            hasArrow: true,
+            items: ["Nuts & Dry Fruits", "Tea, Coffee and Beverages", "Chocolates", "Snacks Corner", "Gifting Combos", "Sweets Store", "Jams, Spreads and Honey", "Breakfast Items"]
+          },
+          {
+            title: "Health & Nutrition",
+            items: ["All Supplements", "Protein Supplements", "Vitamin Supplements", "Health Drinks", "Ayurvedic Supplements"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Books",
+            hasArrow: true,
+            items: ["Entrance Exams", "Academics", "Literature & Fiction", "Non Fiction", "Young Readers", "Self-Help", "E-Learning", "Preorders", "Indian Languages"]
+          },
+          {
+            title: "Stationery",
+            hasArrow: true,
+            items: ["Pens", "Diaries", "Card Holders", "Desk Organizers", "Calculators", "Key Chains"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Auto Accessories",
+            hasArrow: true,
+            items: ["Helmets & Riding Gears", "Car Audio/Video", "Car Mobile Accessories", "Car & Bike Care", "Vehicle Lubricants"]
+          },
+          {
+            title: "Industrial & Scientific tools",
+            hasArrow: true,
+            items: ["Industrial Measurement Devices", "Industrial Testing Devices", "Lab & Scientific Products", "Packaging & Shipping Products", "Safety Products"]
+          },
+          {
+            title: "Medical Supplies",
+            items: ["Pregnancy and Fertility Kits", "Hot Water Bag"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "Music",
+            items: ["Musical Instruments", "Music", "Movies & Tv shows"]
+          },
+          {
+            title: "Gaming",
+            items: ["Gaming Consoles", "Gaming Accessories", "PS4 Games", "Smart Glasses (VR)"]
+          },
+          {
+            title: "Grocery (Only in Select Cities)",
+            hasArrow: true,
+            items: []
+          }
+        ]
+      }
+    ]
+  }
+};
+
 function showMegaMenu(cat) {
   cancelCloseMegaMenu();
   const flyout = document.getElementById("flipkart-mega-menu-flyout");
-  if (!flyout) return;
-  flyout.classList.remove("hidden");
+  const content = document.getElementById("flipkart-mega-menu-content");
+  if (!flyout || !content) return;
 
-  // Reset all arrows
-  const allArrows = ["electronics", "mobiles", "laptops", "tv", "audio"];
-  allArrows.forEach(a => {
-    const el = document.getElementById(`arrow-cat-${a}`);
-    if (el) el.classList.remove("rotate-180");
+  const data = JAANKAR_MEGA_MENUS[cat];
+  if (!data) return;
+
+  currentMegaCategory = cat;
+
+  // Render 5 columns dynamically
+  let html = `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 text-xs text-slate-700 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">`;
+
+  data.columns.forEach((col, colIdx) => {
+    const isLastCol = (colIdx === data.columns.length - 1);
+    const padClass = colIdx === 0 ? "pt-2 sm:pt-0 sm:pr-4" : (isLastCol ? "pt-3 sm:pt-0 sm:pl-4 bg-orange-50/40 -my-6 py-6 px-4 rounded-r-2xl border-l border-orange-100" : "pt-3 sm:pt-0 sm:px-4");
+
+    html += `<div class="space-y-4 ${padClass}">`;
+
+    col.groups.forEach(grp => {
+      html += `<div>`;
+      html += `
+        <div onclick="applySubcategoryFilter('${cat}', '${grp.title.replace(/'/g, "\\'")}')" class="font-black text-slate-900 uppercase tracking-wider flex items-center justify-between hover:text-orange-600 cursor-pointer text-[11px] pb-1 border-b border-slate-100 group">
+          <span>${grp.title}</span>
+          ${grp.hasArrow ? `<span class="text-slate-400 group-hover:text-orange-600 group-hover:translate-x-0.5 transition-transform">▸</span>` : ''}
+        </div>
+      `;
+
+      if (grp.subHeaders && grp.subHeaders.length > 0) {
+        grp.subHeaders.forEach(sub => {
+          html += `
+            <div class="mt-2.5">
+              <div onclick="applySubcategoryFilter('${cat}', '${sub.title.replace(/'/g, "\\'")}')" class="font-bold text-slate-800 text-[10.5px] flex items-center justify-between hover:text-orange-600 cursor-pointer py-0.5">
+                <span>${sub.title}</span>
+                ${sub.hasArrow ? `<span class="text-slate-400">▸</span>` : ''}
+              </div>
+              ${sub.items && sub.items.length > 0 ? `
+                <ul class="space-y-1 text-slate-600 font-medium pl-2 mt-1">
+                  ${sub.items.map(it => `
+                    <li>
+                      <button type="button" onclick="applySubcategoryFilter('${cat}', '${it.replace(/'/g, "\\'")}')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5 text-[11px]">
+                        ${it}
+                      </button>
+                    </li>
+                  `).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `;
+        });
+      }
+
+      if (grp.items && grp.items.length > 0) {
+        html += `
+          <ul class="space-y-1.5 text-slate-600 font-medium mt-2">
+            ${grp.items.map(it => `
+              <li>
+                <button type="button" onclick="applySubcategoryFilter('${cat}', '${it.replace(/'/g, "\\'")}')" class="hover:text-orange-600 hover:font-bold transition text-left w-full py-0.5 text-[11px]">
+                  ${it}
+                </button>
+              </li>
+            `).join('')}
+          </ul>
+        `;
+      }
+
+      html += `</div>`;
+    });
+
+    html += `</div>`;
   });
 
-  const activeArrow = document.getElementById(`arrow-cat-${cat}`);
-  if (activeArrow) activeArrow.classList.add("rotate-180");
+  html += `</div>`;
+
+  content.innerHTML = html;
+  flyout.classList.remove("hidden");
+
+  // Reset & update arrow indicators for 7 categories
+  const allCatKeys = ["electronics", "tv_appliances", "men", "women", "kids", "home", "sports"];
+  allCatKeys.forEach(k => {
+    const arr = document.getElementById(`arrow-cat-${k}`);
+    if (arr) arr.classList.remove("rotate-180");
+  });
+  const curArr = document.getElementById(`arrow-cat-${cat}`);
+  if (curArr) curArr.classList.add("rotate-180");
 }
 window.showMegaMenu = showMegaMenu;
 
 function toggleMegaMenu(cat) {
   const flyout = document.getElementById("flipkart-mega-menu-flyout");
   if (!flyout) return;
-  if (flyout.classList.contains("hidden")) {
+  if (flyout.classList.contains("hidden") || currentMegaCategory !== cat) {
     showMegaMenu(cat);
   } else {
     closeMegaMenu();
@@ -1510,10 +2264,10 @@ window.toggleMegaMenu = toggleMegaMenu;
 function closeMegaMenu() {
   const flyout = document.getElementById("flipkart-mega-menu-flyout");
   if (flyout) flyout.classList.add("hidden");
-  const allArrows = ["electronics", "mobiles", "laptops", "tv", "audio"];
-  allArrows.forEach(a => {
-    const el = document.getElementById(`arrow-cat-${a}`);
-    if (el) el.classList.remove("rotate-180");
+  const allCatKeys = ["electronics", "tv_appliances", "men", "women", "kids", "home", "sports"];
+  allCatKeys.forEach(k => {
+    const arr = document.getElementById(`arrow-cat-${k}`);
+    if (arr) arr.classList.remove("rotate-180");
   });
 }
 window.closeMegaMenu = closeMegaMenu;
@@ -1551,6 +2305,16 @@ function applySubcategoryFilter(cat, keyword) {
       filterBar.classList.add("hidden");
       filterBar.classList.remove("flex");
     }
+  }
+
+  // Highlight active button in Flipkart strip
+  document.querySelectorAll(".flipkart-nav-btn").forEach(btn => {
+    btn.classList.remove("bg-orange-50", "text-orange-600");
+    btn.classList.add("text-slate-700");
+  });
+  const activeNavBtn = document.getElementById(`flipkart-cat-${cat}`);
+  if (activeNavBtn) {
+    activeNavBtn.classList.add("bg-orange-50", "text-orange-600");
   }
 
   renderCategoryProducts(currentCategory, activeSubcategoryFilter);
@@ -1596,6 +2360,10 @@ function showAllCatalogProducts() {
     filterBar.classList.add("hidden");
     filterBar.classList.remove("flex");
   }
+  document.querySelectorAll(".flipkart-nav-btn").forEach(btn => {
+    btn.classList.remove("bg-orange-50", "text-orange-600");
+    btn.classList.add("text-slate-700");
+  });
   renderCategoryProducts("all", "");
 }
 window.showAllCatalogProducts = showAllCatalogProducts;
@@ -1634,8 +2402,14 @@ function renderCategoryProducts(catName, subFilter = "") {
   if (!container) return;
 
   const titles = {
-    all: "Complete Electronics & Gadgets Catalog",
-    electronics: "Consumer Electronics & Tech Gadgets",
+    all: "Complete Product Catalog",
+    electronics: "Electronics, Tech & Gadgets",
+    tv_appliances: "TVs & Home Appliances",
+    men: "Men's Fashion, Grooming & Footwear",
+    women: "Women's Fashion, Beauty & Footwear",
+    kids: "Baby Care, Kids Toys & Fashion",
+    home: "Home, Furniture, Kitchen & Decor",
+    sports: "Sports, Fitness, Books & More",
     computers: "Desktop Computers & Workstations",
     laptops: "Laptops, Ultrabooks & Gaming Rigs",
     mobiles: "Flagship & Gaming Smartphones",
@@ -1645,14 +2419,14 @@ function renderCategoryProducts(catName, subFilter = "") {
   };
 
   const descs = {
-    all: "Explore top laptops, smartphones, PC rigs, and audio. Compare verified Amazon/Flipkart links or order direct.",
-    electronics: "Explore latest verified tech products with specs and benchmark scores.",
-    computers: "Curated custom gaming builds, enterprise workstations, and liquid-cooled setups.",
-    laptops: "Apple Silicon, Intel 14th Gen, and Ryzen 8000 series notebooks with high battery life.",
-    mobiles: "Top-tier smartphones with optical zoom, Snapdragon 8 Gen 3/4 chipsets, and AI features.",
-    tv: "Infinite contrast OLEDs, 144Hz Mini-LEDs, and HDR10+ gaming monitors.",
-    cameras: "Full-frame 4K/8K cameras with 10-bit recording and real-time animal/human eye AF.",
-    audio: "Lossless LDAC wireless earphones, studio reference monitors, and spatial audio headsets."
+    all: "Explore verified products with specs, benchmarks, verified store links or direct orders.",
+    electronics: "Smartphones, laptops, tablets, audio gear, mirrorless cameras and tech gadgets.",
+    tv_appliances: "Smart 4K TVs, refrigerators, washing machines, inverter split ACs and kitchen appliances.",
+    men: "Trending footwear, casual & formal topwear, ethnic wear, winter jackets, watches and grooming.",
+    women: "Sarees, kurtis, western dresses, footwear, makeup, skincare, jewelry and handbags.",
+    kids: "Educational toys, remote control cars, baby care essentials, kids clothing and school supplies.",
+    home: "Solid wood furniture, kitchenware, bedding, home lighting, curtains and smart security locks.",
+    sports: "Cricket gear, gym fitness equipment, best-selling books, stationery, musical instruments and auto accessories."
   };
 
   if (titleEl) {
@@ -1661,16 +2435,22 @@ function renderCategoryProducts(catName, subFilter = "") {
     } else if (subFilter === "deal") {
       titleEl.textContent = "🔥 Super Deals & Verified Discounts";
     } else {
-      titleEl.textContent = titles[catName] || "Electronics Products";
+      titleEl.textContent = titles[catName] || "Products Catalog";
     }
   }
-  if (descEl) descEl.textContent = descs[catName] || "Browse certified tech products";
+  if (descEl) descEl.textContent = descs[catName] || "Browse certified products with live price comparison";
 
   const allItems = (liveProductsList && liveProductsList.length) ? liveProductsList : defaultProductsCatalog;
   let filtered = allItems;
 
-  if (catName && catName !== "all" && catName !== "electronics") {
-    filtered = filtered.filter(p => (p.category || "").toLowerCase() === catName.toLowerCase());
+  if (catName && catName !== "all") {
+    // If user clicked electronics, allow electronics, computers, laptops, mobiles, cameras, audio
+    if (catName === "electronics") {
+      const elecSubCats = ["electronics", "computers", "laptops", "mobiles", "cameras", "audio"];
+      filtered = filtered.filter(p => elecSubCats.includes((p.category || "").toLowerCase()));
+    } else {
+      filtered = filtered.filter(p => (p.category || "").toLowerCase() === catName.toLowerCase());
+    }
   }
 
   if (subFilter) {
@@ -1697,7 +2477,7 @@ function renderCategoryProducts(catName, subFilter = "") {
       <div class="col-span-full py-16 text-center space-y-3 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
         <i data-lucide="package-open" class="w-12 h-12 text-slate-400 mx-auto"></i>
         <h4 class="text-base font-bold text-slate-800">No products match this selection</h4>
-        <p class="text-xs text-slate-500">Try selecting another brand or clear the filter to browse full catalog.</p>
+        <p class="text-xs text-slate-500">Try selecting another category or clear the filter to browse the full catalog.</p>
         <button type="button" onclick="clearMegaMenuFilter()" class="btn-primary text-xs py-2 px-4 mt-2">Clear Filter</button>
       </div>
     `;
@@ -1708,24 +2488,27 @@ function renderCategoryProducts(catName, subFilter = "") {
   container.innerHTML = filtered.map(p => {
     const mainImg = p.featuredImage || (p.images && p.images[0]) || defaultProductsCatalog[0].images[0];
     const isAffiliate = (p.sellingMode === "AFFILIATE");
+    const isCompared = selectedCompareProductIds.includes(p.id);
 
     return `
       <div onclick="openProductDetailPage('${p.id}')" class="jaankar-card p-4 hover:border-orange-500 rounded-2xl transition-all duration-300 hover:shadow-lg cursor-pointer group flex flex-col justify-between text-slate-900">
         <div class="space-y-3">
+          <!-- Clean Unblocked Product Image with Compare Checkbox -->
           <div class="relative h-48 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center p-2">
             <img src="${mainImg}" alt="${escapeHtml(p.name)}" class="w-full h-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300">
+            
+            <!-- Clean Top-Left Badge -->
             <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${isAffiliate ? 'bg-blue-600' : 'bg-orange-600'} text-white shadow-sm">
               ${escapeHtml(p.discount || (isAffiliate ? "AFFILIATE" : "DEAL"))}
             </span>
-            ${isAffiliate ? `
-              <span class="absolute bottom-2 left-2.5 right-2.5 px-2 py-0.5 rounded text-[9.5px] font-bold bg-slate-900/80 text-white text-center backdrop-blur">
-                Partner Store (Amazon / Flipkart)
-              </span>
-            ` : `
-              <span class="absolute bottom-2 left-2.5 right-2.5 px-2 py-0.5 rounded text-[9.5px] font-bold bg-emerald-900/80 text-emerald-200 text-center backdrop-blur">
-                ✓ Sold by JAANKAR Direct
-              </span>
-            `}
+
+            <!-- Top-Right Compare Checkbox -->
+            <div class="absolute top-2.5 right-2.5 z-10" onclick="event.stopPropagation()">
+              <label class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/95 backdrop-blur border ${isCompared ? 'border-orange-500 bg-orange-50 text-orange-600 font-black' : 'border-slate-200 text-slate-700 font-bold'} shadow-xs cursor-pointer hover:border-orange-400 text-[10.5px] transition">
+                <input type="checkbox" onchange="toggleCompareProduct('${p.id}', this.checked)" ${isCompared ? 'checked' : ''} class="w-3.5 h-3.5 rounded text-orange-600 focus:ring-orange-500 border-slate-300 cursor-pointer">
+                <span>Compare</span>
+              </label>
+            </div>
           </div>
 
           <div class="space-y-1">
@@ -1765,6 +2548,448 @@ function renderCategoryProducts(catName, subFilter = "") {
 
   if (window.lucide) lucide.createIcons();
 }
+
+// ----------------------------------------------------------------------------
+// 8.5 Multi-Product Comparison Engine (Real Gemini AI Powered)
+// ----------------------------------------------------------------------------
+let selectedCompareProductIds = [];
+let cachedGeminiComparisonKey = null;
+
+function toggleCompareProduct(productId, isChecked) {
+  if (isChecked) {
+    if (!selectedCompareProductIds.includes(productId)) {
+      if (selectedCompareProductIds.length >= 4) {
+        if (typeof showToast === "function") showToast("You can compare up to 4 products simultaneously.");
+        renderCategoryProducts(currentCategory, activeSubcategoryFilter);
+        return;
+      }
+      selectedCompareProductIds.push(productId);
+    }
+  } else {
+    selectedCompareProductIds = selectedCompareProductIds.filter(id => id !== productId);
+  }
+
+  renderCompareDock();
+  renderCategoryProducts(currentCategory, activeSubcategoryFilter);
+}
+window.toggleCompareProduct = toggleCompareProduct;
+
+function removeCompareProduct(productId) {
+  selectedCompareProductIds = selectedCompareProductIds.filter(id => id !== productId);
+  renderCompareDock();
+  renderCategoryProducts(currentCategory, activeSubcategoryFilter);
+  if (selectedCompareProductIds.length >= 2) {
+    renderCompareSpecsMatrix();
+  } else {
+    closeProductComparisonModal();
+  }
+}
+window.removeCompareProduct = removeCompareProduct;
+
+function clearAllCompareProducts() {
+  selectedCompareProductIds = [];
+  renderCompareDock();
+  renderCategoryProducts(currentCategory, activeSubcategoryFilter);
+  closeProductComparisonModal();
+}
+window.clearAllCompareProducts = clearAllCompareProducts;
+
+function renderCompareDock() {
+  const dock = document.getElementById("dock-product-compare");
+  const countEl = document.getElementById("compare-dock-count");
+  const thumbsContainer = document.getElementById("compare-dock-thumbnails");
+  if (!dock) return;
+
+  const count = selectedCompareProductIds.length;
+  if (count === 0) {
+    dock.classList.add("hidden");
+    return;
+  }
+
+  dock.classList.remove("hidden");
+  if (countEl) countEl.textContent = count;
+
+  const allItems = (liveProductsList && liveProductsList.length) ? liveProductsList : defaultProductsCatalog;
+  const products = selectedCompareProductIds.map(id => allItems.find(p => p.id === id)).filter(Boolean);
+
+  if (thumbsContainer) {
+    thumbsContainer.innerHTML = products.map(p => {
+      const img = p.featuredImage || (p.images && p.images[0]) || defaultProductsCatalog[0].images[0];
+      return `
+        <div class="relative shrink-0 w-8 h-8 rounded-lg bg-white/10 border border-white/20 p-0.5 flex items-center justify-center group" title="${escapeHtml(p.name)}">
+          <img src="${img}" alt="${escapeHtml(p.name)}" class="w-full h-full object-contain rounded">
+          <button type="button" onclick="event.stopPropagation(); removeCompareProduct('${p.id}')" class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[9px] font-black hover:bg-red-700 shadow-sm transition">✕</button>
+        </div>
+      `;
+    }).join("");
+  }
+}
+window.renderCompareDock = renderCompareDock;
+
+function openProductComparisonModal() {
+  if (selectedCompareProductIds.length < 2) {
+    if (typeof showToast === "function") {
+      showToast("Please select at least 2 products to compare!");
+    } else {
+      alert("Please select at least 2 products to compare!");
+    }
+    return;
+  }
+
+  const modal = document.getElementById("modal-product-ai-comparison");
+  const countIndicator = document.getElementById("compare-modal-count-indicator");
+  if (!modal) return;
+
+  if (countIndicator) {
+    countIndicator.textContent = `Comparing ${selectedCompareProductIds.length} Products`;
+  }
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  document.body.classList.add("overflow-hidden");
+
+  renderCompareSpecsMatrix();
+  switchCompareTab("specs");
+
+  if (window.lucide) lucide.createIcons();
+}
+window.openProductComparisonModal = openProductComparisonModal;
+
+function closeProductComparisonModal() {
+  const modal = document.getElementById("modal-product-ai-comparison");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+  document.body.classList.remove("overflow-hidden");
+}
+window.closeProductComparisonModal = closeProductComparisonModal;
+
+function switchCompareTab(tabName) {
+  const btnSpecs = document.getElementById("tab-btn-compare-specs");
+  const btnAi = document.getElementById("tab-btn-compare-ai");
+  const tabSpecs = document.getElementById("compare-tab-specs");
+  const tabAi = document.getElementById("compare-tab-ai");
+
+  if (tabName === "specs") {
+    if (btnSpecs) {
+      btnSpecs.className = "px-4 py-2 text-xs font-black rounded-t-xl border-b-2 border-orange-600 text-orange-600 bg-white transition cursor-pointer flex items-center gap-1.5";
+    }
+    if (btnAi) {
+      btnAi.className = "px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition cursor-pointer flex items-center gap-1.5";
+    }
+    if (tabSpecs) tabSpecs.classList.remove("hidden");
+    if (tabAi) tabAi.classList.add("hidden");
+  } else {
+    if (btnAi) {
+      btnAi.className = "px-4 py-2 text-xs font-black rounded-t-xl border-b-2 border-orange-600 text-orange-600 bg-white transition cursor-pointer flex items-center gap-1.5";
+    }
+    if (btnSpecs) {
+      btnSpecs.className = "px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition cursor-pointer flex items-center gap-1.5";
+    }
+    if (tabAi) tabAi.classList.remove("hidden");
+    if (tabSpecs) tabSpecs.classList.add("hidden");
+
+    // Auto-trigger Gemini analysis if not already rendered
+    const resultBox = document.getElementById("compare-ai-result");
+    if (resultBox && !resultBox.innerHTML.trim()) {
+      runGeminiProductComparison();
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+window.switchCompareTab = switchCompareTab;
+
+function renderCompareSpecsMatrix() {
+  const container = document.getElementById("compare-specs-matrix-container");
+  if (!container) return;
+
+  const allItems = (liveProductsList && liveProductsList.length) ? liveProductsList : defaultProductsCatalog;
+  const products = selectedCompareProductIds.map(id => allItems.find(p => p.id === id)).filter(Boolean);
+
+  if (products.length < 2) {
+    container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500">Please select at least 2 products to compare specs.</div>`;
+    return;
+  }
+
+  let html = `
+    <table class="w-full border-collapse border border-slate-200 text-xs text-left">
+      <thead>
+        <tr class="bg-slate-50">
+          <th class="p-3 border border-slate-200 font-black text-slate-800 w-44 min-w-[140px] uppercase tracking-wider text-[11px]">Feature / Spec</th>
+          ${products.map(p => {
+            const img = p.featuredImage || (p.images && p.images[0]) || defaultProductsCatalog[0].images[0];
+            const isAffiliate = (p.sellingMode === "AFFILIATE");
+            return `
+              <th class="p-3 border border-slate-200 align-top min-w-[200px] max-w-[280px]">
+                <div class="space-y-2">
+                  <div class="relative h-28 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-2">
+                    <img src="${img}" alt="${escapeHtml(p.name)}" class="max-h-full max-w-full object-contain">
+                    <button type="button" onclick="removeCompareProduct('${p.id}')" class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-slate-200 hover:bg-red-600 hover:text-white text-slate-700 flex items-center justify-center font-bold text-xs transition" title="Remove">✕</button>
+                  </div>
+                  <h4 class="font-black text-slate-900 line-clamp-2 text-xs">${escapeHtml(p.name)}</h4>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-sm font-black text-orange-600">${p.price || '₹0'}</span>
+                    ${p.mrp ? `<span class="text-[10px] text-slate-400 line-through">${p.mrp}</span>` : ''}
+                  </div>
+                  ${isAffiliate ? `
+                    <button type="button" onclick="openProductDetailPage('${p.id}')" class="w-full py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white font-bold text-[11px] border border-blue-200 transition">View Deals</button>
+                  ` : `
+                    <button type="button" onclick="openProductDetailPage('${p.id}')" class="w-full py-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white font-bold text-[11px] border border-orange-200 transition">Order Direct</button>
+                  `}
+                </div>
+              </th>
+            `;
+          }).join('')}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Category</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 font-semibold text-slate-900 uppercase text-[11px]">${escapeHtml(p.category || 'Tech')}</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">User Rating</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 font-bold text-amber-600">★ ${p.rating || '4.8'} / 5</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Store Channel</td>
+          ${products.map(p => {
+            const isAff = (p.sellingMode === "AFFILIATE");
+            return `<td class="p-3 border border-slate-200 font-bold ${isAff ? 'text-blue-700' : 'text-emerald-700'}">${isAff ? 'Partner Store (Amazon / Flipkart)' : '✓ JAANKAR Direct'}</td>`;
+          }).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Processor / Engine</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 text-slate-700">${escapeHtml(p.specs?.processor || p.specs?.chipset || p.specs?.cpu || 'High Performance Architecture')}</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Memory & Storage</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 text-slate-700">${escapeHtml(p.specs?.ram || p.specs?.memory || '')} ${escapeHtml(p.specs?.storage || 'Standard High-Speed')}</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Display / Build</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 text-slate-700">${escapeHtml(p.specs?.display || p.specs?.screen || 'Ultra Vibrant Clarity')}</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Battery / Power</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 text-slate-700">${escapeHtml(p.specs?.battery || p.specs?.power || 'All-Day Long Battery')}</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="p-3 border border-slate-200 font-bold text-slate-700 bg-slate-50/70">Key Highlights</td>
+          ${products.map(p => `<td class="p-3 border border-slate-200 text-slate-600 line-clamp-3">${escapeHtml(p.description || 'Verified product listing with brand warranty.')}</td>`).join('')}
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = html;
+}
+
+async function getGeminiApiKeyForComparison() {
+  if (cachedGeminiComparisonKey) return cachedGeminiComparisonKey;
+  const localKey = localStorage.getItem("jaankar_gemini_api_key");
+  if (localKey && localKey.trim()) {
+    cachedGeminiComparisonKey = localKey.trim();
+    return cachedGeminiComparisonKey;
+  }
+
+  // Fetch from Firestore
+  try {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/systemConfig/aiConfig?key=${firebaseConfig.apiKey}`);
+    if (res.ok) {
+      const data = await res.json();
+      const fireKey = data.fields?.geminiApiKey?.stringValue;
+      if (fireKey && fireKey.trim()) {
+        cachedGeminiComparisonKey = fireKey.trim();
+        localStorage.setItem("jaankar_gemini_api_key", cachedGeminiComparisonKey);
+        return cachedGeminiComparisonKey;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not fetch remote Gemini API Key:", e);
+  }
+
+  return null;
+}
+
+async function runGeminiProductComparison() {
+  const loadingEl = document.getElementById("compare-ai-loading");
+  const resultEl = document.getElementById("compare-ai-result");
+  if (!loadingEl || !resultEl) return;
+
+  const allItems = (liveProductsList && liveProductsList.length) ? liveProductsList : defaultProductsCatalog;
+  const products = selectedCompareProductIds.map(id => allItems.find(p => p.id === id)).filter(Boolean);
+
+  if (products.length < 2) {
+    resultEl.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">Please select at least 2 products to compare.</div>`;
+    return;
+  }
+
+  loadingEl.classList.remove("hidden");
+  resultEl.innerHTML = "";
+
+  const apiKey = await getGeminiApiKeyForComparison();
+  if (!apiKey) {
+    loadingEl.classList.add("hidden");
+    resultEl.innerHTML = `
+      <div class="p-6 rounded-2xl bg-amber-50 border border-amber-200 space-y-3 text-xs">
+        <div class="flex items-center gap-2 text-amber-900 font-black text-sm">
+          <i data-lucide="key" class="w-4 h-4 text-amber-600"></i>
+          <span>Gemini API Key Required</span>
+        </div>
+        <p class="text-amber-800 leading-relaxed">
+          To generate real-time AI product comparisons powered by Google Gemini, please enter your Gemini API Key below or save it in the Admin Dashboard.
+        </p>
+        <div class="flex items-center gap-2 max-w-md pt-1">
+          <input type="password" id="input-inline-gemini-key" placeholder="AIzaSy..." class="flex-1 px-3 py-2 rounded-xl border border-amber-300 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500">
+          <button type="button" onclick="saveInlineGeminiKey()" class="px-4 py-2 rounded-xl bg-orange-600 text-white font-black text-xs hover:bg-orange-700 transition">Save & Compare</button>
+        </div>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  const prompt = `You are the lead consumer electronics and product benchmarking analyst for JAANKAR.
+Analyze and compare the following ${products.length} products side-by-side with complete technical rigor.
+
+${products.map((p, idx) => `
+PRODUCT ${idx + 1}:
+- Name: ${p.name}
+- Category: ${p.category || 'Tech'}
+- Price: ${p.price || 'N/A'} (MRP: ${p.mrp || 'N/A'})
+- Rating: ${p.rating || '4.8'}/5
+- Key Specs: ${JSON.stringify(p.specs || {})}
+- Description: ${p.description || ''}
+`).join('\n')}
+
+INSTRUCTIONS:
+1. Provide an authoritative, zero-fluff, completely objective analysis formatted in clean Markdown.
+2. Structure your answer with clear headers:
+   ### 📊 Executive Overview & Head-to-Head Comparison
+   (Concise 2-3 sentences contrasting these devices directly)
+
+   ### 🏆 Best Value for Money Winner
+   (Identify which product delivers the highest performance per rupee spent with specific justification)
+
+   ### ⚡ Performance & Display Leader
+   (Identify which product wins on raw processor speeds, display quality, or build)
+
+   ### 🎯 Clear Buyer Recommendation ("Who Should Buy Which One?")
+   - **Buy ${products[0].name} if:** (list specific user profiles, e.g. gamers, heavy multitaskers, creators)
+   - **Buy ${products[1].name} if:** (list specific user profiles, e.g. budget conscious, student, long battery seeker)
+   ${products.length > 2 ? products.slice(2).map(p => `- **Buy ${p.name} if:** (specific user profile)`).join('\n') : ''}
+
+CRITICAL RULES:
+- Zero pleasantries, no "Sure, I can help with that!", no "Hope this helps!", no introductory filler.
+- Dive immediately into the analysis.
+- Be decisive and bold in choosing winners based on the numbers and specs.`;
+
+  const candidateModels = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-1.5-flash"];
+  let finalMarkdown = null;
+  let lastError = null;
+
+  for (const model of candidateModels) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            topP: 0.95,
+            maxOutputTokens: 2048
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        finalMarkdown = data.candidates[0].content.parts[0].text;
+        break;
+      } else {
+        lastError = data.error?.message || `HTTP ${response.status}`;
+      }
+    } catch (err) {
+      lastError = err.message;
+    }
+  }
+
+  loadingEl.classList.add("hidden");
+
+  if (!finalMarkdown) {
+    resultEl.innerHTML = `
+      <div class="p-5 rounded-2xl bg-red-50 border border-red-200 text-xs space-y-2">
+        <p class="font-bold text-red-900">Gemini AI Analysis Error:</p>
+        <p class="text-red-700 font-mono">${escapeHtml(lastError || 'Unknown error contacting Gemini API')}</p>
+        <button type="button" onclick="runGeminiProductComparison()" class="mt-2 px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition">Try Again</button>
+      </div>
+    `;
+    return;
+  }
+
+  // Convert basic Markdown to rich styled HTML
+  let formattedHtml = finalMarkdown
+    .replace(/^### (.*$)/gim, '<h4 class="text-sm font-black text-slate-900 mt-4 mb-2 pb-1 border-b border-slate-100 flex items-center gap-1.5">$1</h4>')
+    .replace(/^## (.*$)/gim, '<h3 class="text-base font-black text-slate-900 mt-5 mb-2">$1</h3>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-extrabold text-slate-900">$1</strong>')
+    .replace(/^\- (.*$)/gim, '<li class="flex items-start gap-2 text-slate-700 text-xs py-1"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0"></span><span>$1</span></li>')
+    .replace(/\n\n/gim, '<p class="text-xs text-slate-700 leading-relaxed my-2"></p>');
+
+  resultEl.innerHTML = `
+    <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+            ✓ Analysis Complete
+          </span>
+          <span class="text-[11px] text-slate-400">Grounded in verified product specs</span>
+        </div>
+        <button type="button" onclick="copyGeminiComparisonText()" id="btn-copy-compare-text" class="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1 shadow-xs">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>Copy</span>
+        </button>
+      </div>
+
+      <div class="prose prose-sm max-w-none space-y-3" id="gemini-comparison-text-content">
+        ${formattedHtml}
+      </div>
+    </div>
+  `;
+
+  window._lastGeminiComparisonRaw = finalMarkdown;
+  if (window.lucide) lucide.createIcons();
+}
+window.runGeminiProductComparison = runGeminiProductComparison;
+
+function saveInlineGeminiKey() {
+  const input = document.getElementById("input-inline-gemini-key");
+  if (!input || !input.value.trim()) return;
+  const key = input.value.trim();
+  localStorage.setItem("jaankar_gemini_api_key", key);
+  cachedGeminiComparisonKey = key;
+  runGeminiProductComparison();
+}
+window.saveInlineGeminiKey = saveInlineGeminiKey;
+
+function copyGeminiComparisonText() {
+  if (!window._lastGeminiComparisonRaw) return;
+  navigator.clipboard.writeText(window._lastGeminiComparisonRaw).then(() => {
+    const btn = document.getElementById("btn-copy-compare-text");
+    if (btn) {
+      btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i><span class="text-emerald-700">Copied!</span>`;
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = `<i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copy</span>`;
+        if (window.lucide) lucide.createIcons();
+      }, 2000);
+    }
+  });
+}
+window.copyGeminiComparisonText = copyGeminiComparisonText;
 
 // ==================== DEDICATED FULL PRODUCT DETAIL PAGE ====================
 let currentActiveProductId = null;

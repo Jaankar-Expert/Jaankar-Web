@@ -6933,20 +6933,57 @@ function handlePincodeLookup(val) {
 }
 window.handlePincodeLookup = handlePincodeLookup;
 
-// Razorpay Payment Gateway Integration
-function triggerRazorpayPayment(orderDoc, onSuccess, onFailure) {
-  const rzpKey = window.JAANKAR_RAZORPAY_KEY || "rzp_test_JaankarDemoKey";
+// Razorpay Standard Web Checkout Integration (Backend Order Creation & Signature Verification)
+async function triggerRazorpayPayment(orderDoc, onSuccess, onFailure) {
+  const rzpKey = window.JAANKAR_RAZORPAY_KEY || "rzp_test_TpQ6lrvdyBSAyx";
   const amountPaise = Math.round(orderDoc.pricing.grandTotal * 100);
 
+  if (amountPaise < 100) {
+    if (onFailure) onFailure(new Error("Minimum transaction amount is 100 paise (₹1.00)."));
+    return;
+  }
+
+  // STEP 1: Call Backend to Create Order (POST /api/create-order)
+  let orderData = null;
+  try {
+    const createReq = await fetch("/api/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: String(orderDoc.orderId).slice(0, 40),
+        notes: {
+          customerName: orderDoc.customerName,
+          customerPhone: orderDoc.customerPhone,
+          orderId: orderDoc.orderId
+        }
+      })
+    });
+
+    const resJson = await createReq.json();
+    if (createReq.ok && resJson.success && resJson.order_id) {
+      orderData = resJson;
+    } else {
+      throw new Error(resJson.error || `Server responded with status ${createReq.status}`);
+    }
+  } catch (err) {
+    console.error("Backend order creation error:", err);
+    if (onFailure) onFailure(new Error("Could not initialize payment order: " + err.message));
+    return;
+  }
+
+  // STEP 2: Open Razorpay Modal with order_id
   if (typeof window.Razorpay === "function") {
     try {
       const options = {
         key: rzpKey,
-        amount: amountPaise,
-        currency: "INR",
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
         name: "JAANKAR Store",
         description: `Order ${orderDoc.orderId} - Electronics & Gadgets`,
         image: "jaankar-logo.png",
+        order_id: orderData.order_id,
         prefill: {
           name: orderDoc.customerName,
           contact: orderDoc.customerPhone,
@@ -6955,13 +6992,37 @@ function triggerRazorpayPayment(orderDoc, onSuccess, onFailure) {
         theme: {
           color: "#ea580c"
         },
-        handler: function (response) {
-          console.log("Razorpay payment approved:", response);
-          if (onSuccess) onSuccess(response);
+        handler: async function (response) {
+          console.log("Razorpay payment approved by gateway, verifying signature on server:", response);
+
+          // STEP 3: Verify Payment Signature on Backend (POST /api/verify-payment)
+          try {
+            const verifyReq = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyJson = await verifyReq.json();
+            if (verifyReq.ok && verifyJson.success && verifyJson.verified) {
+              console.log("Razorpay signature verified successfully!");
+              if (onSuccess) onSuccess(response);
+            } else {
+              console.error("Signature verification failed:", verifyJson);
+              if (onFailure) onFailure(new Error(verifyJson.error || "Payment signature verification failed. Transaction was not confirmed."));
+            }
+          } catch (vErr) {
+            console.error("Payment verification network error:", vErr);
+            if (onFailure) onFailure(new Error("Network error while verifying payment signature: " + vErr.message));
+          }
         },
         modal: {
           ondismiss: function () {
-            console.log("Razorpay payment cancelled by user");
+            console.log("Razorpay payment modal closed/dismissed by user");
             if (onFailure) onFailure(new Error("Payment was cancelled or closed by user."));
           }
         }
@@ -6969,24 +7030,17 @@ function triggerRazorpayPayment(orderDoc, onSuccess, onFailure) {
 
       const rzpInstance = new window.Razorpay(options);
       rzpInstance.on("payment.failed", function (resp) {
-        console.error("Razorpay payment error:", resp.error);
-        if (onFailure) onFailure(new Error(resp.error.description || "Payment failed."));
+        console.error("Razorpay payment.failed event:", resp.error);
+        if (onFailure) onFailure(new Error(resp.error?.description || "Payment failed. Please try again."));
       });
       rzpInstance.open();
     } catch (e) {
-      console.warn("Razorpay window opening note, using sandbox fallback:", e);
-      fallbackSandboxPayment(orderDoc, onSuccess);
+      console.error("Razorpay modal error:", e);
+      if (onFailure) onFailure(new Error("Failed to open Razorpay modal: " + e.message));
     }
   } else {
-    console.warn("Razorpay script not available, completing with sandbox verification");
-    fallbackSandboxPayment(orderDoc, onSuccess);
+    if (onFailure) onFailure(new Error("Razorpay checkout script not loaded. Please check your internet connection."));
   }
-}
-
-function fallbackSandboxPayment(orderDoc, onSuccess) {
-  setTimeout(() => {
-    if (onSuccess) onSuccess({ razorpay_payment_id: `pay_sim_${Date.now()}` });
-  }, 400);
 }
 
 async function finalizeSavedOrder(orderDoc) {
@@ -7629,7 +7683,7 @@ window.syncMyOrdersBadge = syncMyOrdersBadge;
 // 12. Store Settings (COD Master Switch & Razorpay Key Listener)
 // ----------------------------------------------------------------------------
 window.isCodEnabled = false; // COD disabled by default until admin enables
-window.JAANKAR_RAZORPAY_KEY = "rzp_test_JaankarDemoKey";
+window.JAANKAR_RAZORPAY_KEY = window.JAANKAR_RAZORPAY_KEY || "rzp_test_TpQ6lrvdyBSAyx";
 
 function initStoreSettingsListener() {
   const cachedCod = localStorage.getItem("jaankar_cod_enabled");

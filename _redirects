@@ -1,3 +1,6 @@
-/api/send-otp    /.netlify/functions/send-otp    200
-/api/verify-otp  /.netlify/functions/verify-otp  200
-/*               /index.html                     200
+/api/send-otp        /.netlify/functions/send-otp        200
+/api/verify-otp      /.netlify/functions/verify-otp      200
+/api/create-order    /.netlify/functions/create-order    200
+/api/verify-payment  /.netlify/functions/verify-payment  200
+/*                   /index.html                         200
+

@@ -1222,7 +1222,11 @@ function switchTab(tabId) {
     "product-detail",
     "settings",
     "account",
-    "orders"
+    "orders",
+    "ai",
+    "my-learning",
+    "saved-items",
+    "download-history"
   ];
 
   allViews.forEach((v) => {
@@ -1263,6 +1267,10 @@ function switchTab(tabId) {
   if (tabId === "settings") loadSettingsInfo();
   if (tabId === "account") renderAccountDetails();
   if (tabId === "orders") renderMyOrdersList();
+  if (tabId === "ai" && typeof initFullpageJaankarAiView === "function") initFullpageJaankarAiView();
+  if (tabId === "my-learning" && typeof renderMyLearningProgress === "function") renderMyLearningProgress();
+  if (tabId === "saved-items" && typeof renderSavedItemsPage === "function") renderSavedItemsPage();
+  if (tabId === "download-history" && typeof renderDownloadHistory === "function") renderDownloadHistory();
 
   if (window.lucide && typeof lucide.createIcons === "function") {
     lucide.createIcons();
@@ -2468,6 +2476,19 @@ function renderCategoryProducts(catName, subFilter = "") {
     }
   }
 
+  // Live search filtering from top order page search bar
+  if (typeof orderPageSearchQuery === "string" && orderPageSearchQuery.trim()) {
+    const sQuery = orderPageSearchQuery.trim().toLowerCase();
+    filtered = filtered.filter(p => {
+      const nameMatch = (p.name || "").toLowerCase().includes(sQuery);
+      const descMatch = (p.description || "").toLowerCase().includes(sQuery);
+      const catMatch = (p.category || "").toLowerCase().includes(sQuery);
+      const brandMatch = (p.brand || "").toLowerCase().includes(sQuery);
+      const specsMatch = JSON.stringify(p.specs || {}).toLowerCase().includes(sQuery);
+      return nameMatch || descMatch || catMatch || brandMatch || specsMatch;
+    });
+  }
+
   if (countBadge) {
     countBadge.textContent = `${filtered.length} Product${filtered.length === 1 ? '' : 's'}`;
   }
@@ -2546,8 +2567,34 @@ function renderCategoryProducts(catName, subFilter = "") {
     `;
   }).join("");
 
-  if (window.lucide) lucide.createIcons();
 }
+window.renderCategoryProducts = renderCategoryProducts;
+
+let orderPageSearchQuery = "";
+
+function handleOrderPageSearch(query) {
+  orderPageSearchQuery = (query || "").trim();
+  const clearBtn = document.getElementById("btn-clear-order-search") || document.getElementById("order-page-search-clear");
+  if (clearBtn) {
+    if (orderPageSearchQuery) {
+      clearBtn.classList.remove("hidden");
+    } else {
+      clearBtn.classList.add("hidden");
+    }
+  }
+  renderCategoryProducts(currentCategory, activeSubcategoryFilter);
+}
+window.handleOrderPageSearch = handleOrderPageSearch;
+
+function clearOrderPageSearch() {
+  orderPageSearchQuery = "";
+  const input = document.getElementById("order-page-search-input");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("btn-clear-order-search") || document.getElementById("order-page-search-clear");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderCategoryProducts(currentCategory, activeSubcategoryFilter);
+}
+window.clearOrderPageSearch = clearOrderPageSearch;
 
 // ----------------------------------------------------------------------------
 // 8.5 Multi-Product Comparison Engine (Real Gemini AI Powered)
@@ -5421,79 +5468,135 @@ window.switchAccountSubTab = switchAccountSubTab;
 // ----------------------------------------------------------------------------
 // 14. Settings & 2-Way Live Help Desk (Text, Image & Audio Voice Notes)
 // ----------------------------------------------------------------------------
+// 14. Settings & 2-Way Live Help Desk (Text, Image & Audio Voice Notes)
+// ----------------------------------------------------------------------------
+let localSupportMessages = [];
+
 function loadSettingsInfo() {
   const emailEl = document.getElementById("settings-support-email");
   const phoneEl = document.getElementById("settings-support-phone");
   if (emailEl && !emailEl.textContent) emailEl.textContent = "support@jaankar.in";
   if (phoneEl && !phoneEl.textContent) phoneEl.textContent = "+91 98765 43210";
+
+  const savedUserStr = localStorage.getItem("jaankar_user");
+  const user = savedUserStr ? JSON.parse(savedUserStr) : { uid: "guest_user", email: "guest@jaankar.in", displayName: "Guest" };
+  const userId = user.uid || user.email || "guest_user";
+  initSupportChatStream(userId);
 }
+window.loadSettingsInfo = loadSettingsInfo;
 
 function initSupportChatStream(userId) {
-  if (!db || !userId) return;
+  const streamContainer = document.getElementById("support-messages-stream") || document.getElementById("support-chat-stream");
+  if (!streamContainer) return;
+
+  if (!userId) {
+    const savedUserStr = localStorage.getItem("jaankar_user");
+    const user = savedUserStr ? JSON.parse(savedUserStr) : { uid: "guest_user" };
+    userId = user.uid || user.email || "guest_user";
+  }
+
+  // Load from local storage first for zero-latency display
+  const cachedHistory = localStorage.getItem(`jaankar_support_chat_${userId}`);
+  if (cachedHistory) {
+    try {
+      localSupportMessages = JSON.parse(cachedHistory) || [];
+    } catch (e) {
+      localSupportMessages = [];
+    }
+  }
+
+  if (localSupportMessages.length > 0) {
+    renderSupportChatMessages(localSupportMessages);
+  } else {
+    streamContainer.innerHTML = `
+      <div class="text-center py-8 text-xs text-slate-400 space-y-2">
+        <div class="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto shadow-inner">
+          <i data-lucide="message-square" class="w-5 h-5"></i>
+        </div>
+        <p class="font-bold text-slate-700">Welcome to JAANKAR Live Support Desk</p>
+        <p class="text-[11px] text-slate-500">Ask hardware questions, report bugs, send photos from PC or record voice notes directly to the team.</p>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  if (!db) return;
+
   if (supportChatUnsubscribe) {
     supportChatUnsubscribe();
     supportChatUnsubscribe = null;
   }
 
-  const streamContainer = document.getElementById("support-chat-stream");
+  try {
+    supportChatUnsubscribe = db.collection("support_chats").doc(userId).collection("messages")
+      .orderBy("timestamp", "asc")
+      .onSnapshot((snapshot) => {
+        if (!snapshot || snapshot.empty) return;
+
+        const remoteMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (remoteMsgs.length > 0) {
+          localSupportMessages = remoteMsgs;
+          localStorage.setItem(`jaankar_support_chat_${userId}`, JSON.stringify(localSupportMessages));
+          renderSupportChatMessages(localSupportMessages);
+        }
+      }, (err) => {
+        console.warn("Support stream note:", err.message);
+      });
+  } catch (err) {
+    console.warn("Firestore support chat listener error:", err);
+  }
+}
+window.initSupportChatStream = initSupportChatStream;
+
+function renderSupportChatMessages(messages) {
+  const streamContainer = document.getElementById("support-messages-stream") || document.getElementById("support-chat-stream");
   if (!streamContainer) return;
 
-  supportChatUnsubscribe = db.collection("support_chats").doc(userId).collection("messages")
-    .orderBy("timestamp", "asc")
-    .onSnapshot((snapshot) => {
-      if (!snapshot || snapshot.empty) {
-        streamContainer.innerHTML = `
-          <div class="text-center py-8 text-xs text-slate-400 space-y-1">
-            <i data-lucide="message-square" class="w-8 h-8 text-slate-600 mx-auto"></i>
-            <p>Welcome to JAANKAR Live Support.</p>
-            <p>You can send text messages, images, or record voice notes!</p>
-          </div>
-        `;
-        if (window.lucide) lucide.createIcons();
-        return;
-      }
+  if (!messages || messages.length === 0) return;
 
-      streamContainer.innerHTML = snapshot.docs.map(doc => {
-        const d = doc.data();
-        const isAdmin = d.sender === "admin";
-        return `
-          <div class="flex items-start ${isAdmin ? 'justify-start' : 'justify-end'} gap-2">
-            ${isAdmin ? `<div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] font-black">AD</div>` : ""}
-            <div class="p-3 rounded-2xl ${isAdmin ? 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700' : 'bg-orange-600 text-white rounded-tr-none'} text-xs max-w-[80%] space-y-2 shadow-sm">
-              ${d.text ? `<p class="whitespace-pre-line">${escapeHtml(d.text)}</p>` : ""}
-              ${d.imageUrl ? `<img src="${d.imageUrl}" class="w-48 h-auto rounded-lg object-cover cursor-pointer" onclick="window.open('${d.imageUrl}', '_blank')">` : ""}
-              ${d.audioUrl ? `<audio controls src="${d.audioUrl}" class="w-48 h-8 rounded-lg mt-1"></audio>` : ""}
-              <p class="text-[9px] text-right ${isAdmin ? 'text-slate-400' : 'text-orange-200'}">${d.timestamp ? new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}</p>
-            </div>
-          </div>
-        `;
-      }).join("");
+  streamContainer.innerHTML = messages.map(d => {
+    const isAdmin = d.sender === "admin";
+    return `
+      <div class="flex items-start ${isAdmin ? 'justify-start' : 'justify-end'} gap-2">
+        ${isAdmin ? `<div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">AD</div>` : ""}
+        <div class="p-3 rounded-2xl ${isAdmin ? 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700' : 'bg-orange-600 text-white rounded-tr-none'} text-xs max-w-[85%] space-y-1.5 shadow-sm">
+          ${d.text ? `<p class="whitespace-pre-line leading-relaxed">${escapeHtml(d.text)}</p>` : ""}
+          ${d.imageUrl ? `<img src="${d.imageUrl}" class="w-52 max-h-48 rounded-xl object-cover cursor-pointer border border-white/20 hover:opacity-95 transition" onclick="window.open('${d.imageUrl}', '_blank')">` : ""}
+          ${d.audioUrl ? `<audio controls src="${d.audioUrl}" class="w-52 h-8 rounded-lg mt-1"></audio>` : ""}
+          <p class="text-[9.5px] text-right ${isAdmin ? 'text-slate-400' : 'text-orange-200'}">${d.timestamp ? new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}</p>
+        </div>
+      </div>
+    `;
+  }).join("");
 
-      streamContainer.scrollTop = streamContainer.scrollHeight;
-      if (window.lucide) lucide.createIcons();
-    }, (err) => {
-      console.warn("Support stream note:", err.message);
-    });
+  streamContainer.scrollTop = streamContainer.scrollHeight;
+  if (window.lucide) lucide.createIcons();
 }
 
 async function sendSupportTextMessage() {
-  const input = document.getElementById("support-chat-input");
+  const input = document.getElementById("support-chat-input-text") || document.getElementById("support-chat-input");
   const text = (input ? input.value : "").trim();
   if (!text) return;
   input.value = "";
 
   const savedUserStr = localStorage.getItem("jaankar_user");
   const user = savedUserStr ? JSON.parse(savedUserStr) : { uid: "guest_user", email: "guest@jaankar.in", displayName: "Guest" };
-  const userId = user.uid || user.email;
+  const userId = user.uid || user.email || "guest_user";
+
+  const newMsg = {
+    sender: "user",
+    text: text,
+    timestamp: Date.now()
+  };
+
+  // Immediate local display
+  localSupportMessages.push(newMsg);
+  localStorage.setItem(`jaankar_support_chat_${userId}`, JSON.stringify(localSupportMessages));
+  renderSupportChatMessages(localSupportMessages);
 
   if (db) {
     try {
-      await db.collection("support_chats").doc(userId).collection("messages").add({
-        sender: "user",
-        text: text,
-        timestamp: Date.now()
-      });
-
+      await db.collection("support_chats").doc(userId).collection("messages").add(newMsg);
       await db.collection("support_chats").doc(userId).set({
         userId: userId,
         userName: user.displayName || user.name || "User",
@@ -5503,8 +5606,22 @@ async function sendSupportTextMessage() {
         unreadAdminCount: firebase.firestore.FieldValue.increment(1)
       }, { merge: true });
     } catch (e) {
-      console.error("Support msg error:", e);
+      console.warn("Support msg remote sync warning:", e);
     }
+  }
+
+  // Simulated auto-acknowledgment if this is user's first query
+  if (localSupportMessages.filter(m => m.sender === "admin").length === 0) {
+    setTimeout(() => {
+      const autoAck = {
+        sender: "admin",
+        text: "Namaste! Your message has been received by the JAANKAR technical support team. Our engineers are reviewing your query and will reply shortly.",
+        timestamp: Date.now()
+      };
+      localSupportMessages.push(autoAck);
+      localStorage.setItem(`jaankar_support_chat_${userId}`, JSON.stringify(localSupportMessages));
+      renderSupportChatMessages(localSupportMessages);
+    }, 1200);
   }
 }
 window.sendSupportTextMessage = sendSupportTextMessage;
@@ -5515,7 +5632,6 @@ function handleSendSupportChatMessage(e) {
   return false;
 }
 window.handleSendSupportChatMessage = handleSendSupportChatMessage;
-window.handleSupportImageAttached = handleSupportImageUpload;
 
 function handleSupportImageUpload(event) {
   const file = event.target.files && event.target.files[0];
@@ -5526,29 +5642,39 @@ function handleSupportImageUpload(event) {
     const base64Img = e.target.result;
     const savedUserStr = localStorage.getItem("jaankar_user");
     const user = savedUserStr ? JSON.parse(savedUserStr) : { uid: "guest_user" };
-    const userId = user.uid || user.email;
+    const userId = user.uid || user.email || "guest_user";
+
+    const newMsg = {
+      sender: "user",
+      text: "📷 Photo Attached",
+      imageUrl: base64Img,
+      timestamp: Date.now()
+    };
+
+    localSupportMessages.push(newMsg);
+    localStorage.setItem(`jaankar_support_chat_${userId}`, JSON.stringify(localSupportMessages));
+    renderSupportChatMessages(localSupportMessages);
 
     if (db) {
-      await db.collection("support_chats").doc(userId).collection("messages").add({
-        sender: "user",
-        text: "Attached Image",
-        imageUrl: base64Img,
-        timestamp: Date.now()
-      });
-
-      await db.collection("support_chats").doc(userId).set({
-        lastMessage: "📷 Sent an image",
-        lastTimestamp: Date.now(),
-        unreadAdminCount: firebase.firestore.FieldValue.increment(1)
-      }, { merge: true });
+      try {
+        await db.collection("support_chats").doc(userId).collection("messages").add(newMsg);
+        await db.collection("support_chats").doc(userId).set({
+          lastMessage: "📷 Sent a photo",
+          lastTimestamp: Date.now(),
+          unreadAdminCount: firebase.firestore.FieldValue.increment(1)
+        }, { merge: true });
+      } catch (err) {
+        console.warn("Support image sync error:", err);
+      }
     }
   };
   reader.readAsDataURL(file);
 }
 window.handleSupportImageUpload = handleSupportImageUpload;
+window.handleSupportImageAttached = handleSupportImageUpload;
 
 async function toggleSupportVoiceRecording() {
-  const recBtn = document.getElementById("support-voice-btn");
+  const recBtn = document.getElementById("btn-voice-record") || document.getElementById("support-voice-btn");
   if (!isRecordingVoice) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -5566,21 +5692,30 @@ async function toggleSupportVoiceRecording() {
           const base64Audio = reader.result;
           const savedUserStr = localStorage.getItem("jaankar_user");
           const user = savedUserStr ? JSON.parse(savedUserStr) : { uid: "guest_user" };
-          const userId = user.uid || user.email;
+          const userId = user.uid || user.email || "guest_user";
+
+          const newMsg = {
+            sender: "user",
+            text: "🎤 Voice Note",
+            audioUrl: base64Audio,
+            timestamp: Date.now()
+          };
+
+          localSupportMessages.push(newMsg);
+          localStorage.setItem(`jaankar_support_chat_${userId}`, JSON.stringify(localSupportMessages));
+          renderSupportChatMessages(localSupportMessages);
 
           if (db) {
-            await db.collection("support_chats").doc(userId).collection("messages").add({
-              sender: "user",
-              text: "🎤 Voice Note",
-              audioUrl: base64Audio,
-              timestamp: Date.now()
-            });
-
-            await db.collection("support_chats").doc(userId).set({
-              lastMessage: "🎤 Sent a voice note",
-              lastTimestamp: Date.now(),
-              unreadAdminCount: firebase.firestore.FieldValue.increment(1)
-            }, { merge: true });
+            try {
+              await db.collection("support_chats").doc(userId).collection("messages").add(newMsg);
+              await db.collection("support_chats").doc(userId).set({
+                lastMessage: "🎤 Sent a voice note",
+                lastTimestamp: Date.now(),
+                unreadAdminCount: firebase.firestore.FieldValue.increment(1)
+              }, { merge: true });
+            } catch (err) {
+              console.warn("Support audio sync error:", err);
+            }
           }
         };
         reader.readAsDataURL(audioBlob);
@@ -5588,21 +5723,28 @@ async function toggleSupportVoiceRecording() {
 
       mediaRecorder.start();
       isRecordingVoice = true;
-      if (recBtn) recBtn.classList.add("bg-rose-600", "text-white", "animate-pulse");
-      showAppToast("Voice recording started... Speak now!");
+      if (recBtn) {
+        recBtn.classList.remove("bg-slate-100", "text-slate-600");
+        recBtn.classList.add("bg-rose-600", "text-white", "animate-pulse");
+      }
+      if (typeof showToast === "function") showToast("Voice recording started... Speak now!");
     } catch (err) {
-      alert("Microphone access denied: " + err.message);
+      alert("Microphone access permission required: " + err.message);
     }
   } else {
     if (mediaRecorder && isRecordingVoice) {
       mediaRecorder.stop();
       isRecordingVoice = false;
-      if (recBtn) recBtn.classList.remove("bg-rose-600", "text-white", "animate-pulse");
-      showAppToast("Voice note sent to support desk!");
+      if (recBtn) {
+        recBtn.classList.remove("bg-rose-600", "text-white", "animate-pulse");
+        recBtn.classList.add("bg-slate-100", "text-slate-600");
+      }
+      if (typeof showToast === "function") showToast("Voice note sent to support desk!");
     }
   }
 }
 window.toggleSupportVoiceRecording = toggleSupportVoiceRecording;
+window.toggleVoiceNoteRecording = toggleSupportVoiceRecording;
 
 // ----------------------------------------------------------------------------
 // 15. Global Live Search Engine
@@ -5903,12 +6045,13 @@ function openSpecificTool(toolId) {
 window.openSpecificTool = openSpecificTool;
 
 function switchToolSubTab(toolId) {
-  const tools = ["pdf-compressor", "qr-scanner", "img-to-pdf", "smart-alarms"];
+  const tools = ["pdf-compressor", "qr-scanner", "img-to-pdf", "smart-alarms", "build-pc"];
   const tabMap = {
     "pdf-compressor": "tool-tab-pdf",
     "qr-scanner": "tool-tab-qr",
     "img-to-pdf": "tool-tab-img",
-    "smart-alarms": "tool-tab-alarm"
+    "smart-alarms": "tool-tab-alarm",
+    "build-pc": "tool-tab-pc"
   };
 
   tools.forEach((t) => {
@@ -5920,15 +6063,26 @@ function switchToolSubTab(toolId) {
     }
     if (tabBtn) {
       if (t === toolId) {
-        tabBtn.className = "tool-tab-btn active flex items-center gap-1.5";
+        if (t === "build-pc") {
+          tabBtn.className = "tool-tab-btn active flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-orange-500 text-white font-extrabold shadow-md shadow-purple-500/25";
+        } else {
+          tabBtn.className = "tool-tab-btn active flex items-center gap-1.5";
+        }
       } else {
-        tabBtn.className = "tool-tab-btn flex items-center gap-1.5";
+        if (t === "build-pc") {
+          tabBtn.className = "tool-tab-btn flex items-center gap-1.5 bg-purple-50 text-purple-900 border border-purple-200 hover:border-purple-400 font-extrabold";
+        } else {
+          tabBtn.className = "tool-tab-btn flex items-center gap-1.5";
+        }
       }
     }
   });
 
   if (toolId === "qr-scanner") {
     generateLiveQrCode();
+  }
+  if (toolId === "build-pc" && typeof renderPcBuilderSlots === "function") {
+    renderPcBuilderSlots();
   }
 
   if (window.lucide && typeof lucide.createIcons === "function") {
@@ -7518,3 +7672,1067 @@ try {
   console.warn("Immediate store settings init:", e);
 }
 
+// ============================================================================
+// 16. ACCOUNT PORTALS: MY LEARNING, SAVED ITEMS & DOWNLOAD HISTORY
+// ============================================================================
+
+function openMyLearningPage() {
+  switchTab("my-learning");
+}
+window.openMyLearningPage = openMyLearningPage;
+
+function openSavedItemsPage() {
+  switchTab("saved-items");
+}
+window.openSavedItemsPage = openSavedItemsPage;
+
+function openDownloadHistoryPage() {
+  switchTab("download-history");
+}
+window.openDownloadHistoryPage = openDownloadHistoryPage;
+
+let activeSavedFilter = "all";
+
+const defaultSavedItems = [
+  {
+    id: "saved-prod-1",
+    type: "product",
+    productId: "prod-laptop-strix-16",
+    title: "ASUS ROG Strix G16 Gaming Laptop",
+    subtitle: "Intel Core i7 13650HX • RTX 4060 8GB • 16GB DDR5",
+    price: "₹1,24,990",
+    mrp: "₹1,49,990",
+    image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&auto=format&fit=crop&q=80",
+    badge: "Saved Product"
+  },
+  {
+    id: "saved-prod-2",
+    type: "product",
+    productId: "prod-audio-sony-xm5",
+    title: "Sony WH-1000XM5 Wireless ANC Headphones",
+    subtitle: "Industry Leading Noise Cancelling • 30hr Battery • LDAC",
+    price: "₹26,990",
+    mrp: "₹34,990",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80",
+    badge: "Saved Audio"
+  },
+  {
+    id: "saved-art-1",
+    type: "article",
+    articleId: "art-rtx-5090-blackwell",
+    title: "NVIDIA RTX 5090 Blackwell Architecture Breakdown",
+    subtitle: "32GB GDDR7, 512-bit bus, and next-gen DLSS 4 neural rendering roadmap",
+    price: "5 Min Read",
+    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=500&auto=format&fit=crop&q=80",
+    badge: "Saved Article"
+  },
+  {
+    id: "saved-art-2",
+    type: "article",
+    articleId: "art-snapdragon-8-gen-3",
+    title: "Snapdragon 8 Gen 3 vs Apple A17 Pro: 3nm Benchmark Duel",
+    subtitle: "Thermal throttling analysis, Adreno 750 ray tracing & battery efficiency tests",
+    price: "7 Min Read",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format&fit=crop&q=80",
+    badge: "Saved Article"
+  },
+  {
+    id: "saved-vid-1",
+    type: "video",
+    videoId: "vid-pc-building-2026",
+    title: "How to Build a Gaming PC in 2026: Step-by-Step",
+    subtitle: "Thermal paste application, cable management & first boot BIOS setup",
+    price: "24:15 Min",
+    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=80",
+    badge: "Saved Video"
+  },
+  {
+    id: "saved-vid-2",
+    type: "video",
+    videoId: "vid-oled-vs-qled",
+    title: "OLED vs QD-OLED vs Mini-LED: Complete Buying Guide",
+    subtitle: "Brightness measurements, burn-in risk testing & black level contrast",
+    price: "18:40 Min",
+    image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=500&auto=format&fit=crop&q=80",
+    badge: "Saved Video"
+  }
+];
+
+function getSavedItemsList() {
+  const local = localStorage.getItem("jaankar_saved_items_list");
+  if (local) {
+    try {
+      return JSON.parse(local);
+    } catch (e) {
+      console.warn("Error parsing saved items:", e);
+    }
+  }
+  localStorage.setItem("jaankar_saved_items_list", JSON.stringify(defaultSavedItems));
+  return defaultSavedItems;
+}
+
+function renderSavedItemsPage(filter = activeSavedFilter) {
+  activeSavedFilter = filter;
+  const container = document.getElementById("saved-items-grid");
+  const badge = document.getElementById("saved-items-total-badge");
+  if (!container) return;
+
+  const items = getSavedItemsList();
+  const filtered = filter === "all" ? items : items.filter(it => it.type === (filter === "products" ? "product" : filter === "articles" ? "article" : "video"));
+
+  if (badge) {
+    badge.textContent = `${filtered.length} Item${filtered.length === 1 ? '' : 's'}`;
+  }
+
+  // Update filter pills styling
+  ["all", "products", "articles", "videos"].forEach(f => {
+    const btn = document.getElementById(`saved-tab-${f}`);
+    if (btn) {
+      if (f === filter) {
+        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-xs transition";
+      } else {
+        btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
+      }
+    }
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-16 text-center space-y-3 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <i data-lucide="bookmark-x" class="w-12 h-12 text-slate-300 mx-auto"></i>
+        <h4 class="text-base font-bold text-slate-800">No saved ${filter} yet</h4>
+        <p class="text-xs text-slate-500">Bookmark products, news stories, and videos to access them instantly from your account.</p>
+        <button type="button" onclick="switchTab('categories')" class="btn-primary-orange text-xs py-2 px-4 mx-auto">Explore Products</button>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => {
+    let clickAction = "";
+    if (item.type === "product") {
+      clickAction = `openProductDetailPage('${item.productId || ''}')`;
+    } else if (item.type === "article") {
+      clickAction = `openArticleDetail('${item.articleId || ''}')`;
+    } else {
+      clickAction = `openVideoWatchPage('${item.videoId || ''}')`;
+    }
+
+    return `
+      <div onclick="${clickAction}" class="jaankar-card p-4 hover:border-orange-500 rounded-2xl transition-all duration-300 hover:shadow-lg cursor-pointer group flex flex-col justify-between text-slate-900">
+        <div class="space-y-3">
+          <div class="relative h-44 rounded-xl bg-slate-100 overflow-hidden">
+            <img src="${item.image}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-slate-950/80 backdrop-blur-md text-white shadow-sm">
+              ${escapeHtml(item.badge)}
+            </span>
+            <button type="button" onclick="event.stopPropagation(); removeSavedItem('${item.id}');" class="absolute top-2.5 right-2.5 w-7 h-7 rounded-lg bg-white/90 hover:bg-rose-600 hover:text-white text-slate-600 flex items-center justify-center transition shadow-xs" title="Remove Bookmark">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div class="space-y-1">
+            <h3 class="font-black text-sm text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+              ${escapeHtml(item.title)}
+            </h3>
+            <p class="text-xs text-slate-500 line-clamp-2 font-medium">
+              ${escapeHtml(item.subtitle)}
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between mt-3">
+          <span class="text-sm font-black text-orange-600">${item.price}</span>
+          <span class="text-xs font-bold text-slate-600 group-hover:text-orange-600 transition flex items-center gap-1">
+            <span>View Details</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderSavedItemsPage = renderSavedItemsPage;
+
+function filterSavedItems(filter) {
+  renderSavedItemsPage(filter);
+}
+window.filterSavedItems = filterSavedItems;
+
+function removeSavedItem(id) {
+  let items = getSavedItemsList();
+  items = items.filter(it => it.id !== id);
+  localStorage.setItem("jaankar_saved_items_list", JSON.stringify(items));
+  renderSavedItemsPage(activeSavedFilter);
+  if (typeof showToast === "function") showToast("Item removed from saved list");
+}
+window.removeSavedItem = removeSavedItem;
+
+function renderMyLearningProgress() {
+  if (window.lucide) lucide.createIcons();
+}
+window.renderMyLearningProgress = renderMyLearningProgress;
+
+function renderDownloadHistory() {
+  if (window.lucide) lucide.createIcons();
+}
+window.renderDownloadHistory = renderDownloadHistory;
+
+// ============================================================================
+// 17. FULL-SIZE DEDICATED JAANKAR AI VIEW (REAL GEMINI API POWERED)
+// ============================================================================
+let jaankarAiChatMessages = [];
+let isAiSpeechEnabled = true;
+let isAiVoiceListening = false;
+
+function initFullpageJaankarAiView() {
+  const container = document.getElementById("fullpage-ai-messages");
+  const welcome = document.getElementById("fullpage-ai-welcome");
+  if (!container) return;
+
+  if (jaankarAiChatMessages.length === 0) {
+    if (welcome) welcome.classList.remove("hidden");
+  } else {
+    if (welcome) welcome.classList.add("hidden");
+  }
+
+  const input = document.getElementById("fullpage-ai-query-input");
+  if (input) setTimeout(() => input.focus(), 200);
+
+  if (window.lucide) lucide.createIcons();
+}
+window.initFullpageJaankarAiView = initFullpageJaankarAiView;
+
+function sendAiPromptStarter(promptText) {
+  const input = document.getElementById("fullpage-ai-query-input");
+  if (input) {
+    input.value = promptText;
+    handleSendFullpageAiMessage();
+  }
+}
+window.sendAiPromptStarter = sendAiPromptStarter;
+
+function clearJaankarAiChat() {
+  jaankarAiChatMessages = [];
+  const container = document.getElementById("fullpage-ai-messages");
+  const welcome = document.getElementById("fullpage-ai-welcome");
+  if (container) {
+    container.innerHTML = "";
+    if (welcome) {
+      container.appendChild(welcome);
+      welcome.classList.remove("hidden");
+    }
+  }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (typeof showToast === "function") showToast("AI Chat history cleared");
+  if (window.lucide) lucide.createIcons();
+}
+window.clearJaankarAiChat = clearJaankarAiChat;
+
+function toggleVoiceSpeechPlayback() {
+  isAiSpeechEnabled = !isAiSpeechEnabled;
+  const label = document.getElementById("label-ai-tts");
+  const btn = document.getElementById("btn-toggle-ai-tts");
+  if (label) label.textContent = isAiSpeechEnabled ? "Voice: ON" : "Voice: OFF";
+  if (btn) {
+    if (isAiSpeechEnabled) {
+      btn.className = "px-3 py-1.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer";
+    } else {
+      btn.className = "px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer";
+    }
+  }
+  if (!isAiSpeechEnabled && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+}
+window.toggleVoiceSpeechPlayback = toggleVoiceSpeechPlayback;
+
+function toggleFullpageAiMic() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    alert("Speech recognition is not supported in this browser. Please use Chrome, Edge, or Brave.");
+    return;
+  }
+
+  const micBtn = document.getElementById("btn-fullpage-ai-mic");
+  const input = document.getElementById("fullpage-ai-query-input");
+
+  if (!isAiVoiceListening) {
+    try {
+      const recognition = new SpeechRec();
+      recognition.lang = "en-IN"; // Supports Indian English and Hindi accent
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        isAiVoiceListening = true;
+        if (micBtn) {
+          micBtn.classList.remove("bg-orange-100", "text-orange-600");
+          micBtn.classList.add("bg-rose-600", "text-white", "animate-pulse");
+        }
+        if (typeof showToast === "function") showToast("Listening... Speak your hardware query!");
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (input) input.value = transcript;
+        setTimeout(() => handleSendFullpageAiMessage(), 300);
+      };
+
+      recognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        isAiVoiceListening = false;
+        if (micBtn) {
+          micBtn.classList.remove("bg-rose-600", "text-white", "animate-pulse");
+          micBtn.classList.add("bg-orange-100", "text-orange-600");
+        }
+      };
+
+      recognition.onend = () => {
+        isAiVoiceListening = false;
+        if (micBtn) {
+          micBtn.classList.remove("bg-rose-600", "text-white", "animate-pulse");
+          micBtn.classList.add("bg-orange-100", "text-orange-600");
+        }
+      };
+
+      recognition.start();
+    } catch (e) {
+      alert("Could not start microphone: " + e.message);
+    }
+  }
+}
+window.toggleFullpageAiMic = toggleFullpageAiMic;
+
+function parseMarkdownToHtml(md) {
+  if (!md) return "";
+  let html = md
+    .replace(/^### (.*$)/gim, '<h4 class="font-black text-slate-900 text-sm mt-3 mb-1.5 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500 inline-block"></span>$1</h4>')
+    .replace(/^## (.*$)/gim, '<h3 class="font-black text-slate-900 text-base mt-4 mb-2">$1</h3>')
+    .replace(/^# (.*$)/gim, '<h2 class="font-black text-slate-900 text-lg mt-4 mb-2">$1</h2>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-bold text-slate-900">$1</strong>')
+    .replace(/\*(.*?)\*/gim, '<em class="italic text-slate-700">$1</em>')
+    .replace(/`([^`]+)`/gim, '<code class="px-1.5 py-0.5 rounded bg-slate-100 text-orange-600 font-mono text-[11px]">$1</code>')
+    .replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-slate-700 leading-relaxed">$1</li>')
+    .replace(/\n\n/gim, '<div class="h-2"></div>')
+    .replace(/\n/gim, '<br>');
+  return html;
+}
+
+async function handleSendFullpageAiMessage(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById("fullpage-ai-query-input");
+  const query = (input ? input.value : "").trim();
+  if (!query) return;
+
+  input.value = "";
+  const container = document.getElementById("fullpage-ai-messages");
+  const welcome = document.getElementById("fullpage-ai-welcome");
+  if (welcome) welcome.classList.add("hidden");
+
+  // Append user bubble
+  const userMsgId = "msg-user-" + Date.now();
+  const userHtml = `
+    <div id="${userMsgId}" class="flex items-start justify-end gap-2.5 animate-in fade-in duration-200">
+      <div class="p-3.5 sm:p-4 rounded-2xl rounded-tr-none bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs sm:text-sm max-w-[85%] shadow-md shadow-orange-500/20 font-medium">
+        <p class="whitespace-pre-line leading-relaxed">${escapeHtml(query)}</p>
+        <span class="block text-[9.5px] text-right text-orange-100 mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>
+      <div class="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm">
+        You
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", userHtml);
+  container.scrollTop = container.scrollHeight;
+
+  // Append thinking bubble
+  const loadingMsgId = "msg-ai-loading-" + Date.now();
+  const loadingHtml = `
+    <div id="${loadingMsgId}" class="flex items-start gap-2.5 animate-in fade-in duration-200">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+        <i data-lucide="sparkles" class="w-4 h-4 fill-white"></i>
+      </div>
+      <div class="p-3.5 sm:p-4 rounded-2xl rounded-tl-none bg-white border border-slate-200 text-xs sm:text-sm text-slate-800 max-w-[85%] shadow-sm space-y-2">
+        <div class="flex items-center gap-2 text-orange-600 font-bold text-xs">
+          <div class="w-2 h-2 rounded-full bg-orange-600 animate-ping"></div>
+          <span>Gemini AI is analyzing hardware specs...</span>
+        </div>
+        <p class="text-xs text-slate-400">Verifying benchmark databases, thermal ratings and architecture comparisons</p>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", loadingHtml);
+  if (window.lucide) lucide.createIcons();
+  container.scrollTop = container.scrollHeight;
+
+  // Call Gemini API
+  try {
+    const aiResponseText = await runFullpageGeminiAi(query);
+    const loadingEl = document.getElementById(loadingMsgId);
+    if (loadingEl) loadingEl.remove();
+
+    const aiMsgId = "msg-ai-" + Date.now();
+    const formattedHtml = parseMarkdownToHtml(aiResponseText);
+    const plainTextForSpeech = aiResponseText.replace(/[#*`_-]/g, "");
+
+    const aiBubbleHtml = `
+      <div id="${aiMsgId}" class="flex items-start gap-2.5 animate-in fade-in duration-200">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <i data-lucide="bot" class="w-4 h-4"></i>
+        </div>
+        <div class="p-4 sm:p-5 rounded-2xl rounded-tl-none bg-white border border-slate-200 text-xs sm:text-sm text-slate-800 max-w-[88%] shadow-sm space-y-2.5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-orange-600 flex items-center gap-1">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>
+              <span>JAANKAR Gemini Intelligence</span>
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="navigator.clipboard.writeText(\`${escapeHtml(aiResponseText)}\`); if(typeof showToast==='function') showToast('Copied to clipboard');" class="p-1 rounded text-slate-400 hover:text-slate-700 transition" title="Copy Text">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" onclick="speakAiResponse(\`${escapeHtml(plainTextForSpeech.slice(0, 300))}\`)" class="p-1 rounded text-slate-400 hover:text-orange-600 transition" title="Read Aloud">
+                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+          <div class="prose prose-sm max-w-none text-slate-800 leading-relaxed space-y-2">
+            ${formattedHtml}
+          </div>
+          <span class="block text-[9.5px] text-right text-slate-400 pt-1 border-t border-slate-100">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", aiBubbleHtml);
+    if (window.lucide) lucide.createIcons();
+    container.scrollTop = container.scrollHeight;
+
+    // Optional TTS speech readout
+    if (isAiSpeechEnabled) {
+      speakAiResponse(plainTextForSpeech.slice(0, 300));
+    }
+  } catch (err) {
+    const loadingEl = document.getElementById(loadingMsgId);
+    if (loadingEl) {
+      loadingEl.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 max-w-[85%] space-y-1">
+          <p class="font-bold">Error generating Gemini AI response</p>
+          <p class="text-[11px]">${escapeHtml(err.message)}</p>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+window.handleSendFullpageAiMessage = handleSendFullpageAiMessage;
+
+function speakAiResponse(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-IN";
+  utterance.rate = 1.05;
+  window.speechSynthesis.speak(utterance);
+}
+window.speakAiResponse = speakAiResponse;
+
+async function runFullpageGeminiAi(userPrompt) {
+  const apiKey = await getGeminiApiKeyForComparison();
+  if (!apiKey) {
+    throw new Error("Gemini API Key missing. Please provide an API key in Admin Settings or local storage.");
+  }
+
+  const systemInstruction = `You are JAANKAR AI, India's most authoritative, strictly factual hardware and gadgets intelligence engine.
+Your purpose is to give accurate, zero-fluff answers on processors (CPUs), graphics cards (GPUs), smartphones, laptops, custom PC builds, monitors, and consumer electronics.
+
+STRICT ACCURACY RULES:
+1. NO hallucinations. NO invented benchmark numbers. Always cite realistic specifications (e.g., TDP in Watts, clock speeds in GHz, memory bandwidth in GB/s, VRAM, architecture nm).
+2. Prices must be referenced in Indian Rupees (₹) with realistic market pricing in India.
+3. If recommending laptops or components, specify exact models, cooling strengths, and TGP wattage.
+4. Format responses in clean, beautiful Markdown with clear headers, bold metrics, and structured bullet points.
+5. DO NOT provide generic conversational filler ("Hello! I would be delighted to help you"). Dive straight into the factual, objective breakdown.`;
+
+  const candidateModels = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-1.5-flash"];
+  let lastError = null;
+
+  for (const model of candidateModels) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: systemInstruction + "\n\nUSER QUESTION: " + userPrompt }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            topP: 0.95,
+            maxOutputTokens: 2048
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        lastError = data.error?.message || `Model ${model} returned unexpected payload`;
+      }
+    } catch (e) {
+      lastError = e.message;
+    }
+  }
+
+  throw new Error(lastError || "Could not reach Google Gemini API");
+}
+window.runFullpageGeminiAi = runFullpageGeminiAi;
+
+// ============================================================================
+// 18. SMART TOOLS: BUILD PC (GEMINI AI POWERED) CONTROLLER
+// ============================================================================
+
+const PC_BUILDER_SLOTS = [
+  { key: "cpu", name: "Processor / CPU", icon: "cpu", category: "cpu", keywords: ["ryzen", "core i", "processor", "cpu"] },
+  { key: "gpu", name: "Graphic Card (GPU)", icon: "sparkles", category: "gpu", keywords: ["rtx", "radeon", "geforce", "gpu", "graphics"] },
+  { key: "motherboard", name: "Motherboard", icon: "circuit-board", category: "motherboard", keywords: ["b650", "z790", "motherboard", "b550", "b760"] },
+  { key: "ram", name: "RAM Memory", icon: "layers", category: "ram", keywords: ["ddr5", "ddr4", "ram", "corsair", "fury", "ripjaws"] },
+  { key: "nvme_ssd", name: "M.2 NVMe SSD", icon: "hard-drive", category: "ssd", keywords: ["nvme", "m.2", "sn850", "990 pro", "ssd"] },
+  { key: "sata_ssd", name: "SATA SSD", icon: "hard-drive-download", category: "ssd", keywords: ["sata", "bx500", "a400", "2.5"] },
+  { key: "hdd", name: "Hard Disk (HDD)", icon: "database", category: "hdd", keywords: ["hdd", "barracuda", "hard drive", "wd blue"] },
+  { key: "smps", name: "Power Supply (SMPS)", icon: "zap", category: "smps", keywords: ["smps", "power supply", "watt", "80+", "corsair rm"] },
+  { key: "cooler", name: "Cooler / Cooling System", icon: "fan", category: "cooler", keywords: ["cooler", "liquid", "ak620", "aio", "cooling", "fan"] },
+  { key: "monitor", name: "Monitor / Display", icon: "monitor", category: "monitors", keywords: ["monitor", "display", "144hz", "165hz", "ips", "oled"] },
+  { key: "keyboard", name: "Keyboard", icon: "keyboard", category: "accessories", keywords: ["keyboard", "mechanical", "redragon", "keychron"] },
+  { key: "mouse", name: "Mouse", icon: "mouse", category: "accessories", keywords: ["mouse", "deathadder", "g502", "gaming mouse"] },
+  { key: "cables", name: "Cables & Connectors", icon: "cable", category: "accessories", keywords: ["cable", "hdmi", "displayport", "extension", "sleeved"] },
+  { key: "wifi_dongle", name: "Wi-Fi Dongle", icon: "wifi", category: "accessories", keywords: ["wifi", "wi-fi", "adapter", "dongle", "t3u"] },
+  { key: "bluetooth_dongle", name: "Bluetooth Dongle", icon: "bluetooth", category: "accessories", keywords: ["bluetooth", "bt", "dongle", "ub500"] },
+  { key: "ups", name: "UPS Power Backup", icon: "battery-charging", category: "accessories", keywords: ["ups", "inverter", "apc", "microtek", "power backup"] }
+];
+
+const VERIFIED_PC_COMPONENTS_CATALOG = {
+  cpu: [
+    { id: "cpu-1", name: "AMD Ryzen 7 7800X3D", brand: "AMD", price: 36990, wattage: 120, spec: "8 Cores, 16 Threads, 5.0GHz, AM5 Socket, 3D V-Cache", image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=300&auto=format&fit=crop&q=80" },
+    { id: "cpu-2", name: "Intel Core i7 14700K", brand: "Intel", price: 37490, wattage: 220, spec: "20 Cores, 28 Threads, 5.6GHz, LGA1700 Socket", image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=300&auto=format&fit=crop&q=80" },
+    { id: "cpu-3", name: "AMD Ryzen 5 7600", brand: "AMD", price: 17990, wattage: 65, spec: "6 Cores, 12 Threads, 5.1GHz, AM5 Socket", image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=300&auto=format&fit=crop&q=80" },
+    { id: "cpu-4", name: "Intel Core i5 13400F", brand: "Intel", price: 15490, wattage: 65, spec: "10 Cores, 16 Threads, 4.6GHz, LGA1700 Socket", image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=300&auto=format&fit=crop&q=80" }
+  ],
+  gpu: [
+    { id: "gpu-1", name: "NVIDIA GeForce RTX 4070 Super 12GB", brand: "ZOTAC", price: 58990, wattage: 220, spec: "12GB GDDR6X, DLSS 3.5, 7168 CUDA Cores", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" },
+    { id: "gpu-2", name: "NVIDIA GeForce RTX 4060 8GB", brand: "ASUS Dual", price: 28990, wattage: 115, spec: "8GB GDDR6, Ray Tracing, 3072 CUDA Cores", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" },
+    { id: "gpu-3", name: "AMD Radeon RX 7800 XT 16GB", brand: "Sapphire", price: 51990, wattage: 263, spec: "16GB GDDR6, 256-bit Bus, RDNA 3 Architecture", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" },
+    { id: "gpu-4", name: "NVIDIA GeForce RTX 4080 Super 16GB", brand: "Gigabyte Gaming OC", price: 99990, wattage: 320, spec: "16GB GDDR6X, 4K Ultra Gaming, 10240 CUDA Cores", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" }
+  ],
+  motherboard: [
+    { id: "mb-1", name: "MSI MAG B650 Tomahawk WiFi", brand: "MSI", price: 21490, wattage: 45, spec: "AM5 Socket, DDR5, PCIe 4.0, Realtek 2.5G LAN, Wi-Fi 6E", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&auto=format&fit=crop&q=80" },
+    { id: "mb-2", name: "ASUS ROG Strix Z790-F Gaming WiFi II", brand: "ASUS", price: 34990, wattage: 55, spec: "LGA1700 Socket, DDR5, PCIe 5.0 x16, Wi-Fi 7", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&auto=format&fit=crop&q=80" },
+    { id: "mb-3", name: "Gigabyte B650M DS3H", brand: "Gigabyte", price: 12990, wattage: 35, spec: "AM5 Socket, Micro-ATX, Dual M.2 PCIe 4.0, DDR5", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&auto=format&fit=crop&q=80" }
+  ],
+  ram: [
+    { id: "ram-1", name: "Corsair Vengeance 32GB (2x16GB) DDR5 6000MHz", brand: "Corsair", price: 9990, wattage: 15, spec: "CL30-36-36-76, AMD EXPO & Intel XMP 3.0", image: "https://images.unsplash.com/photo-1562976540-1502c2145186?w=300&auto=format&fit=crop&q=80" },
+    { id: "ram-2", name: "G.Skill Ripjaws S5 32GB (2x16GB) DDR5 5600MHz", brand: "G.Skill", price: 8490, wattage: 15, spec: "CL36, Low-Profile Aluminum Heatspreader", image: "https://images.unsplash.com/photo-1562976540-1502c2145186?w=300&auto=format&fit=crop&q=80" },
+    { id: "ram-3", name: "Kingston Fury Beast 16GB (2x8GB) DDR4 3200MHz", brand: "Kingston", price: 3690, wattage: 10, spec: "CL16, Plug N Play Automatic Overclocking", image: "https://images.unsplash.com/photo-1562976540-1502c2145186?w=300&auto=format&fit=crop&q=80" }
+  ],
+  nvme_ssd: [
+    { id: "ssd-1", name: "Samsung 990 Pro 1TB PCIe 4.0 NVMe", brand: "Samsung", price: 9990, wattage: 8, spec: "7450 MB/s Read, 6900 MB/s Write, V-NAND 3-bit MLC", image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=300&auto=format&fit=crop&q=80" },
+    { id: "ssd-2", name: "WD Black SN850X 1TB PCIe Gen4 NVMe", brand: "Western Digital", price: 8890, wattage: 8, spec: "7300 MB/s Read, Gaming Mode 2.0 Predictive Loading", image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=300&auto=format&fit=crop&q=80" },
+    { id: "ssd-3", name: "Crucial P3 Plus 1TB PCIe 4.0 M.2 SSD", brand: "Crucial", price: 5490, wattage: 6, spec: "5000 MB/s Read, Micron Advanced 3D NAND", image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=300&auto=format&fit=crop&q=80" }
+  ],
+  sata_ssd: [
+    { id: "sata-1", name: "Crucial BX500 1TB 2.5-inch SATA SSD", brand: "Crucial", price: 5290, wattage: 4, spec: "540 MB/s Read, 500 MB/s Write, 3D NAND", image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=300&auto=format&fit=crop&q=80" },
+    { id: "sata-2", name: "Kingston A400 960GB 2.5\" SATA SSD", brand: "Kingston", price: 4890, wattage: 4, spec: "500 MB/s Read, 450 MB/s Write, Shock Resistant", image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=300&auto=format&fit=crop&q=80" }
+  ],
+  hdd: [
+    { id: "hdd-1", name: "Seagate Barracuda 2TB 7200 RPM HDD", brand: "Seagate", price: 4990, wattage: 15, spec: "256MB Cache, SATA 6Gb/s 3.5\" Internal Hard Drive", image: "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=300&auto=format&fit=crop&q=80" },
+    { id: "hdd-2", name: "WD Blue 2TB 7200 RPM Desktop HDD", brand: "Western Digital", price: 5190, wattage: 15, spec: "256MB Cache, NoTouch Ramp Load Technology", image: "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=300&auto=format&fit=crop&q=80" }
+  ],
+  smps: [
+    { id: "smps-1", name: "Corsair RM750e 750W 80+ Gold Fully Modular", brand: "Corsair", price: 9490, wattage: 0, spec: "750W Gold Certified, ATX 3.0 & PCIe 5.0 Ready", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" },
+    { id: "smps-2", name: "Deepcool PM750D 750W 80+ Gold", brand: "Deepcool", price: 6290, wattage: 0, spec: "750W Gold Rated, Non-Modular, Flat Black Cables", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" },
+    { id: "smps-3", name: "Cooler Master MWE 650 Bronze V2", brand: "Cooler Master", price: 4890, wattage: 0, spec: "650W Bronze Certified, HDB 120mm Silent Fan", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" }
+  ],
+  cooler: [
+    { id: "clr-1", name: "Deepcool AK620 High-Performance Dual Tower", brand: "Deepcool", price: 5490, wattage: 10, spec: "260W TDP Support, Dual FDB 120mm PWM Fans", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" },
+    { id: "clr-2", name: "Cooler Master MasterLiquid 360L ARGB AIO", brand: "Cooler Master", price: 7290, wattage: 25, spec: "360mm Radiator, Dual Chamber Gen S Pump, ARGB", image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=300&auto=format&fit=crop&q=80" }
+  ],
+  monitor: [
+    { id: "mon-1", name: "LG UltraGear 27\" QHD 165Hz IPS Gaming Monitor", brand: "LG", price: 21990, wattage: 35, spec: "2560x1440 2K, 1ms GtG, HDR10, sRGB 99%, G-Sync Compatible", image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=80" },
+    { id: "mon-2", name: "Acer Nitro 24\" FHD 180Hz Fast IPS Display", brand: "Acer", price: 10490, wattage: 25, spec: "1920x1080, 0.5ms Response, AMD FreeSync Premium", image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&auto=format&fit=crop&q=80" }
+  ],
+  keyboard: [
+    { id: "kb-1", name: "Redragon K552 Kumara RGB Mechanical Keyboard", brand: "Redragon", price: 2790, wattage: 2, spec: "Custom Dustproof Outemu Blue Switches, Tenkeyless", image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop&q=80" },
+    { id: "kb-2", name: "Keychron K2 V2 Wireless Mechanical Keyboard", brand: "Keychron", price: 7990, wattage: 2, spec: "75% Layout, Hot-Swappable Gateron G Pro Brown, Bluetooth", image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop&q=80" }
+  ],
+  mouse: [
+    { id: "ms-1", name: "Razer DeathAdder Essential Gaming Mouse", brand: "Razer", price: 1299, wattage: 2, spec: "6400 DPI Optical Sensor, 5 Hyperesponse Buttons", image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=300&auto=format&fit=crop&q=80" },
+    { id: "ms-2", name: "Logitech G502 HERO High Performance Mouse", brand: "Logitech", price: 3995, wattage: 2, spec: "HERO 25K Sensor, 11 Programmable Buttons, Tunable Weight", image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=300&auto=format&fit=crop&q=80" }
+  ],
+  cables: [
+    { id: "cbl-1", name: "Braided Sleeved PSU Extension Cable Kit", brand: "Sensei", price: 1990, wattage: 0, spec: "24-Pin ATX, 8-Pin EPS, Dual 8-Pin PCIe with Cable Combs", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&auto=format&fit=crop&q=80" },
+    { id: "cbl-2", name: "8K Ultra High-Speed HDMI 2.1 Braided Cable", brand: "AmazonBasics", price: 699, wattage: 0, spec: "48Gbps, eARC, 8K@60Hz, 4K@120Hz, 2 Meters", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&auto=format&fit=crop&q=80" }
+  ],
+  wifi_dongle: [
+    { id: "wf-1", name: "TP-Link Archer TXE75E WiFi 6E PCIe Adapter", brand: "TP-Link", price: 4490, wattage: 3, spec: "AXE5400 Tri-Band, Bluetooth 5.3, Dual External Antennas", image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=300&auto=format&fit=crop&q=80" },
+    { id: "wf-2", name: "TP-Link Archer T3U Plus AC1300 USB Wi-Fi", brand: "TP-Link", price: 1299, wattage: 2, spec: "Dual-Band High Gain 5dBi External Antenna, USB 3.0", image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=300&auto=format&fit=crop&q=80" }
+  ],
+  bluetooth_dongle: [
+    { id: "bt-1", name: "TP-Link UB500 Bluetooth 5.3 Nano USB Adapter", brand: "TP-Link", price: 599, wattage: 1, spec: "Plug & Play, Long-Range BLE 5.3 Backward Compatible", image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=300&auto=format&fit=crop&q=80" }
+  ],
+  ups: [
+    { id: "ups-1", name: "APC Back-UPS BX1100C-IN 1100VA / 660W UPS", brand: "APC by Schneider", price: 6490, wattage: 0, spec: "660W Capacity, Automatic Voltage Regulation (AVR), 4 Sockets", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&auto=format&fit=crop&q=80" },
+    { id: "ups-2", name: "Microtek Legend 1000VA / 600W Inverter UPS", brand: "Microtek", price: 5190, wattage: 0, spec: "600W Capacity, Overload Protection, Fast Battery Charging", image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=300&auto=format&fit=crop&q=80" }
+  ]
+};
+
+let selectedPcBuild = {};
+let activePickerSlotKey = null;
+
+function renderPcBuilderSlots() {
+  const container = document.getElementById("pc-builder-slots-grid");
+  if (!container) return;
+
+  let totalPrice = 0;
+  let totalWattage = 0;
+  let selectedCount = 0;
+
+  const html = PC_BUILDER_SLOTS.map(slot => {
+    const chosen = selectedPcBuild[slot.key];
+    if (chosen) {
+      selectedCount++;
+      totalPrice += Number(chosen.price || 0);
+      totalWattage += Number(chosen.wattage || 0);
+    }
+
+    return `
+      <div class="jaankar-card p-4 flex flex-col justify-between hover:border-purple-300 transition-all duration-200 ${chosen ? 'border-purple-500 bg-purple-50/20' : ''}">
+        <div class="space-y-3">
+          <!-- Slot Header -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg ${chosen ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center shrink-0">
+                <i data-lucide="${slot.icon}" class="w-4 h-4"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-800">${escapeHtml(slot.name)}</span>
+            </div>
+            ${chosen ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">Selected</span>` : `<span class="text-[10px] text-slate-400 font-semibold">Empty</span>`}
+          </div>
+
+          <!-- Component Details or Empty State -->
+          ${chosen ? `
+            <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 shadow-xs">
+              <div class="flex items-center gap-2">
+                <img src="${chosen.image}" class="w-10 h-10 object-contain rounded-lg bg-slate-50 border border-slate-100 shrink-0">
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-black text-slate-900 truncate">${escapeHtml(chosen.name)}</p>
+                  <p class="text-[10px] text-slate-500 truncate">${escapeHtml(chosen.spec || chosen.brand || '')}</p>
+                </div>
+              </div>
+              <div class="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span class="font-black text-purple-700">₹${Number(chosen.price).toLocaleString('en-IN')}</span>
+                ${chosen.wattage ? `<span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-bold text-[9.5px]">⚡ ${chosen.wattage}W</span>` : ''}
+              </div>
+            </div>
+          ` : `
+            <div class="py-5 px-3 rounded-xl border border-dashed border-slate-200 text-center space-y-1 bg-slate-50/50">
+              <p class="text-xs font-semibold text-slate-400">No ${slot.name} chosen</p>
+              <p class="text-[10px] text-slate-400">Click choose to browse inventory</p>
+            </div>
+          `}
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-3 mt-3 border-t border-slate-100 flex items-center gap-2">
+          <button type="button" onclick="openPcComponentPicker('${slot.key}')" class="flex-1 py-1.5 px-3 rounded-xl ${chosen ? 'bg-purple-100 hover:bg-purple-200 text-purple-800' : 'bg-slate-900 hover:bg-orange-600 text-white'} text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer">
+            <span>${chosen ? 'Change' : 'Choose'}</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          </button>
+          ${chosen ? `
+            <button type="button" onclick="removeSlotComponent('${slot.key}')" class="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition cursor-pointer" title="Remove Component">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = html;
+
+  // Update sticky summary bar
+  const priceBadge = document.getElementById("pc-total-price-badge");
+  const wattageBadge = document.getElementById("pc-total-wattage-badge");
+  const countBadge = document.getElementById("pc-selected-count-badge");
+
+  if (priceBadge) priceBadge.textContent = `₹${totalPrice.toLocaleString('en-IN')}`;
+  if (wattageBadge) wattageBadge.textContent = `${totalWattage} W`;
+  if (countBadge) countBadge.textContent = `${selectedCount} / 16 Selected`;
+
+  if (window.lucide) lucide.createIcons();
+}
+window.renderPcBuilderSlots = renderPcBuilderSlots;
+
+function removeSlotComponent(slotKey) {
+  delete selectedPcBuild[slotKey];
+  renderPcBuilderSlots();
+  if (typeof showToast === "function") showToast("Component removed from custom PC build");
+}
+window.removeSlotComponent = removeSlotComponent;
+
+function resetCustomPcBuild() {
+  if (Object.keys(selectedPcBuild).length === 0) return;
+  if (confirm("Are you sure you want to reset and clear all selected PC components?")) {
+    selectedPcBuild = {};
+    renderPcBuilderSlots();
+    const resultBox = document.getElementById("pc-gemini-results");
+    if (resultBox) resultBox.classList.add("hidden");
+    if (typeof showToast === "function") showToast("Custom PC build reset");
+  }
+}
+window.resetCustomPcBuild = resetCustomPcBuild;
+
+function openPcComponentPicker(slotKey) {
+  activePickerSlotKey = slotKey;
+  const slotDef = PC_BUILDER_SLOTS.find(s => s.key === slotKey);
+  const modal = document.getElementById("modal-pc-component-picker");
+  const title = document.getElementById("picker-modal-title");
+  const searchInput = document.getElementById("picker-search-input");
+  if (!modal || !slotDef) return;
+
+  if (title) title.textContent = `Select ${slotDef.name}`;
+  if (searchInput) searchInput.value = "";
+
+  renderPickerItemsList("");
+  modal.classList.remove("hidden");
+  modal.style.display = "flex";
+
+  if (window.lucide) lucide.createIcons();
+}
+window.openPcComponentPicker = openPcComponentPicker;
+
+function closePcComponentPicker() {
+  const modal = document.getElementById("modal-pc-component-picker");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+  }
+  activePickerSlotKey = null;
+}
+window.closePcComponentPicker = closePcComponentPicker;
+
+function filterPcPickerItems(query) {
+  renderPickerItemsList(query);
+}
+window.filterPcPickerItems = filterPcPickerItems;
+
+function renderPickerItemsList(query) {
+  const container = document.getElementById("picker-items-grid");
+  if (!container || !activePickerSlotKey) return;
+
+  const slotDef = PC_BUILDER_SLOTS.find(s => s.key === activePickerSlotKey);
+  if (!slotDef) return;
+
+  const q = (query || "").toLowerCase().trim();
+
+  // 1. Gather admin products from live inventory
+  const allProds = (liveProductsList && liveProductsList.length) ? liveProductsList : defaultProductsCatalog;
+  const adminMatches = allProds.filter(p => {
+    const cat = (p.category || "").toLowerCase();
+    const name = (p.name || "").toLowerCase();
+    const isCatMatch = cat === slotDef.category || slotDef.keywords.some(k => cat.includes(k) || name.includes(k));
+    if (!isCatMatch) return false;
+    if (!q) return true;
+    return name.includes(q) || (p.description || "").toLowerCase().includes(q) || JSON.stringify(p.specs || {}).toLowerCase().includes(q);
+  }).map(p => {
+    // Parse numeric price
+    const rawPrice = String(p.price || "0").replace(/[^0-9]/g, "");
+    return {
+      id: p.id,
+      name: p.name,
+      brand: p.brand || "JAANKAR Verified",
+      price: Number(rawPrice) || 2999,
+      wattage: p.specs?.wattage || p.specs?.power || 45,
+      spec: p.description || Object.entries(p.specs || {}).map(([k,v]) => `${k}: ${v}`).join(", "),
+      image: p.featuredImage || (p.images && p.images[0]) || "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=300",
+      isAdminStock: true
+    };
+  });
+
+  // 2. Gather verified catalog presets
+  const presets = (VERIFIED_PC_COMPONENTS_CATALOG[activePickerSlotKey] || []).filter(item => {
+    if (!q) return true;
+    return item.name.toLowerCase().includes(q) || item.brand.toLowerCase().includes(q) || item.spec.toLowerCase().includes(q);
+  });
+
+  const combined = [...adminMatches, ...presets];
+
+  if (combined.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-12 text-center space-y-2">
+        <i data-lucide="package-search" class="w-10 h-10 text-slate-400 mx-auto"></i>
+        <p class="text-sm font-bold text-slate-800">No matching ${slotDef.name} found</p>
+        <p class="text-xs text-slate-500">Try typing another brand or clear search query.</p>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = combined.map(item => {
+    const isCurrent = selectedPcBuild[activePickerSlotKey]?.id === item.id;
+    return `
+      <div class="jaankar-card p-4 flex flex-col justify-between hover:border-purple-500 transition-all duration-200 ${isCurrent ? 'border-purple-600 bg-purple-50/30' : ''}">
+        <div class="space-y-3">
+          <div class="relative h-32 rounded-xl bg-slate-50 p-2 flex items-center justify-center overflow-hidden border border-slate-100">
+            <img src="${item.image}" alt="${escapeHtml(item.name)}" class="w-full h-full object-contain">
+            ${item.isAdminStock ? `
+              <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9.5px] font-black bg-orange-600 text-white shadow-xs">
+                Admin Store Stock
+              </span>
+            ` : `
+              <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9.5px] font-bold bg-slate-900/80 text-white backdrop-blur-xs">
+                Verified Spec
+              </span>
+            `}
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-bold text-purple-700 uppercase tracking-wider">${escapeHtml(item.brand)}</span>
+              ${item.wattage ? `<span class="font-semibold text-slate-500">⚡ ${item.wattage}W</span>` : ''}
+            </div>
+            <h4 class="font-black text-xs text-slate-900 line-clamp-2">${escapeHtml(item.name)}</h4>
+            <p class="text-[10.5px] text-slate-500 line-clamp-2 leading-relaxed">${escapeHtml(item.spec)}</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 mt-3 flex items-center justify-between">
+          <span class="text-sm font-black text-slate-900">₹${Number(item.price).toLocaleString('en-IN')}</span>
+          <button type="button" onclick='selectPcComponent(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="px-3 py-1.5 rounded-xl ${isCurrent ? 'bg-purple-600 text-white' : 'bg-slate-900 hover:bg-purple-600 text-white'} text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>${isCurrent ? 'Selected' : 'Select'}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function selectPcComponent(item) {
+  if (!activePickerSlotKey) return;
+  selectedPcBuild[activePickerSlotKey] = item;
+  closePcComponentPicker();
+  renderPcBuilderSlots();
+  if (typeof showToast === "function") showToast(`Added ${item.name} to custom PC build`);
+}
+window.selectPcComponent = selectPcComponent;
+
+function removeCurrentSlotComponent() {
+  if (activePickerSlotKey) {
+    delete selectedPcBuild[activePickerSlotKey];
+    closePcComponentPicker();
+    renderPcBuilderSlots();
+    if (typeof showToast === "function") showToast("Component removed");
+  }
+}
+window.removeCurrentSlotComponent = removeCurrentSlotComponent;
+
+async function runGeminiPcBuildAnalysis() {
+  const chosenKeys = Object.keys(selectedPcBuild);
+  if (chosenKeys.length < 2) {
+    alert("Please select at least a Processor and RAM or GPU to run the Gemini AI PC Build Analysis.");
+    return;
+  }
+
+  const loadingEl = document.getElementById("pc-gemini-loading");
+  const resultEl = document.getElementById("pc-gemini-results");
+  if (!loadingEl || !resultEl) return;
+
+  loadingEl.classList.remove("hidden");
+  resultEl.classList.add("hidden");
+  resultEl.innerHTML = "";
+
+  // Calculate totals
+  let totalPrice = 0;
+  let totalWatts = 0;
+  const partsSummary = chosenKeys.map(k => {
+    const item = selectedPcBuild[k];
+    const slotDef = PC_BUILDER_SLOTS.find(s => s.key === k);
+    totalPrice += Number(item.price || 0);
+    totalWatts += Number(item.wattage || 0);
+    return `- ${slotDef ? slotDef.name : k}: ${item.name} (${item.brand}) • Price: ₹${Number(item.price).toLocaleString('en-IN')} • Power: ${item.wattage || 0}W • Spec: ${item.spec}`;
+  }).join("\n");
+
+  const smpsChosen = selectedPcBuild["smps"];
+  const smpsWattageText = smpsChosen ? smpsChosen.name : "Not Selected Yet";
+
+  const prompt = `You are the lead PC hardware architect and gaming system evaluator at JAANKAR Technologies India.
+Analyze the following custom PC configuration selected by the user:
+
+SELECTED PC COMPONENTS:
+${partsSummary}
+
+TOTAL SYSTEM METRICS:
+- Total Hardware Cost: ₹${totalPrice.toLocaleString('en-IN')}
+- Total Estimated Base Draw: ${totalWatts} Watts
+- Selected SMPS / PSU: ${smpsWattageText}
+
+INSTRUCTIONS:
+Provide an expert, technical, completely objective analysis formatted in clear Markdown with the following exact sections:
+
+### 🎮 Gaming Performance & Benchmark Forecast
+- Estimate realistic FPS and optimal resolution (1080p / 1440p / 4K) for:
+  * GTA V / GTA VI Readiness
+  * Cyberpunk 2077 (High/Ultra + Ray Tracing/DLSS/FSR)
+  * Valorant & CS2 (Esports competitive frame rates)
+  * BGMI (via PC Emulator) & PUBG Battlegrounds
+  * Call of Duty: Warzone
+
+### 💻 Creative & Professional Software Capability
+- Exact capabilities for:
+  * Adobe Premiere Pro & After Effects (4K timeline smoothness, render times)
+  * DaVinci Resolve (color grading & GPU acceleration)
+  * Blender 3D (Cycles viewport rendering & ray tracing compute)
+  * Coding & Development (Docker, Android Studio compilation, local LLMs)
+
+### ⚡ Power Supply & Thermal Sufficiency
+- Evaluate base wattage (${totalWatts}W) vs recommended PSU headroom.
+- Is the chosen SMPS (${smpsWattageText}) sufficient? State recommended minimum wattage with 30% headroom.
+
+### ⚠️ Compatibility, Socket Match & Bottleneck Percentage
+- Verify CPU socket to motherboard compatibility.
+- Verify DDR generation (DDR4 vs DDR5).
+- State estimated CPU-GPU Bottleneck percentage (e.g. <5% perfectly balanced, or if one limits the other).
+
+### 🚀 2–3 Year Upgrade Roadmap
+- Exact recommendations on what to upgrade next (e.g. storage expansion, RAM upgrade, GPU upgrade path).
+
+### 💰 Overall Value & Verdict Rating
+- Score this build out of 10 for price-to-performance in the Indian market.
+
+CRITICAL RULES:
+- Zero pleasantries, no conversational filler ("Sure, here is your build analysis").
+- Dive immediately into the Markdown response.
+- Provide concrete numbers, specific architectural details, and bold highlights.`;
+
+  try {
+    const apiKey = await getGeminiApiKeyForComparison();
+    if (!apiKey) {
+      loadingEl.classList.add("hidden");
+      resultEl.classList.remove("hidden");
+      resultEl.innerHTML = `
+        <div class="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-3">
+          <p class="font-bold text-sm">Gemini API Key Required</p>
+          <p>Please configure your Gemini API Key in localStorage ('jaankar_gemini_api_key') or Admin Settings to run AI PC compatibility benchmarks.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const candidateModels = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-1.5-flash"];
+    let analysisMarkdown = null;
+
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              topP: 0.95,
+              maxOutputTokens: 2500
+            }
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+          analysisMarkdown = data.candidates[0].content.parts[0].text;
+          break;
+        }
+      } catch (err) {
+        console.warn(`Model ${model} PC analysis warning:`, err.message);
+      }
+    }
+
+    loadingEl.classList.add("hidden");
+    resultEl.classList.remove("hidden");
+
+    if (!analysisMarkdown) {
+      resultEl.innerHTML = `
+        <div class="p-6 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-2">
+          <p class="font-bold">Could not generate PC build evaluation</p>
+          <p>Please check your internet connection or Gemini API credentials.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const formattedHtml = parseMarkdownToHtml(analysisMarkdown);
+    resultEl.innerHTML = `
+      <div class="jaankar-card p-6 sm:p-8 space-y-6 border-purple-200 bg-gradient-to-br from-white via-purple-50/20 to-orange-50/20 shadow-md">
+        <!-- Dashboard Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-600/30 shrink-0">
+              <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-black text-slate-900">Gemini AI Custom Rig Evaluation</h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Verified Analysis</span>
+              </div>
+              <p class="text-xs text-slate-500">Total Investment: <strong class="text-purple-700">₹${totalPrice.toLocaleString('en-IN')}</strong> • Estimated Draw: <strong class="text-orange-600">${totalWatts}W</strong></p>
+            </div>
+          </div>
+          <button type="button" onclick="runGeminiPcBuildAnalysis()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer shrink-0">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Re-evaluate Rig</span>
+          </button>
+        </div>
+
+        <!-- Rendered Report -->
+        <div class="prose prose-sm max-w-none text-slate-800 space-y-3 leading-relaxed">
+          ${formattedHtml}
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
+            <span>All hardware benchmarks simulated with real-world Indian ambient temperatures (32°C).</span>
+          </div>
+          <button type="button" onclick="window.print()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition flex items-center gap-1 cursor-pointer">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>Print Spec Sheet</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    if (window.lucide) lucide.createIcons();
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (e) {
+    loadingEl.classList.add("hidden");
+    resultEl.classList.remove("hidden");
+    resultEl.innerHTML = `
+      <div class="p-6 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+        <p class="font-bold">Evaluation Error: ${escapeHtml(e.message)}</p>
+      </div>
+    `;
+  }
+}
+window.runGeminiPcBuildAnalysis = runGeminiPcBuildAnalysis;

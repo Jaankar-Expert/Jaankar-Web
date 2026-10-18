@@ -360,11 +360,11 @@
         </div>
       </div>
 
-      <!-- 6. Jaankar AI -->
-      <button type="button" onclick="openJaankarAiDrawer(); if(window.innerWidth < 768) toggleAppSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
+      <!-- 6. Jaankar AI (Full-Size Gemini Powered) -->
+      <button type="button" onclick="switchTab('ai'); if(window.innerWidth < 768) toggleAppSidebar(false);" id="sidebar-tab-ai" class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition hover:bg-orange-50 hover:text-orange-600">
         <i data-lucide="sparkles" class="w-4 h-4 text-purple-600"></i>
         <span>Jaankar AI</span>
-        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-700 font-bold">Voice</span>
+        <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-700 font-bold">Gemini AI</span>
       </button>
 
       <!-- 7. My Orders & Live Tracking -->
@@ -703,6 +703,10 @@
             <i data-lucide="alarm-clock" class="w-4 h-4 text-amber-500"></i>
             <span>Smart Alarms</span>
           </button>
+          <button type="button" onclick="switchToolSubTab('build-pc')" id="tool-tab-pc" class="tool-tab-btn flex items-center gap-1.5 bg-gradient-to-r from-purple-50 to-orange-50 text-purple-900 border-purple-200 hover:border-purple-400 font-extrabold">
+            <i data-lucide="cpu" class="w-4 h-4 text-purple-600"></i>
+            <span>🖥️ Build PC (Gemini AI)</span>
+          </button>
         </div>
 
         <!-- ================= TOOL 1: PDF COMPRESSOR ================= -->
@@ -976,6 +980,83 @@
             <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Scheduled Alarms</h4>
             <div id="alarms-active-list" class="space-y-2"></div>
           </div>
+        </div>
+
+        <!-- ================= TOOL 5: BUILD PC (GEMINI AI POWERED) ================= -->
+        <div id="tool-panel-build-pc" class="hidden jaankar-card p-5 sm:p-7 space-y-6">
+          <!-- Top Tool Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
+                <i data-lucide="cpu" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-black text-lg text-slate-900">Interactive Custom PC Builder</h3>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-700 border border-purple-200">Gemini Powered</span>
+                </div>
+                <p class="text-xs text-slate-500">Pick compatible components, check live pricing, power draw, and run deep AI benchmark simulations</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="resetCustomPcBuild()" class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                <span>Reset Build</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sticky Live Build Metrics & AI Action Bar -->
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-700">
+            <div class="grid grid-cols-3 gap-4 w-full md:w-auto divide-x divide-slate-700/80">
+              <div class="px-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Budget</span>
+                <p class="text-lg sm:text-xl font-black text-orange-400 mt-0.5">₹<span id="pc-build-total-price">0</span></p>
+              </div>
+              <div class="px-3">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Est. Power</span>
+                <p class="text-lg sm:text-xl font-black text-emerald-400 mt-0.5"><span id="pc-build-total-wattage">0</span> W</p>
+              </div>
+              <div class="px-3">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Components</span>
+                <p class="text-lg sm:text-xl font-black text-white mt-0.5"><span id="pc-build-selected-count">0</span> / 16</p>
+              </div>
+            </div>
+
+            <button type="button" onclick="runGeminiPcBuildAnalysis()" id="btn-run-pc-gemini" class="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 transition cursor-pointer">
+              <i data-lucide="sparkles" class="w-4 h-4 fill-white"></i>
+              <span>Build PC & Analyze with Gemini AI</span>
+            </button>
+          </div>
+
+          <!-- 16 Component Selection Grid -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-orange-600"></i>
+                <span>Choose PC Components (16 Slots)</span>
+              </h4>
+              <span class="text-[11px] text-slate-400 font-medium">Click on any component to select or change parts</span>
+            </div>
+
+            <!-- Dynamically populated via renderPcBuilderSlots() -->
+            <div id="pc-builder-slots-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            </div>
+          </div>
+
+          <!-- Gemini AI Analysis Loading State -->
+          <div id="pc-gemini-loading" class="hidden py-10 text-center space-y-3 bg-purple-50/50 rounded-2xl border border-purple-100">
+            <div class="w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="text-sm font-bold text-slate-800">Gemini AI is analyzing your custom PC build...</p>
+            <p class="text-xs text-slate-500">Checking gaming resolution capabilities, software rendering speeds, bottleneck percentage, and power headroom</p>
+          </div>
+
+          <!-- Gemini AI Analysis Results Dashboard -->
+          <div id="pc-gemini-results" class="hidden space-y-4">
+            <!-- Rendered dynamically by runGeminiPcBuildAnalysis() -->
+          </div>
+
         </div>
 
       </div>
@@ -1442,8 +1523,24 @@
       </div>
 
       <!-- ==================== VIEW 5: 6 ELECTRONICS CATEGORIES (WITH FLIPKART MEGA MENU) ==================== -->
-      <div id="view-categories" class="hidden space-y-6">
+      <div id="view-categories" class="hidden space-y-4">
         
+        <!-- Order Page Top Search Bar (Just Above 7 Flipkart Options) -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-3 flex flex-col sm:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="order-page-search-input" oninput="handleOrderPageSearch(this.value)" placeholder="Search products, brands, processors, specs (e.g. iPhone, RTX 4060, OLED, Sony)..." class="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition">
+            <button type="button" id="btn-clear-order-search" onclick="clearOrderPageSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center text-[10px] font-bold transition cursor-pointer" title="Clear Search">✕</button>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+            <span id="order-search-matches-badge" class="hidden text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200"></span>
+            <button type="button" onclick="handleOrderPageSearch(document.getElementById('order-page-search-input').value)" class="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i>
+              <span>Search</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Flipkart-Style Category Navigation Strip with Floating Multi-Column Mega Menu -->
         <div class="relative z-30 bg-white border border-slate-200 rounded-2xl shadow-sm">
           
@@ -1863,58 +1960,398 @@
           </button>
         </div>
 
-        <!-- 3 Account Sub-Pages -->
+        <!-- 3 Account Sub-Pages (Clickable Real Portals) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
           <!-- 1. Learning Progress -->
-          <div class="jaankar-card p-5 space-y-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+          <div onclick="openMyLearningPage()" class="jaankar-card p-5 space-y-3 hover:border-blue-500 hover:shadow-md cursor-pointer transition group">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                </div>
+                <h3 class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors">My Learning</h3>
               </div>
-              <h3 class="font-bold text-sm text-slate-900">My Learning</h3>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-transform"></i>
             </div>
             <div class="space-y-2">
               <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                <p class="text-xs font-bold text-slate-800">DDR5 vs DDR4 Architecture</p>
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-bold text-slate-800">DDR5 vs DDR4 Architecture</p>
+                  <span class="text-[10px] font-bold text-blue-600">80%</span>
+                </div>
                 <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                   <div class="bg-blue-600 h-full w-4/5"></div>
                 </div>
-                <span class="text-[10px] text-slate-500">80% Completed</span>
+                <p class="text-[10px] text-slate-500">Click to view full course mastery & certificates</p>
               </div>
             </div>
           </div>
 
           <!-- 2. Saved Items -->
-          <div class="jaankar-card p-5 space-y-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-                <i data-lucide="bookmark" class="w-4 h-4"></i>
+          <div onclick="openSavedItemsPage()" class="jaankar-card p-5 space-y-3 hover:border-orange-500 hover:shadow-md cursor-pointer transition group">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                  <i data-lucide="bookmark" class="w-4 h-4"></i>
+                </div>
+                <h3 class="font-bold text-sm text-slate-900 group-hover:text-orange-600 transition-colors">Saved Items</h3>
               </div>
-              <h3 class="font-bold text-sm text-slate-900">Saved Items</h3>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-orange-600 group-hover:translate-x-0.5 transition-transform"></i>
             </div>
             <div class="space-y-2">
               <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <p class="text-xs font-bold text-slate-800">ROG Strix SCAR 16 Specs</p>
-                <p class="text-[10px] text-slate-500">Saved to wishlist</p>
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-bold text-slate-800" id="account-card-saved-snippet">Saved Wishlist & Articles</p>
+                  <span id="account-saved-badge-count" class="text-[10px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">0 items</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">Click to browse your bookmarked products & news</p>
               </div>
             </div>
           </div>
 
           <!-- 3. Download History -->
-          <div class="jaankar-card p-5 space-y-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                <i data-lucide="download-cloud" class="w-4 h-4"></i>
+          <div onclick="openDownloadHistoryPage()" class="jaankar-card p-5 space-y-3 hover:border-emerald-500 hover:shadow-md cursor-pointer transition group">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                </div>
+                <h3 class="font-bold text-sm text-slate-900 group-hover:text-emerald-600 transition-colors">Download History</h3>
               </div>
-              <h3 class="font-bold text-sm text-slate-900">Download History</h3>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-transform"></i>
             </div>
             <div class="space-y-2">
               <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <p class="text-xs font-bold text-slate-800">JAANKAR App v1.1.0 APK</p>
-                <p class="text-[10px] text-slate-500">Downloaded yesterday (26 MB)</p>
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-bold text-slate-800">APK & Invoices</p>
+                  <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">Ready</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">Click to view offline files and invoices</p>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW: MY LEARNING PROGRESS HUB ==================== -->
+      <div id="view-my-learning" class="hidden space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="switchTab('account')" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer">
+              <i data-lucide="arrow-left" class="w-4 h-4 text-blue-600"></i>
+              <span>Back to Account</span>
+            </button>
+            <div>
+              <h2 class="text-lg sm:text-xl font-black text-slate-900">My Learning & Tech Progress</h2>
+              <p class="text-xs text-slate-500">Live progress tracker across hardware courses, tutorials and teardowns</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 KPI Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="jaankar-card p-4 space-y-1 bg-gradient-to-br from-blue-50/70 to-white">
+            <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Completed Topics</span>
+            <p class="text-2xl font-black text-slate-900">18 / 24</p>
+            <p class="text-[10px] text-slate-400">75% overall completion</p>
+          </div>
+          <div class="jaankar-card p-4 space-y-1 bg-gradient-to-br from-indigo-50/70 to-white">
+            <span class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">Time Invested</span>
+            <p class="text-2xl font-black text-slate-900">14.5 Hrs</p>
+            <p class="text-[10px] text-slate-400">Verified video hours</p>
+          </div>
+          <div class="jaankar-card p-4 space-y-1 bg-gradient-to-br from-purple-50/70 to-white">
+            <span class="text-[11px] font-bold text-purple-600 uppercase tracking-wider">Quiz Accuracy</span>
+            <p class="text-2xl font-black text-slate-900">92%</p>
+            <p class="text-[10px] text-slate-400">High hardware IQ</p>
+          </div>
+          <div class="jaankar-card p-4 space-y-1 bg-gradient-to-br from-emerald-50/70 to-white">
+            <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Mastery Tier</span>
+            <p class="text-2xl font-black text-slate-900">Pro Rigger</p>
+            <p class="text-[10px] text-slate-400">Hardware Certified</p>
+          </div>
+        </div>
+
+        <!-- Learning Modules List -->
+        <div class="space-y-4">
+          <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i>
+            <span>Active Learning Modules</span>
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Module 1 -->
+            <div class="jaankar-card p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700">Hardware</span>
+                <span class="text-xs font-bold text-blue-600">85% Done</span>
+              </div>
+              <h4 class="font-black text-sm text-slate-900">PC Building & BIOS Optimization</h4>
+              <p class="text-xs text-slate-500">Covers thermal paste application, AIO cooling setup, XMP/EXPO RAM profiling, and cable management.</p>
+              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="bg-blue-600 h-full w-[85%]"></div>
+              </div>
+              <div class="pt-2 flex justify-between items-center text-xs">
+                <span class="text-slate-400">6 of 7 lessons</span>
+                <button type="button" onclick="switchTab('videos-shorts')" class="text-blue-600 font-bold hover:underline">Continue Video</button>
+              </div>
+            </div>
+
+            <!-- Module 2 -->
+            <div class="jaankar-card p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-700">Processors</span>
+                <span class="text-xs font-bold text-orange-600">90% Done</span>
+              </div>
+              <h4 class="font-black text-sm text-slate-900">Smartphone SoCs & GPU Benchmarks</h4>
+              <p class="text-xs text-slate-500">In-depth breakdown of Snapdragon 8 Gen series, Apple A-Bionic, Dimensity 9300, and TSMC 3nm efficiency.</p>
+              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="bg-orange-500 h-full w-[90%]"></div>
+              </div>
+              <div class="pt-2 flex justify-between items-center text-xs">
+                <span class="text-slate-400">9 of 10 lessons</span>
+                <button type="button" onclick="switchTab('videos-shorts')" class="text-orange-600 font-bold hover:underline">Continue Video</button>
+              </div>
+            </div>
+
+            <!-- Module 3 -->
+            <div class="jaankar-card p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-700">Display Tech</span>
+                <span class="text-xs font-bold text-purple-600">75% Done</span>
+              </div>
+              <h4 class="font-black text-sm text-slate-900">OLED vs Mini-LED vs IPS Panels</h4>
+              <p class="text-xs text-slate-500">Understanding pixel response times, local dimming zones, burn-in mitigation, and HDR10+ calibration.</p>
+              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="bg-purple-600 h-full w-[75%]"></div>
+              </div>
+              <div class="pt-2 flex justify-between items-center text-xs">
+                <span class="text-slate-400">3 of 4 lessons</span>
+                <button type="button" onclick="switchTab('videos-shorts')" class="text-purple-600 font-bold hover:underline">Continue Video</button>
+              </div>
+            </div>
+
+            <!-- Module 4 -->
+            <div class="jaankar-card p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-700">Completed</span>
+                <span class="text-xs font-bold text-emerald-600">100% Done</span>
+              </div>
+              <h4 class="font-black text-sm text-slate-900">Wi-Fi 7 & Gigabit Mesh Networking</h4>
+              <p class="text-xs text-slate-500">320MHz channel bandwidth, Multi-Link Operation (MLO), latency reduction, and secure WPA3 encryption.</p>
+              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="bg-emerald-600 h-full w-full"></div>
+              </div>
+              <div class="pt-2 flex justify-between items-center text-xs">
+                <span class="text-slate-400">All 5 lessons completed</span>
+                <span class="text-emerald-600 font-bold flex items-center gap-1">✓ Certificate Unlocked</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW: SAVED ITEMS & WISHLIST HUB ==================== -->
+      <div id="view-saved-items" class="hidden space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="switchTab('account')" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer">
+              <i data-lucide="arrow-left" class="w-4 h-4 text-orange-600"></i>
+              <span>Back to Account</span>
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg sm:text-xl font-black text-slate-900">Saved Items & Wishlist</h2>
+                <span id="saved-items-total-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">0 Items</span>
+              </div>
+              <p class="text-xs text-slate-500">Your bookmarked products, saved news stories, and favorite tech videos</p>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            <button type="button" onclick="filterSavedItems('all')" id="saved-tab-all" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white shadow-xs transition">All</button>
+            <button type="button" onclick="filterSavedItems('products')" id="saved-tab-products" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Products</button>
+            <button type="button" onclick="filterSavedItems('articles')" id="saved-tab-articles" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Articles</button>
+            <button type="button" onclick="filterSavedItems('videos')" id="saved-tab-videos" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Videos</button>
+          </div>
+        </div>
+
+        <!-- Saved Items Grid -->
+        <div id="saved-items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Dynamically populated via renderSavedItemsPage() -->
+        </div>
+      </div>
+
+      <!-- ==================== VIEW: DOWNLOAD HISTORY & OFFLINE HUB ==================== -->
+      <div id="view-download-history" class="hidden space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="switchTab('account')" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer">
+              <i data-lucide="arrow-left" class="w-4 h-4 text-emerald-600"></i>
+              <span>Back to Account</span>
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg sm:text-xl font-black text-slate-900">Download History</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Offline Files</span>
+              </div>
+              <p class="text-xs text-slate-500">Offline documents, downloaded APKs, invoices, and cached articles</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Downloads List -->
+        <div class="space-y-3" id="downloads-history-list">
+          <!-- Item 1: APK -->
+          <div class="jaankar-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <i data-lucide="smartphone" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-black text-sm text-slate-900">JAANKAR Android App v1.1.0</h4>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-700">APK Package</span>
+                </div>
+                <p class="text-xs text-slate-500">Size: 26.4 MB • Complete Mobile Experience</p>
+              </div>
+            </div>
+            <a href="https://github.com/Jaankar-Expert/Jaankar/releases/download/v1.1.0/app-release.apk" target="_blank" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Re-download APK</span>
+            </a>
+          </div>
+
+          <!-- Item 2: Tax Invoice -->
+          <div class="jaankar-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                <i data-lucide="receipt" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-black text-sm text-slate-900">JAANKAR Direct Tax Invoice Sample</h4>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700">Tax Invoice</span>
+                </div>
+                <p class="text-xs text-slate-500">Size: 142 KB • GST Compliant Digital Receipt</p>
+              </div>
+            </div>
+            <button type="button" onclick="printOrderInvoiceFromModal()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer">
+              <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i>
+              <span>Print Invoice</span>
+            </button>
+          </div>
+
+          <!-- Item 3: PC Component Spec Sheet -->
+          <div class="jaankar-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                <i data-lucide="cpu" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-black text-sm text-slate-900">PC Builder Benchmark Specs Sheet</h4>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-700">Specs Sheet</span>
+                </div>
+                <p class="text-xs text-slate-500">Size: 85 KB • Custom PC Configurations</p>
+              </div>
+            </div>
+            <button type="button" onclick="switchToolSubTab('build-pc'); switchTab('tools');" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer">
+              <i data-lucide="external-link" class="w-4 h-4"></i>
+              <span>Open PC Builder</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW: FULL-SIZE DEDICATED JAANKAR AI (GEMINI POWERED) ==================== -->
+      <div id="view-ai" class="hidden space-y-4">
+        <!-- Top AI Header Bar -->
+        <div class="jaankar-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-orange-200/80 bg-gradient-to-r from-orange-50/60 via-white to-amber-50/40">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/25 shrink-0">
+              <i data-lucide="sparkles" class="w-6 h-6 fill-white"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg sm:text-xl font-black text-slate-900">JAANKAR AI Assistant</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  <span>Gemini 2.5 Flash Online</span>
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">Unfiltered, 100% accurate tech benchmarks, PC building advice, and verified purchasing guidance</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="clearJaankarAiChat()" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Clear Chat</span>
+            </button>
+            <button type="button" onclick="toggleVoiceSpeechPlayback()" id="btn-toggle-ai-tts" class="px-3 py-1.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+              <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+              <span id="label-ai-tts">Voice: ON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Chat Surface (Full-Size Container) -->
+        <div class="jaankar-card p-4 sm:p-6 flex flex-col h-[calc(100vh-250px)] min-h-[560px] shadow-sm">
+          
+          <!-- Chat Messages Scrollable Feed -->
+          <div id="fullpage-ai-messages" class="flex-1 overflow-y-auto space-y-4 pr-1 sm:pr-2 scrollbar-thin">
+            <!-- Welcome Banner & Prompt Starters -->
+            <div id="fullpage-ai-welcome" class="p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-orange-50/50 border border-slate-200 space-y-4 my-auto text-center max-w-2xl mx-auto">
+              <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto shadow-inner">
+                <i data-lucide="bot" class="w-8 h-8"></i>
+              </div>
+              <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-900">Namaste! Main JAANKAR AI hoon.</h3>
+                <p class="text-xs text-slate-600">Google Gemini ke latest model se connected hoon. Aap mujhse kisi bhi processor, graphics card, laptop, smartphone, ya PC building ke baare mein sawaal pooch sakte hain.</p>
+              </div>
+
+              <!-- Quick Prompt Starters -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left pt-2">
+                <button type="button" onclick="sendAiPromptStarter('Compare Snapdragon 8 Gen 3 vs Apple A17 Pro in gaming performance')" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-orange-500 hover:bg-orange-50/50 text-xs text-slate-700 transition flex items-start gap-2 shadow-xs cursor-pointer group">
+                  <span class="text-orange-600 font-bold">⚡</span>
+                  <span class="group-hover:text-orange-700 font-semibold">Snapdragon 8 Gen 3 vs Apple A17 Pro</span>
+                </button>
+                <button type="button" onclick="sendAiPromptStarter('Suggest best gaming laptop under ₹65,000 in India with RTX 3050/4050')" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-orange-500 hover:bg-orange-50/50 text-xs text-slate-700 transition flex items-start gap-2 shadow-xs cursor-pointer group">
+                  <span class="text-orange-600 font-bold">🎮</span>
+                  <span class="group-hover:text-orange-700 font-semibold">Best gaming laptop under ₹65,000</span>
+                </button>
+                <button type="button" onclick="sendAiPromptStarter('Help me build a 1080p 144Hz video editing PC under ₹50,000')" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-orange-500 hover:bg-orange-50/50 text-xs text-slate-700 transition flex items-start gap-2 shadow-xs cursor-pointer group">
+                  <span class="text-orange-600 font-bold">🖥️</span>
+                  <span class="group-hover:text-orange-700 font-semibold">Build 1080p editing PC under ₹50k</span>
+                </button>
+                <button type="button" onclick="sendAiPromptStarter('What is the difference between OLED vs QLED and which is better for dark rooms?')" class="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-orange-500 hover:bg-orange-50/50 text-xs text-slate-700 transition flex items-start gap-2 shadow-xs cursor-pointer group">
+                  <span class="text-orange-600 font-bold">📺</span>
+                  <span class="group-hover:text-orange-700 font-semibold">OLED vs QLED for dark rooms</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Prompt Input Bar -->
+          <div class="pt-4 border-t border-slate-200 mt-2">
+            <form onsubmit="handleSendFullpageAiMessage(event); return false;" class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <input type="text" id="fullpage-ai-query-input" placeholder="Ask Gemini AI anything (e.g. Which RTX 4060 laptop has highest TGP?)..." class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition">
+                <button type="button" id="btn-fullpage-ai-mic" onclick="toggleFullpageAiMic()" class="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-600 flex items-center justify-center transition" title="Speak via Voice">
+                  <i data-lucide="mic" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <button type="submit" id="btn-fullpage-ai-send" class="px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-orange-500/25 transition shrink-0 cursor-pointer">
+                <span>Send</span>
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+            </form>
+          </div>
+
         </div>
       </div>
 
@@ -2652,6 +3089,57 @@
         <p class="text-[11px] text-slate-500">Prices and specs are synchronized with official brand listings.</p>
         <button type="button" onclick="closeProductComparisonModal()" class="btn-secondary-clean text-xs py-2 px-4 cursor-pointer">
           Close Comparison
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: PC BUILDER COMPONENT PICKER ==================== -->
+  <div id="modal-pc-component-picker" class="fixed inset-0 z-[9998] bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 my-6 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-between border-b border-slate-700">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/50 flex items-center justify-center text-purple-400">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-white" id="picker-modal-title">Select Component</h3>
+            <p class="text-[11px] text-slate-300">Choose from verified inventory with live pricing & power metrics</p>
+          </div>
+        </div>
+        <button type="button" onclick="closePcComponentPicker()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="relative flex-1 w-full">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="picker-search-input" oninput="filterPcPickerItems(this.value)" placeholder="Search parts by model, socket, speed, or brand..." class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-purple-500">
+        </div>
+        <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end text-xs">
+          <span id="picker-item-count" class="text-slate-500 font-bold">0 Options available</span>
+        </div>
+      </div>
+
+      <!-- Component Items Grid (Scrollable) -->
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div id="picker-items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamically populated via openPcComponentPicker(slotKey) -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <button type="button" onclick="removeCurrentSlotComponent()" class="text-xs font-bold text-rose-600 hover:underline">
+          Remove this component from build
+        </button>
+        <button type="button" onclick="closePcComponentPicker()" class="btn-secondary-clean text-xs py-1.5 px-4 cursor-pointer">
+          Cancel
         </button>
       </div>
 
